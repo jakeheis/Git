@@ -8,6 +8,10 @@ struct Repository {
     
     let url: URL
     
+    private var internalDirectory: URL {
+        return url.appendingPathComponent(".git")
+    }
+    
     init?(path: String) {
         let url = URL(fileURLWithPath: path)
         self.init(url: url)
@@ -23,6 +27,10 @@ struct Repository {
         }
         
         self.url = url
+    }
+    
+    func suburl(with path: String) -> URL {
+        return internalDirectory.appendingPathComponent(path)
     }
     
 }
