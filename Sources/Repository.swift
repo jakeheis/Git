@@ -1,4 +1,5 @@
 import Foundation
+import FileKit
 
 struct Paths {
     static let hiddenDirectory = ".git"
@@ -6,31 +7,32 @@ struct Paths {
 
 struct Repository {
     
-    let url: URL
+    let path: Path
     
-    private var internalDirectory: URL {
-        return url.appendingPathComponent(".git")
+    private var internalDirectory: Path {
+        return path + ".git"
     }
     
     init?(path: String) {
-        let url = URL(fileURLWithPath: path)
-        self.init(url: url)
+        self.init(path: Path(path))
     }
     
     init?(url: URL) {
-        do {
-            if try !url.appendingPathComponent(Paths.hiddenDirectory).checkResourceIsReachable() {
-                return nil
-            }
-        } catch {
-             return nil
+        guard let path = Path(url: url) else {
+            return nil
         }
-        
-        self.url = url
+        self.init(path: path)
     }
     
-    func suburl(with path: String) -> URL {
-        return internalDirectory.appendingPathComponent(path)
+    init?(path: Path) {
+        guard (path + ".git").isDirectory else {
+            return nil
+        }
+        self.path = path
+    }
+    
+    func subpath(with sub: String) -> Path {
+        return internalDirectory + sub
     }
     
 }

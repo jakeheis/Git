@@ -1,11 +1,12 @@
 import Foundation
+import FileKit
 
 enum Head {
     case hash(String)
     case ref(String)
     
-    init?(url: URL) {
-        guard let contents = try? String(contentsOf: url, encoding: String.Encoding.utf8) else {
+    init?(path: Path) {
+        guard let contents = try? String.readFromPath(path) else {
             return nil
         }
         
@@ -29,7 +30,7 @@ extension Repository {
     
     var head: Head? {
         get {
-            return Head(url: suburl(with: "HEAD"))
+            return Head(path: subpath(with: "HEAD"))
         }
     }
     

@@ -1,15 +1,16 @@
 import Foundation
+import FileKit
 
 struct Tag {
     let name: String
     let hash: String
     
-    init?(url: URL) {
-        guard let hash = try? String(contentsOf: url, encoding: String.Encoding.utf8) else {
+    init?(path: Path) {
+        guard let hash = try? String.readFromPath(path) else {
             return nil
         }
         
-        self.name = url.lastPathComponent
+        self.name = path.fileName
         self.hash = hash.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
     }
 }
@@ -18,11 +19,8 @@ extension Repository {
     
     var tags: [Tag] {
         get {
-            let directoryURL = suburl(with: "refs/tags")
-            if let urls = try? FileManager.default.contentsOfDirectory(at: directoryURL, includingPropertiesForKeys: nil, options: []) {
-                return urls.flatMap { Tag(url: $0) }
-            }
-            return []
+            let tagsDirectory = subpath(with: "refs/tags")
+            return tagsDirectory.flatMap { Tag(path: $0) }
         }
     }
     
