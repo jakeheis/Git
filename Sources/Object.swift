@@ -74,14 +74,6 @@ extension Object: CustomStringConvertible {
     
 }
 
-class Commit: Object {
-    
-    required init(hash: String, data: Data) {
-        super.init(hash: hash, data: data, type: .commit)
-    }
-    
-}
-
 extension Repository {
     
     var objects: [Object] {
