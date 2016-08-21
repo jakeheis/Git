@@ -1,6 +1,8 @@
 import Foundation
 
-let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/SwiftCLI")
+let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
+
+print(repo.objects)
 
 let data = NSData(contentsOfFile: "/Users/jakeheiser/Documents/Swift/SwiftCLI/.git/objects/fa/64385a6cc5c47c477f3f7c71758b29c3ca4abe")!
 
