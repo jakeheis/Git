@@ -169,7 +169,6 @@ extension GzipProcessor {
         let rawInput = UnsafeMutableRawPointer(mutating: data.bytes).assumingMemoryBound(to: Bytef.self)
         _stream.pointee.next_in = rawInput
         _stream.pointee.avail_in = uInt(data.length)
-        print("avail in", _stream.pointee.avail_in)
         
         guard let output = NSMutableData(capacity: CHUNK_SIZE) else {
             throw GzipError.memory(message: "Not enough memory")
@@ -184,22 +183,13 @@ extension GzipProcessor {
                 output.length += CHUNK_SIZE;
             }
             
-            
-            
             let writtenBeforeThisChunk = _stream.pointee.total_out - chunkStart
             let availOut = uLong(output.length) - writtenBeforeThisChunk
-            
-            print("total out before", _stream.pointee.total_out, writtenBeforeThisChunk, availOut)
-            
+                        
             _stream.pointee.avail_out = uInt(availOut)
             _stream.pointee.next_out = output.mutableBytes.assumingMemoryBound(to: Bytef.self).advanced(by: Int(writtenBeforeThisChunk))
-            
-            print("avail out", availOut)
-            
-            print("next in", _stream.pointee.next_in)
+                        
             result = processChunk()
-            print("total out after", _stream.pointee.total_out)
-            print("avail in after process", _stream.pointee.avail_in)
 
             guard result >= 0 || (result == Z_BUF_ERROR && _stream.pointee.avail_out == 0) else {
                 throw GzipError(code: result, message: _stream.pointee.msg)
