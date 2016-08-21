@@ -73,14 +73,6 @@ extension Object: CustomStringConvertible {
     
 }
 
-class Tree: Object {
-    
-    required init(hash: String, data: Data) {
-        super.init(hash: hash, data: data, type: .tree)
-    }
-    
-}
-
 class Commit: Object {
     
     required init(hash: String, data: Data) {
