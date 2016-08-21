@@ -50,8 +50,9 @@ class Object {
         }
         
         let hash = path.parent.fileName + path.fileName
+        let contentData = uncompressed.subdata(in: (header.characters.count + 1)..<uncompressed.count)
         
-        return type.objectClass.init(hash: hash, data: uncompressed)
+        return type.objectClass.init(hash: hash, data: contentData)
     }
     
     required init(hash: String, data: Data) {
@@ -77,14 +78,6 @@ class Commit: Object {
     
     required init(hash: String, data: Data) {
         super.init(hash: hash, data: data, type: .commit)
-    }
-    
-}
-
-class Blob: Object {
-    
-    required init(hash: String, data: Data) {
-        super.init(hash: hash, data: data, type: .blob)
     }
     
 }

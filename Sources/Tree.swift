@@ -7,14 +7,10 @@ class Tree: Object {
     let treeObjects: [TreeObject]
     
     required init(hash: String, data: Data) {
-        var unparsed = String(data: data, encoding: .ascii)!
-        
+        var unparsed = String(data: data, encoding: .ascii)!        
         var byteCounter = 0
-        let headerIndex = unparsed.characters.index(of: "\0")!
-        byteCounter += unparsed.distance(from: unparsed.startIndex, to: headerIndex) + 1
-        unparsed = unparsed.substring(from: unparsed.index(headerIndex, offsetBy: 1))
-        
         var treeObjects: [TreeObject] = []
+        
         while !unparsed.isEmpty {
             let modeIndex = unparsed.characters.index(of: " ")!
             let mode = unparsed.substring(to: modeIndex)
