@@ -12,9 +12,9 @@ let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
 
 let commits = repo.objects.flatMap { $0 as? Commit }
 let commit = commits[3]
-print(commit.hash)
-print(commit.log())
+//print(commit.hash)
+//print(commit.log())
 
-commit.tree.ls()
+print((commit.tree.treeEntries.first!.object as! Blob).contents)
 
-print(commit.parent?.log())
+//print(commit.parent?.log())

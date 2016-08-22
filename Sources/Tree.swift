@@ -2,14 +2,12 @@ import Foundation
 
 class Tree: Object {
     
-    typealias TreeObject = (mode: Int, hash: String, name: String)
-    
-    let treeObjects: [TreeObject]
+    let treeEntries: [TreeEntry]
     
     required init(hash: String, data: Data, repository: Repository) {
         var unparsed = String(data: data, encoding: .ascii)!        
         var byteCounter = 0
-        var treeObjects: [TreeObject] = []
+        var treeEntries: [TreeEntry] = []
         
         while !unparsed.isEmpty {
             let modeIndex = unparsed.characters.index(of: " ")!
@@ -32,21 +30,74 @@ class Tree: Object {
             for i in 0..<hashBytes.count {
                 hash.append(NSString(format: "%02x", hashBytes[i]) as String)
             }
-
-            let object = (Int(mode) ?? 0, hash as String, name)
-            treeObjects.append(object)
+            
+            let object = TreeEntry(mode: mode, hash: hash as String, name: name, repository: repository)
+            treeEntries.append(object)
         }
         
-        self.treeObjects = treeObjects
+        self.treeEntries = treeEntries
         
         super.init(hash: hash, data: data, type: .tree, repository: repository)
     }
     
     func ls() {
-        for treeObject in treeObjects {
-            print(treeObject.mode, treeObject.hash, treeObject.name)
+        for treeEntry in treeEntries {
+            print(treeEntry)
         }
     }
     
+}
+
+struct TreeEntry {
+    
+    enum Mode: Int {
+        case directory = 40000
+        case blob = 100644
+        case executable = 100755
+        case link = 120000
+        
+        var intText: String {
+            if self == .directory {
+                return "0" + String(describing: rawValue)
+            }
+            return String(describing: rawValue)
+        }
+        
+        var name: String {
+            switch self {
+            case .directory: return "tree"
+            case .blob, .link, .executable: return "blob"
+            }
+        }
+    }
+    
+    let mode: Mode
+    let hash: String
+    let name: String
+    let repository: Repository
+    
+    var object: Object {
+        guard let object = try? Object.from(hash: hash, in: repository) else {
+            fatalError("Could not resolve tree entry: \(hash)")
+        }
+        return object
+    }
+    
+    init(mode raw: String, hash: String, name: String, repository: Repository) {
+        guard let modeInt = Int(raw), let mode = Mode(rawValue: modeInt) else {
+            fatalError("Unrecognized mode: \(raw)")
+        }
+        self.mode = mode
+        self.hash = hash
+        self.name = name
+        self.repository = repository
+    }
+    
+}
+
+extension TreeEntry: CustomStringConvertible {
+    var description: String {
+        return "\(mode.intText) \(mode.name) \(hash) \(name)"
+    }
 }
 

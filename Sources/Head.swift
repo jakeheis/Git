@@ -20,7 +20,7 @@ enum Head {
             let ref = text.substring(with: startIndex ..< endIndex)
             self = .ref(ref)
         } else {
-            self = .hash(text.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines))
+            self = .hash(text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
     }
     
