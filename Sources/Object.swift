@@ -5,6 +5,7 @@ class Object {
     
     let hash: String
     let type: ObjectType
+    let repository: Repository
     
     enum ObjectType: String {
         case blob
@@ -33,7 +34,15 @@ class Object {
         case parseError
     }
     
-    static func from(file path: Path) throws -> Object {
+    static func from(hash: String, in repository: Repository) throws -> Object {
+        let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
+        let firstTwo = hash.substring(to: breakIndex)
+        let hashEnd = hash.substring(from: breakIndex)
+        let path = repository.subpath(with: "objects/\(firstTwo)/\(hashEnd)")
+        return try from(file: path, in: repository)
+    }
+    
+    static func from(file path: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(path) else {
             throw Error.readError
         }
@@ -52,16 +61,17 @@ class Object {
         let hash = path.parent.fileName + path.fileName
         let contentData = uncompressed.subdata(in: (header.characters.count + 1)..<uncompressed.count)
         
-        return type.objectClass.init(hash: hash, data: contentData)
+        return type.objectClass.init(hash: hash, data: contentData, repository: repository)
     }
     
-    required init(hash: String, data: Data) {
+    required init(hash: String, data: Data, repository: Repository) {
         fatalError("Use subclass")
     }
     
-    init(hash: String, data: Data, type: ObjectType) {
+    init(hash: String, data: Data, type: ObjectType, repository: Repository) {
         self.hash = hash
         self.type = type
+        self.repository = repository
     }
     
 }
@@ -84,7 +94,7 @@ extension Repository {
                 continue
             }
             do {
-                let object = try Object.from(file: objectFile)
+                let object = try Object.from(file: objectFile, in: self)
                 objects.append(object)
             } catch {
                 print(error, "for", objectFile)

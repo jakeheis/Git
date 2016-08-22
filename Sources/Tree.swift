@@ -6,7 +6,7 @@ class Tree: Object {
     
     let treeObjects: [TreeObject]
     
-    required init(hash: String, data: Data) {
+    required init(hash: String, data: Data, repository: Repository) {
         var unparsed = String(data: data, encoding: .ascii)!        
         var byteCounter = 0
         var treeObjects: [TreeObject] = []
@@ -39,7 +39,7 @@ class Tree: Object {
         
         self.treeObjects = treeObjects
         
-        super.init(hash: hash, data: data, type: .tree)
+        super.init(hash: hash, data: data, type: .tree, repository: repository)
     }
     
     func ls() {
