@@ -1,18 +1,8 @@
 import Foundation
 import FileKit
 
-struct Tag {
-    let name: String
-    let hash: String
+class Tag: Reference {
     
-    init?(path: Path) {
-        guard let hash = try? String.readFromPath(path) else {
-            return nil
-        }
-        
-        self.name = path.fileName
-        self.hash = hash.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-    }
 }
 
 extension Repository {

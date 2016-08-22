@@ -11,6 +11,7 @@ class Object {
         case blob
         case commit
         case tree
+        case tag
         
         init?(header: String) {
             guard let firstWord = header.components(separatedBy: " ").first else {
@@ -24,6 +25,7 @@ class Object {
             case .blob: return Blob.self
             case .commit: return Commit.self
             case .tree: return Tree.self
+            case .tag: return AnnotatedTag.self
             }
         }
     }
