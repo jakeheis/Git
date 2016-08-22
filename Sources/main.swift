@@ -20,5 +20,7 @@ let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/initgit")!
 
 //print(commit.parent?.log())
 
-let annotatedTags = repo.objects.flatMap { $0 as? AnnotatedTag }
-print((annotatedTags.first!.object as! Commit).log())
+let tags = repo.tags
+print(tags)
+
+print((tags.first!.object as! Commit).log())

@@ -13,18 +13,35 @@ class Reference {
     
     let path: Path
     let hash: String
+    let repository: Repository
     
     var name: String {
         return path.fileName
     }
     
-    init?(path: Path) {
+    var object: Object {
+        guard let object = try? Object.from(hash: hash, in: repository) else {
+            fatalError("Broken reference: \(hash)")
+        }
+        return object
+    }
+    
+    init?(path: Path, repository: Repository) {
         guard let hash = try? String.readFromPath(path) else {
             return nil
         }
         
         self.path = path
         self.hash = hash.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        self.repository = repository
+    }
+    
+}
+
+extension Reference: CustomStringConvertible {
+    
+    var description: String {
+        return "\(name) (\(hash))"
     }
     
 }
