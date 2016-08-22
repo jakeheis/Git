@@ -24,9 +24,7 @@ class AnnotatedTag: Object {
         return object
     }
     
-    required init(hash: String, data: Data, repository: Repository) {
-        _ = (data as NSData).subdata(with: NSRange(location: 0, length: 0)) // Keeps compiler from crashing
-        
+    required init(hash: String, data: Data, repository: Repository) {        
         let lines = String(data: data, encoding: .ascii)!.components(separatedBy: "\n")
         
         let infoLines = lines[0 ..< 4]

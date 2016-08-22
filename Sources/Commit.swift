@@ -23,8 +23,6 @@ class Commit: Object {
     let message: String
     
     required init(hash: String, data: Data, repository: Repository) {
-        _ = (data as NSData).subdata(with: NSRange(location: 0, length: 1)) // Keeps compiler from crashing
-        
         var lines = String(data: data, encoding: .ascii)!.components(separatedBy: "\n")
         _ = lines.removeLast() // Blank line
         var typeLines: [(type: String, value: String)] = lines.map { (line) in

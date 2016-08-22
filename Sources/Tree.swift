@@ -5,34 +5,17 @@ class Tree: Object {
     let treeEntries: [TreeEntry]
     
     required init(hash: String, data: Data, repository: Repository) {
-        var unparsed = String(data: data, encoding: .ascii)!        
-        var byteCounter = 0
-        var treeEntries: [TreeEntry] = []
+        guard let fileReader = FileReader(data: data) else {
+            fatalError("Couldn't read data of tree: \(hash)")
+        }
         
-        while !unparsed.isEmpty {
-            let modeIndex = unparsed.characters.index(of: " ")!
-            let mode = unparsed.substring(to: modeIndex)
-            byteCounter += unparsed.distance(from: unparsed.startIndex, to: modeIndex) + 1
-            unparsed = unparsed.substring(from: unparsed.index(modeIndex, offsetBy: 1))
-            
-            let nameIndex = unparsed.characters.index(of: "\0")!
-            let name = unparsed.substring(to: nameIndex)
-            byteCounter += unparsed.distance(from: unparsed.startIndex, to: nameIndex) + 1
-            unparsed = unparsed.substring(from: unparsed.index(nameIndex, offsetBy: 1))
-            
-            let hashIndex = unparsed.index(unparsed.startIndex, offsetBy: 20)
-            // let hashBytes = data.subdata(in: byteCounter..<(byteCounter + 20))
-            let hashBytes = (data as NSData).subdata(with: NSRange(location: byteCounter, length: 20))
-            unparsed = unparsed.substring(from: hashIndex)
-            byteCounter += 20
-            
-            let hash = NSMutableString()
-            for i in 0..<hashBytes.count {
-                hash.append(NSString(format: "%02x", hashBytes[i]) as String)
-            }
-            
-            let object = TreeEntry(mode: mode, hash: hash as String, name: name, repository: repository)
-            treeEntries.append(object)
+        var treeEntries: [TreeEntry] = []
+        while fileReader.canRead {
+            let mode = fileReader.read(until: " ")
+            let name = fileReader.read(until: "\0")
+            let entryHash = fileReader.readHex(length: 20)
+            let entry = TreeEntry(mode: mode, hash: entryHash, name: name, repository: repository)
+            treeEntries.append(entry)
         }
         
         self.treeEntries = treeEntries
