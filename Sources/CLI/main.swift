@@ -39,6 +39,7 @@ Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 CLI.setup(name: "Git")
 
 CLI.register(command: CatFileCommand())
+CLI.register(command: LogCommand())
 
-let result = CLI.debugGo(with: "git cat-file -p 02c087533d1ecf6e6cd20888338045a340fc9737")
+let result = CLI.debugGo(with: "git log")
 exit(result)
