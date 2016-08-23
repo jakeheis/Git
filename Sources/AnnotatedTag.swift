@@ -14,7 +14,7 @@ class AnnotatedTag: Object {
     let objectHash: String
     let tagType: ObjectType
     let name: String
-    let tagger: Annotation
+    let tagger: Signature
     let message: String
     
     var object: Object {
@@ -40,7 +40,7 @@ class AnnotatedTag: Object {
         }
         self.tagType = tagType
         self.name = lineValues[2]
-        self.tagger = Annotation(annotation: lineValues[3])
+        self.tagger = Signature(signature: lineValues[3])
         self.message = lines[5 ..< lines.index(before: lines.endIndex)].joined(separator: "\n")
         
         super.init(hash: hash, data: data, type: .blob, repository: repository)

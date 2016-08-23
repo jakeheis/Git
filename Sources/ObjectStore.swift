@@ -25,12 +25,6 @@ class ObjectStore {
         }
     }
     
-    subscript(reference: Reference) -> Object? {
-        get {
-            return try? Object.from(file: path(for: reference.hash), in: repository)
-        }
-    }
-    
     func path(for hash: String) -> Path {
         let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
         let firstTwo = hash.substring(to: breakIndex)

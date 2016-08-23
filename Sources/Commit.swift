@@ -18,8 +18,8 @@ class Commit: Object {
         return repository.objectStore[parentHash] as? Commit
     }
     
-    let author: Annotation
-    let commit: Annotation
+    let author: Signature
+    let commit: Signature
     let message: String
     
     required init(hash: String, data: Data, repository: Repository) {
@@ -35,12 +35,12 @@ class Commit: Object {
         let secondLine = typeLines.removeFirst()
         if secondLine.type == "parent" {
             parentHash = secondLine.value
-            author = Annotation(annotation: typeLines.removeFirst().value)
+            author = Signature(signature: typeLines.removeFirst().value)
         } else {
             parentHash = nil
-            author = Annotation(annotation: secondLine.value)
+            author = Signature(signature: secondLine.value)
         }
-        commit = Annotation(annotation: typeLines.removeFirst().value)
+        commit = Signature(signature: typeLines.removeFirst().value)
         _ = typeLines.removeFirst()
         message = typeLines.map({ $0.type + " " + $0.value }).joined(separator: "\n")
         
