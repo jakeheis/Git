@@ -14,7 +14,7 @@ class AnnotatedTag: Object {
     let objectHash: String
     let tagType: ObjectType
     let name: String
-    let taggerString: String
+    let tagger: Annotation
     let message: String
     
     var object: Object {
@@ -33,21 +33,21 @@ class AnnotatedTag: Object {
             _ = words.removeFirst()
             return words.joined(separator: " ")
         }
-
+        
         objectHash = lineValues[0]
         guard let tagType = ObjectType(rawValue: lineValues[1]) else {
             fatalError("Unrecognized tag type: \(lineValues[1])")
         }
         self.tagType = tagType
         self.name = lineValues[2]
-        self.taggerString = lineValues[3]
+        self.tagger = Annotation(annotation: lineValues[3])
         self.message = lines[5 ..< lines.index(before: lines.endIndex)].joined(separator: "\n")
         
         super.init(hash: hash, data: data, type: .blob, repository: repository)
     }
     
     func print() {
-        Swift.print(objectHash, tagType, name, taggerString, message)
+        Swift.print(objectHash, tagType, name, tagger, message)
     }
     
 }

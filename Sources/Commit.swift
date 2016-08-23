@@ -18,8 +18,8 @@ class Commit: Object {
         return (try? Object.from(hash: parentHash, in: repository)) as? Commit
     }
     
-    let authorString: String
-    let commitString: String
+    let author: Annotation
+    let commit: Annotation
     let message: String
     
     required init(hash: String, data: Data, repository: Repository) {
@@ -35,12 +35,12 @@ class Commit: Object {
         let secondLine = typeLines.removeFirst()
         if secondLine.type == "parent" {
             parentHash = secondLine.value
-            authorString = typeLines.removeFirst().value
+            author = Annotation(annotation: typeLines.removeFirst().value)
         } else {
             parentHash = nil
-            authorString = secondLine.value
+            author = Annotation(annotation: secondLine.value)
         }
-        commitString = typeLines.removeFirst().value
+        commit = Annotation(annotation: typeLines.removeFirst().value)
         _ = typeLines.removeFirst()
         message = typeLines.map({ $0.type + " " + $0.value }).joined(separator: "\n")
         
@@ -48,7 +48,7 @@ class Commit: Object {
     }
     
     func log() -> String {
-        return [treeHash, parentHash ?? "(first)", authorString, commitString, "", message].joined(separator: "\n")
+        return [treeHash, parentHash ?? "(first)", String(describing: author), String(describing: commit), "", message].joined(separator: "\n")
     }
     
 }
