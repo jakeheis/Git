@@ -1,8 +1,9 @@
 import Darwin.C
 import SwiftCLI
 import FileKit
+import Core
 
-Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+Path.Current = "/Users/jakeheiser/Documents/Swift/SwiftCLI"
 
 CLI.setup(name: "Git")
 
