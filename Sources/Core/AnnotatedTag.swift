@@ -24,8 +24,11 @@ public class AnnotatedTag: Object {
         return object
     }
     
-    public required init(hash: String, data: Data, repository: Repository) {        
-        let lines = String(data: data, encoding: .ascii)!.components(separatedBy: "\n")
+    public required init(hash: String, data: Data, repository: Repository) {
+        guard let contents = String(data: data, encoding: .ascii) else {
+            fatalError("Couldn't read object \(hash)")
+        }
+        let lines = contents.components(separatedBy: "\n")
         
         let infoLines = lines[0 ..< 4]
         let lineValues: [String] = infoLines.map { (line) in

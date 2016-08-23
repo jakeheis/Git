@@ -40,12 +40,14 @@ public class Object {
         guard let data = try? NSData.readFromPath(path) else {
             throw Error.readError
         }
-        guard let uncompressed = try? data.gzipUncompressed() as Data else {
-            throw Error.compressionError
+        guard let uncompressed = try? data.gzipUncompressed() as Data,
+            let unparsed = String(data: uncompressed, encoding: .ascii) else {
+                throw Error.compressionError
         }
         
-        let unparsed = String(data: uncompressed, encoding: .ascii)!
-        let headerIndex = unparsed.characters.index(of: "\0")!
+        guard let headerIndex = unparsed.characters.index(of: "\0") else {
+            throw Error.parseError
+        }
         let header = unparsed.substring(to: headerIndex)
         
         guard let type = ObjectType(header: header) else {

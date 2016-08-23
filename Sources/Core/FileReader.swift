@@ -68,7 +68,7 @@ class FileReader {
         let subdata = data.subdata(in: byteCounter ..< (byteCounter + length))
         // Can't just use substring (like other read methods use) because String considers \r\n one character and messes up the offset
         let remainingData = data.subdata(in: (byteCounter + length) ..< data.count)
-        unread = String(data: remainingData, encoding: .ascii)!
+        unread = String(data: remainingData, encoding: .ascii)! // ! allowed 
         byteCounter += length
         return subdata
     }

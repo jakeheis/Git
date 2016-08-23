@@ -23,7 +23,10 @@ public class Commit: Object {
     public let message: String
     
     public required init(hash: String, data: Data, repository: Repository) {
-        var lines = String(data: data, encoding: .ascii)!.components(separatedBy: "\n")
+        guard let contents = String(data: data, encoding: .ascii) else {
+            fatalError("Couldn't read object \(hash)")
+        }
+        var lines = contents.components(separatedBy: "\n")
         _ = lines.removeLast() // Blank line
         var typeLines: [(type: String, value: String)] = lines.map { (line) in
             var words = line.components(separatedBy: " ")
