@@ -1,4 +1,5 @@
 import Foundation
+import Core
 
 //let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/initgit")!
 let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!

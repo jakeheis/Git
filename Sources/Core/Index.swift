@@ -9,9 +9,9 @@
 import Foundation
 import FileKit
 
-class Index {
+public class Index {
     
-    let version: Int
+    public let version: Int
     
     enum Error: Swift.Error {
         case readError
@@ -19,7 +19,7 @@ class Index {
     }
     
     let repository: Repository
-    let entries: [IndexEntry]
+    public let entries: [IndexEntry]
     
     init(repository: Repository) throws {
         let indexPath = repository.subpath(with: "index")
@@ -138,47 +138,49 @@ class Index {
     
 }
 
-struct IndexEntry {
+public struct IndexEntry {
     
-    enum ObjectType: Int {
+    public enum ObjectType: Int {
         case regularFile = 0b1000
         case symbolicLink = 0b1010
         case gitLink = 0b1110
     }
     
-    enum UnixPermission: Int {
+    public enum UnixPermission: Int {
         case zero = 0
         case sixFourtyFour = 0o644
         case sevemFiftyFive = 0o755
     }
     
-    let cDate: Date
-    let mDate: Date
-    let dev: Int
-    let ino: Int
-    let objectType: ObjectType
-    let unixPermission: UnixPermission
-    let uid: Int
-    let gid: Int
-    let fileSize: Int
-    let hash: String
-    let assumeValid: Bool
-    let extended: Bool
-    let firstStage: Bool
-    let secondStage: Bool
-    let name: String
+    public let cDate: Date
+    public let mDate: Date
+    public let dev: Int
+    public let ino: Int
+    public let objectType: ObjectType
+    public let unixPermission: UnixPermission
+    public let uid: Int
+    public let gid: Int
+    public let fileSize: Int
+    public let hash: String
+    public let assumeValid: Bool
+    public let extended: Bool
+    public let firstStage: Bool
+    public let secondStage: Bool
+    public let name: String
     
 }
 
 extension IndexEntry: CustomStringConvertible {
-    var description: String {
+    
+    public var description: String {
         return name
     }
+    
 }
 
 extension Repository {
     
-    var index: Index? {
+    public var index: Index? {
         return try? Index(repository: self)
     }
     

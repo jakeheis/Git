@@ -9,7 +9,7 @@
 import Foundation
 import FileKit
 
-class ObjectStore {
+public class ObjectStore {
     
     static let directory = "objects"
     
@@ -19,20 +19,20 @@ class ObjectStore {
         self.repository = repository
     }
     
-    subscript(hash: String) -> Object? {
+    public subscript(hash: String) -> Object? {
         get {
             return try? Object.from(file: path(for: hash), in: repository)
         }
     }
     
-    func path(for hash: String) -> Path {
+    public func path(for hash: String) -> Path {
         let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
         let firstTwo = hash.substring(to: breakIndex)
         let hashEnd = hash.substring(from: breakIndex)
         return repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)/\(hashEnd)")
     }
     
-    func allObjects() -> [Object] {
+    public func allObjects() -> [Object] {
         let objectsDirectory = repository.subpath(with: ObjectStore.directory)
         var objects: [Object] = []
         for objectFile in objectsDirectory {
@@ -53,7 +53,7 @@ class ObjectStore {
 
 extension Repository {
     
-    var objectStore: ObjectStore {
+    public var objectStore: ObjectStore {
         return ObjectStore(repository: self)
     }
     

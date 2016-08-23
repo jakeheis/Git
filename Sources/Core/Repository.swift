@@ -1,11 +1,7 @@
 import Foundation
 import FileKit
 
-struct Paths {
-    static let hiddenDirectory = ".git"
-}
-
-struct Repository {
+public class Repository {
     
     let path: Path
     
@@ -13,18 +9,18 @@ struct Repository {
         return path + ".git"
     }
     
-    init?(path: String) {
+    public convenience init?(path: String) {
         self.init(path: Path(path))
     }
     
-    init?(url: URL) {
+    public convenience init?(url: URL) {
         guard let path = Path(url: url) else {
             return nil
         }
         self.init(path: path)
     }
     
-    init?(path: Path) {
+    public init?(path: Path) {
         guard (path + ".git").isDirectory else {
             return nil
         }

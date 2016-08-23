@@ -9,24 +9,24 @@
 import Foundation
 import FileKit
 
-class Reference {
+public class Reference {
     
-    let path: Path
-    let hash: String
+    public let path: Path
+    public let hash: String
     let repository: Repository
     
-    var name: String {
+    public var name: String {
         return path.fileName
     }
     
-    var object: Object {
+    public var object: Object {
         guard let object = repository.objectStore[hash] else {
             fatalError("Broken reference: \(hash)")
         }
         return object
     }
     
-    init?(path: Path, repository: Repository) {
+    public init?(path: Path, repository: Repository) {
         guard let hash = try? String.readFromPath(path) else {
             return nil
         }
@@ -40,7 +40,7 @@ class Reference {
 
 extension Reference: CustomStringConvertible {
     
-    var description: String {
+    public var description: String {
         return "\(name) (\(hash))"
     }
     

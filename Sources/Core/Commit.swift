@@ -1,28 +1,28 @@
 import Foundation
 
-class Commit: Object {
+public class Commit: Object {
     
-    let treeHash: String
-    var tree: Tree {
+    public let treeHash: String
+    public var tree: Tree {
         guard let tree = repository.objectStore[treeHash] as? Tree else {
             fatalError("Couldn't resolve tree hash \(treeHash)")
         }
         return tree
     }
     
-    let parentHash: String?
-    var parent: Commit? {
+    public let parentHash: String?
+    public var parent: Commit? {
         guard let parentHash = parentHash else {
             return nil
         }
         return repository.objectStore[parentHash] as? Commit
     }
     
-    let author: Signature
-    let commit: Signature
-    let message: String
+    public let author: Signature
+    public let commit: Signature
+    public let message: String
     
-    required init(hash: String, data: Data, repository: Repository) {
+    public required init(hash: String, data: Data, repository: Repository) {
         var lines = String(data: data, encoding: .ascii)!.components(separatedBy: "\n")
         _ = lines.removeLast() // Blank line
         var typeLines: [(type: String, value: String)] = lines.map { (line) in
@@ -47,7 +47,7 @@ class Commit: Object {
         super.init(hash: hash, data: data, type: .commit, repository: repository)
     }
     
-    func log() -> String {
+    public func log() -> String {
         return [treeHash, parentHash ?? "(first)", String(describing: author), String(describing: commit), "", message].joined(separator: "\n")
     }
     

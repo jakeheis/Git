@@ -8,12 +8,12 @@
 
 import Foundation
 
-class Signature {
+public class Signature {
     
-    let name: String
-    let email: String
-    let time: Date
-    let timeZone: TimeZone
+    public let name: String
+    public let email: String
+    public let time: Date
+    public let timeZone: TimeZone
     
     init(signature: String) {
         var words = signature.components(separatedBy: " ")
@@ -34,7 +34,7 @@ class Signature {
 
 extension Signature: CustomStringConvertible {
     
-    var description: String {
+    public var description: String {
         return "\(name) <\(email)> \(time) \(timeZone)"
     }
     

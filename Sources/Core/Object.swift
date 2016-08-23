@@ -1,13 +1,13 @@
 import Foundation
 import FileKit
 
-class Object {
+public class Object {
     
-    let hash: String
-    let type: ObjectType
+    public let hash: String
+    public let type: ObjectType
     let repository: Repository
     
-    enum ObjectType: String {
+    public enum ObjectType: String {
         case blob
         case commit
         case tree
@@ -30,13 +30,13 @@ class Object {
         }
     }
     
-    enum Error: Swift.Error {
+    public enum Error: Swift.Error {
         case readError
         case compressionError
         case parseError
     }
     
-    static func from(file path: Path, in repository: Repository) throws -> Object {
+    public static func from(file path: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(path) else {
             throw Error.readError
         }
@@ -58,7 +58,7 @@ class Object {
         return type.objectClass.init(hash: hash, data: contentData, repository: repository)
     }
     
-    required init(hash: String, data: Data, repository: Repository) {
+    public required init(hash: String, data: Data, repository: Repository) {
         fatalError("Use subclass")
     }
     
@@ -72,7 +72,7 @@ class Object {
 
 extension Object: CustomStringConvertible {
     
-    var description: String {
+    public var description: String {
         return String(describing: type(of: self)) + " (\(hash))"
     }
     

@@ -1,7 +1,7 @@
 import Foundation
 import FileKit
 
-class Head {
+public class Head {
    
     enum Kind {
         case hash(String)
@@ -11,7 +11,7 @@ class Head {
     let kind: Kind
     let repository: Repository
     
-    var commit: Commit? {
+    public var commit: Commit? {
         switch kind {
         case let .hash(hash): return repository.objectStore[hash] as? Commit
         case let .reference(reference): return reference.object as? Commit
@@ -50,7 +50,7 @@ class Head {
 
 extension Head: CustomStringConvertible {
     
-    var description: String {
+    public var description: String {
         return "HEAD: \(commit?.hash ?? "(none)")"
     }
     
@@ -58,7 +58,7 @@ extension Head: CustomStringConvertible {
 
 extension Repository {
     
-    var head: Head? {
+    public var head: Head? {
         get {
             return Head(repository: self)
         }

@@ -1,10 +1,10 @@
 import Foundation
 
-class Tree: Object {
+public class Tree: Object {
     
-    let treeEntries: [TreeEntry]
+    public let treeEntries: [TreeEntry]
     
-    required init(hash: String, data: Data, repository: Repository) {
+    public required init(hash: String, data: Data, repository: Repository) {
         guard let fileReader = FileReader(data: data) else {
             fatalError("Couldn't read data of tree: \(hash)")
         }
@@ -23,7 +23,7 @@ class Tree: Object {
         super.init(hash: hash, data: data, type: .tree, repository: repository)
     }
     
-    func ls() {
+    public func ls() {
         for treeEntry in treeEntries {
             print(treeEntry)
         }
@@ -31,9 +31,9 @@ class Tree: Object {
     
 }
 
-struct TreeEntry {
+public struct TreeEntry {
     
-    enum Mode: Int {
+    public enum Mode: Int {
         case directory = 40000
         case blob = 100644
         case executable = 100755
@@ -54,12 +54,12 @@ struct TreeEntry {
         }
     }
     
-    let mode: Mode
-    let hash: String
-    let name: String
+    public let mode: Mode
+    public let hash: String
+    public let name: String
     let repository: Repository
     
-    var object: Object {
+    public var object: Object {
         guard let object = repository.objectStore[hash] else {
             fatalError("Could not resolve tree entry: \(hash)")
         }
@@ -79,7 +79,7 @@ struct TreeEntry {
 }
 
 extension TreeEntry: CustomStringConvertible {
-    var description: String {
+    public var description: String {
         return "\(mode.intText) \(mode.name) \(hash) \(name)"
     }
 }

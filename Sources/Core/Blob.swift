@@ -1,10 +1,10 @@
 import Foundation
 
-class Blob: Object {
+public class Blob: Object {
     
-    let contents: String
+    public let contents: String
     
-    required init(hash: String, data: Data, repository: Repository) {
+    public required init(hash: String, data: Data, repository: Repository) {
         self.contents = String(data: data, encoding: .ascii) ?? String()
                 
         super.init(hash: hash, data: data, type: .blob, repository: repository)

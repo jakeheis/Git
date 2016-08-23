@@ -9,22 +9,22 @@
 import Foundation
 import FileKit
 
-class AnnotatedTag: Object {
+public class AnnotatedTag: Object {
     
-    let objectHash: String
-    let tagType: ObjectType
-    let name: String
-    let tagger: Signature
-    let message: String
+    public let objectHash: String
+    public let tagType: ObjectType
+    public let name: String
+    public let tagger: Signature
+    public let message: String
     
-    var object: Object {
+    public var object: Object {
         guard let object = repository.objectStore[objectHash] else {
             fatalError("Corrupt tag pointing to hash: \(objectHash)")
         }
         return object
     }
     
-    required init(hash: String, data: Data, repository: Repository) {        
+    public required init(hash: String, data: Data, repository: Repository) {        
         let lines = String(data: data, encoding: .ascii)!.components(separatedBy: "\n")
         
         let infoLines = lines[0 ..< 4]
@@ -46,7 +46,7 @@ class AnnotatedTag: Object {
         super.init(hash: hash, data: data, type: .blob, repository: repository)
     }
     
-    func print() {
+    public func print() {
         Swift.print(objectHash, tagType, name, tagger, message)
     }
     
