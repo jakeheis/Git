@@ -60,7 +60,7 @@ struct TreeEntry {
     let repository: Repository
     
     var object: Object {
-        guard let object = try? Object.from(hash: hash, in: repository) else {
+        guard let object = repository.objectStore[hash] else {
             fatalError("Could not resolve tree entry: \(hash)")
         }
         return object

@@ -26,5 +26,7 @@ let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
 //
 //print((tags.first!.object as! Commit).log())
 
-let index = repo.index!
-print(index.entries)
+//let index = repo.index!
+//print(index.entries)
+
+print(repo.head!.commit!.log())

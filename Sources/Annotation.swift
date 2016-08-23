@@ -10,8 +10,18 @@ import Foundation
 
 class Annotation {
     
+    let text: String
+    
     init(annotation: String) {
-        print(annotation)
+        self.text = annotation
+    }
+    
+}
+
+extension Annotation: CustomStringConvertible {
+    
+    var description: String {
+        return text
     }
     
 }

@@ -20,7 +20,7 @@ class Reference {
     }
     
     var object: Object {
-        guard let object = try? Object.from(hash: hash, in: repository) else {
+        guard let object = repository.objectStore[hash] else {
             fatalError("Broken reference: \(hash)")
         }
         return object

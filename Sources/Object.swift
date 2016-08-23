@@ -36,14 +36,6 @@ class Object {
         case parseError
     }
     
-    static func from(hash: String, in repository: Repository) throws -> Object {
-        let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
-        let firstTwo = hash.substring(to: breakIndex)
-        let hashEnd = hash.substring(from: breakIndex)
-        let path = repository.subpath(with: "objects/\(firstTwo)/\(hashEnd)")
-        return try from(file: path, in: repository)
-    }
-    
     static func from(file path: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(path) else {
             throw Error.readError
@@ -82,27 +74,6 @@ extension Object: CustomStringConvertible {
     
     var description: String {
         return String(describing: type(of: self)) + " (\(hash))"
-    }
-    
-}
-
-extension Repository {
-    
-    var objects: [Object] {
-        let objectsDirectory = subpath(with: "objects")
-        var objects: [Object] = []
-        for objectFile in objectsDirectory {
-            guard objectFile.isRegular && objectFile.fileName != ".DS_Store" else {
-                continue
-            }
-            do {
-                let object = try Object.from(file: objectFile, in: self)
-                objects.append(object)
-            } catch {
-                print(error, "for", objectFile)
-            }
-        }
-        return objects
     }
     
 }

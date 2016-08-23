@@ -4,7 +4,7 @@ class Commit: Object {
     
     let treeHash: String
     var tree: Tree {
-        guard let tree = (try? Object.from(hash: treeHash, in: repository)) as? Tree else {
+        guard let tree = repository.objectStore[treeHash] as? Tree else {
             fatalError("Couldn't resolve tree hash \(treeHash)")
         }
         return tree
@@ -15,7 +15,7 @@ class Commit: Object {
         guard let parentHash = parentHash else {
             return nil
         }
-        return (try? Object.from(hash: parentHash, in: repository)) as? Commit
+        return repository.objectStore[parentHash] as? Commit
     }
     
     let author: Annotation

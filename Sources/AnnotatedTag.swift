@@ -18,7 +18,7 @@ class AnnotatedTag: Object {
     let message: String
     
     var object: Object {
-        guard let object = try? Object.from(hash: objectHash, in: repository) else {
+        guard let object = repository.objectStore[objectHash] else {
             fatalError("Corrupt tag pointing to hash: \(objectHash)")
         }
         return object
