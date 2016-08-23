@@ -38,13 +38,13 @@ class LogCommand: RepositoryCommand {
     
     func printCommit(_ commit: Commit) {
         print("commit", commit.hash)
-        print("Author:", commit.author.name, "<\(commit.author.email)>")
+        print("Author:", commit.authorSignature.name, "<\(commit.authorSignature.email)>")
         
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .medium
-        dateFormatter.timeZone = commit.author.timeZone
-        print("Date:", dateFormatter.string(from: commit.author.time))
+        dateFormatter.timeZone = commit.authorSignature.timeZone
+        print("Date:", dateFormatter.string(from: commit.authorSignature.time))
         
         print()
         

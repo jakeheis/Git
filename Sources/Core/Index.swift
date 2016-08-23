@@ -41,6 +41,8 @@ public class Index {
         
         // 12 byte header
         
+        // TODO: Initial ugly implementation; refactor
+        
         var entries: [IndexEntry] = []
         for _ in 0 ..< count {
             guard

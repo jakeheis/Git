@@ -73,13 +73,6 @@ class FileReader {
         return subdata
     }
     
-    func readBinary(length: Int) -> String? {
-        guard let hex = readHexInt(length: length) else {
-            return nil
-        }
-        return String(hex, radix: 2)
-    }
-    
     func readHex(length: Int) -> String {
         let hexData = readData(length: length)
         var hexString = ""
@@ -92,6 +85,13 @@ class FileReader {
     func readHexInt(length: Int) -> Int? {
         let hex = readHex(length: length)
         return Int(hex, radix: 16)
+    }
+    
+    func readBinary(length: Int) -> String? {
+        guard let hex = readHexInt(length: length) else {
+            return nil
+        }
+        return String(hex, radix: 2)
     }
     
 }

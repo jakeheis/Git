@@ -32,7 +32,7 @@ public class Reference {
         }
         
         self.path = path
-        self.hash = hash.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+        self.hash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
         self.repository = repository
     }
     

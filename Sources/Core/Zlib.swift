@@ -1,6 +1,8 @@
 import Foundation
 import Czlib
 
+// Taken directly from https://github.com/Zewo/gzip -- delete this file once they update to Swift 3
+
 public protocol Gzippable {
     associatedtype DataType
     func gzipCompressed() throws -> DataType
