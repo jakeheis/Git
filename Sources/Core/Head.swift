@@ -3,12 +3,12 @@ import FileKit
 
 public class Head {
    
-    enum Kind {
+    public enum Kind {
         case hash(String)
         case reference(Reference)
     }
     
-    let kind: Kind
+    public let kind: Kind
     let repository: Repository
     
     public var commit: Commit? {

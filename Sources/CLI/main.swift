@@ -13,11 +13,12 @@ let plumbing: [RepositoryCommand] = [
 ]
 
 let porcelain: [RepositoryCommand] = [
+    BranchCommand(),
     LogCommand()
 ]
 
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git ls-files")
+let result = CLI.debugGo(with: "git branch")
 exit(result)
