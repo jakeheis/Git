@@ -2,7 +2,7 @@
 
 ## Roadmap 
 
-- [ ] Read only library (WIP)
+- [ ] Read only git core (WIP)
 - [ ] Read only porcelain (WIP)
-- [ ] Read/write library
+- [ ] Read/write git core
 - [ ] Read/write porcelain
