@@ -41,6 +41,7 @@ class FileReader {
         return read(next: 1)
     }
     
+    @discardableResult
     func read(next count: Int) -> String {
         let toIndex = unread.index(unread.startIndex, offsetBy: count)
         return read(to: toIndex)
@@ -62,6 +63,7 @@ class FileReader {
         return retVal
     }
     
+    @discardableResult
     func readData(length: Int) -> Data {
         let subdata = data.subdata(in: byteCounter ..< (byteCounter + length))
         // Can't just use substring (like other read methods use) because String considers \r\n one character and messes up the offset
@@ -71,6 +73,13 @@ class FileReader {
         return subdata
     }
     
+    func readBinary(length: Int) -> String? {
+        guard let hex = readHexInt(length: length) else {
+            return nil
+        }
+        return String(hex, radix: 2)
+    }
+    
     func readHex(length: Int) -> String {
         let hexData = readData(length: length)
         var hexString = ""
@@ -78,6 +87,11 @@ class FileReader {
             hexString += String(format: "%02x", byte)
         }
         return hexString
+    }
+    
+    func readHexInt(length: Int) -> Int? {
+        let hex = readHex(length: length)
+        return Int(hex, radix: 16)
     }
     
 }

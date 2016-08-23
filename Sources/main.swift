@@ -1,8 +1,8 @@
 import Foundation
 
 //let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/initgit")!
-//let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
-let repo = Repository(path: "/Users/jakeheiser/Documents/Apps/HinsdaleCentral")!
+let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
+//let repo = Repository(path: "/Users/jakeheiser/Documents/Apps/HinsdaleCentral")!
 
 //let trees = repo.objects.flatMap { $0 as? Tree }
 //let tree = trees.first!
@@ -27,4 +27,4 @@ let repo = Repository(path: "/Users/jakeheiser/Documents/Apps/HinsdaleCentral")!
 //print((tags.first!.object as! Commit).log())
 
 let index = repo.index!
-print(index)
+print(index.entries)
