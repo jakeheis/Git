@@ -1,8 +1,10 @@
-import Foundation
+import Darwin.C
 import Core
+import SwiftCLI
+import FileKit
 
 //let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/initgit")!
-let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
+//let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
 //let repo = Repository(path: "/Users/jakeheiser/Documents/Apps/HinsdaleCentral")!
 
 //let trees = repo.objects.flatMap { $0 as? Tree }
@@ -30,4 +32,13 @@ let repo = Repository(path: "/Users/jakeheiser/Documents/Swift/Git")!
 //let index = repo.index!
 //print(index.entries)
 
-print(repo.head!.commit!.log())
+//print(repo.head!.commit!.log())
+
+Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+
+CLI.setup(name: "Git")
+
+CLI.register(command: CatFileCommand())
+
+let result = CLI.debugGo(with: "git cat-file -p 02c087533d1ecf6e6cd20888338045a340fc9737")
+exit(result)

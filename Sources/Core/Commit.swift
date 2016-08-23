@@ -47,8 +47,16 @@ public class Commit: Object {
         super.init(hash: hash, data: data, type: .commit, repository: repository)
     }
     
-    public func log() -> String {
-        return [treeHash, parentHash ?? "(first)", String(describing: author), String(describing: commit), "", message].joined(separator: "\n")
+    override public func cat() -> String {
+        let lines = [
+            "tree \(treeHash)",
+            "parent \(parentHash ?? "(none)")",
+            "author \(author)",
+            "committer \(commit)",
+            "",
+            message
+        ]
+        return lines.joined(separator: "\n")
     }
     
 }

@@ -3,10 +3,6 @@ import FileKit
 
 public class Object {
     
-    public let hash: String
-    public let type: ObjectType
-    let repository: Repository
-    
     public enum ObjectType: String {
         case blob
         case commit
@@ -35,6 +31,10 @@ public class Object {
         case compressionError
         case parseError
     }
+    
+    public let hash: String
+    public let type: ObjectType
+    let repository: Repository
     
     public static func from(file path: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(path) else {
@@ -66,6 +66,10 @@ public class Object {
         self.hash = hash
         self.type = type
         self.repository = repository
+    }
+    
+    public func cat() -> String {
+        return description
     }
     
 }

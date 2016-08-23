@@ -23,10 +23,9 @@ public class Tree: Object {
         super.init(hash: hash, data: data, type: .tree, repository: repository)
     }
     
-    public func ls() {
-        for treeEntry in treeEntries {
-            print(treeEntry)
-        }
+    override public func cat() -> String {
+        let lines = treeEntries.map { String(describing: $0) }
+        return lines.joined(separator: "\n")
     }
     
 }

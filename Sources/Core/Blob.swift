@@ -10,4 +10,8 @@ public class Blob: Object {
         super.init(hash: hash, data: data, type: .blob, repository: repository)
     }
     
+    override public func cat() -> String {
+        return contents
+    }
+    
 }
