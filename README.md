@@ -7,18 +7,19 @@
 - [x] Index
 - [x] Objects
 - [ ] Packfile
-- [ ] Submodules
 - [x] Tags
+- [ ] Git ignore
+- [x] Signature
 - [ ] Probably much more
 
 #### 2. Read only CLI (WIP)
 - [x] cat-file
+- [x] ls-files
 - [x] ls-tree
-- [x] log
 - [x] branch
+- [x] log
 - [x] status
 - [x] tag
-- [ ] submodule
 - [ ] Probably much more
 
 #### 3. Read/write git core
@@ -27,7 +28,6 @@
 - [ ] Objects
 - [ ] Packfile
 - [ ] Remotes
-- [ ] Submodules
 - [ ] Probably much more
 
 #### 4. Read/write CLI
@@ -38,7 +38,6 @@
 - [ ] mv
 - [ ] reset
 - [ ] commit
-- [ ] submodule
 - [ ] merge 
 - [ ] init
 - [ ] Probably much more
@@ -49,5 +48,6 @@
 - [ ] fetch
 - [ ] push
 - [ ] clone
+- [ ] submodule
 
 #### 6. Add the million options that git offers for each command
