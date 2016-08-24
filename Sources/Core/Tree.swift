@@ -5,15 +5,15 @@ public class Tree: Object {
     public let treeEntries: [TreeEntry]
     
     public required init(hash: String, data: Data, repository: Repository) {
-        guard let fileReader = FileReader(data: data) else {
+        guard let dataReader = DataReader(data: data) else {
             fatalError("Couldn't read data of tree: \(hash)")
         }
         
         var treeEntries: [TreeEntry] = []
-        while fileReader.canRead {
-            let mode = fileReader.read(until: " ")
-            let name = fileReader.read(until: "\0")
-            let entryHash = fileReader.readHex(length: 20)
+        while dataReader.canRead {
+            let mode = dataReader.read(until: " ")
+            let name = dataReader.read(until: "\0")
+            let entryHash = dataReader.readHex(length: 20)
             let entry = TreeEntry(mode: mode, hash: entryHash, name: name, repository: repository)
             treeEntries.append(entry)
         }

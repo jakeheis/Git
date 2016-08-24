@@ -1,5 +1,5 @@
 //
-//  FileReader.swift
+//  DataReader.swift
 //  Git
 //
 //  Created by Jake Heiser on 8/22/16.
@@ -9,7 +9,7 @@
 import Foundation
 import FileKit
 
-class FileReader {
+class DataReader {
     
     let data: Data
     

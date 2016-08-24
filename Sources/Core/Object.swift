@@ -77,11 +77,11 @@ public class Object {
             fatalError("Could not generate header data for blob")
         }
         guard let sha = (headerData + contentData).sha1(),
-            let fileReader = FileReader(data: sha) else {
+            let dataReader = DataReader(data: sha) else {
                 fatalError("Could not hash file")
         }
         
-        self.hash = fileReader.readHex(length: 20)
+        self.hash = dataReader.readHex(length: 20)
         self.type = type
         self.repository = repository
     }
