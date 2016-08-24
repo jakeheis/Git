@@ -28,5 +28,5 @@ let porcelain: [RepositoryCommand] = [
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git status -s")
+let result = CLI.go()
 exit(result)

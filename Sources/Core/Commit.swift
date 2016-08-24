@@ -26,8 +26,7 @@ public class Commit: Object {
         guard let contents = String(data: data, encoding: .ascii) else {
             fatalError("Couldn't read object \(hash)")
         }
-        var lines = contents.components(separatedBy: "\n")
-        _ = lines.removeLast() // Blank line
+        let lines = contents.components(separatedBy: "\n")
         var typeLines: [(type: String, value: String)] = lines.map { (line) in
             var words = line.components(separatedBy: " ")
             let type = words.removeFirst()
@@ -46,7 +45,7 @@ public class Commit: Object {
         
         committerSignature = Signature(signature: typeLines.removeFirst().value)
         _ = typeLines.removeFirst()
-        message = typeLines.map({ $0.type + " " + $0.value }).joined(separator: "\n")
+        message = typeLines.map({ $0.type + " " + $0.value }).joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
         
         super.init(hash: hash, type: .commit, repository: repository)
     }
