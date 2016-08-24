@@ -20,7 +20,7 @@ public class Tree: Object {
         
         self.treeEntries = treeEntries
         
-        super.init(hash: hash, data: data, type: .tree, repository: repository)
+        super.init(hash: hash, type: .tree, repository: repository)
     }
     
     override public func cat() -> String {

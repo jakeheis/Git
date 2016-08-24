@@ -48,7 +48,7 @@ public class Commit: Object {
         _ = typeLines.removeFirst()
         message = typeLines.map({ $0.type + " " + $0.value }).joined(separator: "\n")
         
-        super.init(hash: hash, data: data, type: .commit, repository: repository)
+        super.init(hash: hash, type: .commit, repository: repository)
     }
     
     override public func cat() -> String {

@@ -34,7 +34,7 @@ class StatusCommand: RepositoryCommand {
         guard let index = repository?.index else {
             throw CLIError.error("Repository index could not be read")
         }
-        guard let delta = index.changedFiles() else {
+        guard let delta = index.stagedChanges() else {
             throw CLIError.error("Unable to compare index with most recent commit")
         }
         

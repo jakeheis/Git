@@ -46,7 +46,7 @@ public class AnnotatedTag: Object {
         self.tagger = Signature(signature: lineValues[3])
         self.message = lines[5 ..< lines.index(before: lines.endIndex)].joined(separator: "\n")
         
-        super.init(hash: hash, data: data, type: .blob, repository: repository)
+        super.init(hash: hash, type: .blob, repository: repository)
     }
     
     public func print() {

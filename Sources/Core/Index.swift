@@ -18,7 +18,7 @@ public class Index {
         case parseError
     }
     
-    public let entries: [IndexEntry]
+    fileprivate let entries: [IndexEntry]
     private let keyedEntries: [String: IndexEntry]
     
     let repository: Repository
@@ -138,29 +138,40 @@ public class Index {
         return keyedEntries[name]
     }
     
-    public func changedFiles() -> IndexTreeDelta? {
+    public func stagedChanges() -> IndexDelta? {
         guard let tree = repository.head?.commit?.tree else {
             return nil
         }
-        return IndexTreeDelta(index: self, tree: tree)
+        return IndexDelta(index: self, tree: tree)
+    }
+    
+    public func unstagedChanges() -> IndexDelta? {
+        return IndexDelta(index: self, repository: repository)
+    }
+    
+}
+
+extension Index: Collection {
+    
+    public var startIndex: Int {
+        return entries.startIndex
+    }
+    
+    public var endIndex: Int {
+        return entries.endIndex
+    }
+    
+    public subscript(index: Int) -> IndexEntry {
+        return entries[index]
+    }
+    
+    public func index(after i: Int) -> Int {
+        return entries.index(after: i)
     }
     
 }
 
 public struct IndexEntry {
-    
-    public enum ObjectType: Int {
-        case regularFile = 0b1000
-        case symbolicLink = 0b1010
-        case gitLink = 0b1110
-    }
-    
-    public enum UnixPermission: Int {
-        case zero = 0
-        case sixFourtyFour = 0o644
-        case sevemFiftyFive = 0o755
-    }
-    
     public let cDate: Date
     public let mDate: Date
     public let dev: Int
@@ -194,14 +205,15 @@ extension Repository {
     
 }
 
-// MARK: - IndexTreeDelta
+// MARK: - IndexDelta
 
-public struct IndexTreeDelta {
+public struct IndexDelta {
     
     public enum FileStatus: String {
         case added
         case modified
         case deleted
+        case untracked
     }
     
     public typealias DeltaFile = (name: String, status: FileStatus)
@@ -209,7 +221,6 @@ public struct IndexTreeDelta {
     public let deltaFiles: [DeltaFile]
     
     let index: Index
-    let tree: Tree
     
     init(index: Index, tree: Tree) {
         var indexNames = Set(index.entries.map({ $0.name }))
@@ -234,7 +245,43 @@ public struct IndexTreeDelta {
         
         self.deltaFiles = deltaFiles
         self.index = index
-        self.tree = tree
+    }
+    
+    init(index: Index, repository: Repository) {
+        var indexNames = Set(index.map { $0.name })
+        
+        var deltaFiles: [DeltaFile] = []
+        let gitIgnore = repository.gitIgnore
+        
+        guard let fileIterator = FileManager.default.enumerator(atPath: repository.path.rawValue) else {
+            fatalError("Couldn't iterate the files of the working directory")
+        }
+        for file in fileIterator {
+            guard let file = file as? String, !Path(file).isDirectory else {
+                continue
+            }
+            if let indexEntry = index[file] {
+                indexNames.remove(file)
+                guard let blob = Blob(file: repository.path + file, repository: repository) else {
+                    fatalError("Blob could not be created for file: \(file)")
+                }
+                
+                if indexEntry.hash != blob.hash {
+                    deltaFiles.append((file, .modified))
+                }
+            } else {
+                if !gitIgnore.ignoreFile(file) {
+                    deltaFiles.append((file, .untracked))
+                }
+            }
+        }
+        
+        for remainingName in indexNames {
+            deltaFiles.append((remainingName, .deleted))
+        }
+        
+        self.deltaFiles = deltaFiles
+        self.index = index
     }
     
 }

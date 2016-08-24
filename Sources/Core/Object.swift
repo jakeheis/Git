@@ -1,5 +1,6 @@
 import Foundation
 import FileKit
+import CryptoSwift
 
 public class Object {
     
@@ -64,8 +65,23 @@ public class Object {
         fatalError("Use subclass")
     }
     
-    init(hash: String, data: Data, type: ObjectType, repository: Repository) {
+    init(hash: String, type: ObjectType, repository: Repository) {
         self.hash = hash
+        self.type = type
+        self.repository = repository
+    }
+    
+    public init(contentData: Data, type: ObjectType, repository: Repository) {
+        let header = "\(type.rawValue) \(contentData.count)\0"
+        guard let headerData = header.data(using: .utf8) else {
+            fatalError("Could not generate header data for blob")
+        }
+        guard let sha = (headerData + contentData).sha1(),
+            let fileReader = FileReader(data: sha) else {
+                fatalError("Could not hash file")
+        }
+        
+        self.hash = fileReader.readHex(length: 20)
         self.type = type
         self.repository = repository
     }

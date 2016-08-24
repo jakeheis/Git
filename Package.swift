@@ -9,6 +9,7 @@ let package = Package(
     dependencies: [
         .Package(url: "https://github.com/jakeheis/FileKit", Version(4, 0, 0, prereleaseIdentifiers: ["beta"])),
         .Package(url: "/Users/jakeheiser/Documents/Swift/Czlib", majorVersion: 1, minor: 0),
-        .Package(url: "https://github.com/jakeheis/SwiftCLI", Version(2, 0, 0, prereleaseIdentifiers: ["beta"]))
+        .Package(url: "https://github.com/jakeheis/SwiftCLI", Version(2, 0, 0, prereleaseIdentifiers: ["beta"])),
+        .Package(url: "https://github.com/jakeheis/CryptoSwift", Version(0, 6, 0, prereleaseIdentifiers: ["beta"]))
     ]
 )
