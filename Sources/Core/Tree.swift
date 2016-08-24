@@ -32,28 +32,7 @@ public class Tree: Object {
 
 public struct TreeEntry {
     
-    public enum Mode: Int {
-        case directory = 40000
-        case blob = 100644
-        case executable = 100755
-        case link = 120000
-        
-        var intText: String {
-            if self == .directory {
-                return "0" + String(describing: rawValue)
-            }
-            return String(describing: rawValue)
-        }
-        
-        var name: String {
-            switch self {
-            case .directory: return "tree"
-            case .blob, .link, .executable: return "blob"
-            }
-        }
-    }
-    
-    public let mode: Mode
+    public let mode: FileMode
     public let hash: String
     public let name: String
     let repository: Repository
@@ -66,7 +45,7 @@ public struct TreeEntry {
     }
     
     init(mode raw: String, hash: String, name: String, repository: Repository) {
-        guard let modeInt = Int(raw), let mode = Mode(rawValue: modeInt) else {
+        guard let modeInt = Int(raw), let mode = FileMode(rawValue: modeInt) else {
             fatalError("Unrecognized mode: \(raw)")
         }
         self.mode = mode
@@ -75,7 +54,7 @@ public struct TreeEntry {
         self.repository = repository
     }
     
-    init(mode: Mode, hash: String, name: String, repository: Repository) {
+    init(mode: FileMode, hash: String, name: String, repository: Repository) {
         self.mode = mode
         self.hash = hash
         self.name = name

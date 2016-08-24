@@ -94,4 +94,11 @@ class FileReader {
         return String(hex, radix: 2)
     }
     
+    func readOctal(length: Int) -> String? {
+        guard let hex = readHexInt(length: length) else {
+            return nil
+        }
+        return String(hex, radix: 8)
+    }
+    
 }

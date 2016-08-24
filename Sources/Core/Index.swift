@@ -65,18 +65,9 @@ public class Index {
             
             // 24 bytes in entry
             
-            guard let mode = fileReader.readBinary(length: 4) else {
-                throw Error.parseError
-            }
-            
-            let objectTypeBinary = mode.substring(to: mode.index(mode.startIndex, offsetBy: 4))
-            let unixPermissionBinary = mode.substring(from: mode.index(mode.startIndex, offsetBy: 7))
-            
-            guard
-                let objectTypeInt = Int(objectTypeBinary, radix: 2),
-                let objectType = IndexEntry.ObjectType(rawValue: objectTypeInt),
-                let unixPermissionInt = Int(unixPermissionBinary, radix: 2),
-                let unixPermission = IndexEntry.UnixPermission(rawValue: unixPermissionInt) else {
+            guard let modeOctal = fileReader.readOctal(length: 4),
+                let rawValue = Int(modeOctal),
+                let mode = FileMode(rawValue: rawValue) else {
                     throw Error.parseError
             }
             
@@ -133,7 +124,7 @@ public class Index {
             let paddingCount = 8 - (bytesIn % 8)
             fileReader.read(next: paddingCount)
             
-            let entry = IndexEntry(cDate: cDate, mDate: mDate, dev: dev, ino: ino, objectType: objectType, unixPermission: unixPermission, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
+            let entry = IndexEntry(cDate: cDate, mDate: mDate, dev: dev, ino: ino, mode: mode, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
             entries.append(entry)
             keyedEntries[name] = entry
         }
@@ -174,8 +165,7 @@ public struct IndexEntry {
     public let mDate: Date
     public let dev: Int
     public let ino: Int
-    public let objectType: ObjectType
-    public let unixPermission: UnixPermission
+    public let mode: FileMode
     public let uid: Int
     public let gid: Int
     public let fileSize: Int
@@ -230,7 +220,7 @@ public struct IndexTreeDelta {
         while let treeEntry = recursiveTreeIterator.next() {
             if let indexEntry = index[treeEntry.name] {
                 indexNames.remove(treeEntry.name)
-                if treeEntry.hash != indexEntry.hash {// || treeEntry.mode != indexEntry.
+                if treeEntry.hash != indexEntry.hash || treeEntry.mode != indexEntry.mode {
                     deltaFiles.append((treeEntry.name, .modified))
                 }
             } else {
