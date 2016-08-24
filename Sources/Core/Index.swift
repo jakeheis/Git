@@ -18,8 +18,10 @@ public class Index {
         case parseError
     }
     
-    let repository: Repository
     public let entries: [IndexEntry]
+    private let keyedEntries: [String: IndexEntry]
+    
+    let repository: Repository
     
     init(repository: Repository) throws {
         let indexPath = repository.subpath(with: "index")
@@ -44,6 +46,7 @@ public class Index {
         // TODO: Initial ugly implementation; refactor
         
         var entries: [IndexEntry] = []
+        var keyedEntries: [String: IndexEntry] = [:]
         for _ in 0 ..< count {
             guard
                 let cSeconds = fileReader.readHexInt(length: 4),
@@ -132,10 +135,23 @@ public class Index {
             
             let entry = IndexEntry(cDate: cDate, mDate: mDate, dev: dev, ino: ino, objectType: objectType, unixPermission: unixPermission, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
             entries.append(entry)
+            keyedEntries[name] = entry
         }
         
         self.entries = entries
+        self.keyedEntries = keyedEntries
         self.repository = repository
+    }
+    
+    subscript(name: String) -> IndexEntry? {
+        return keyedEntries[name]
+    }
+    
+    public func changedFiles() -> IndexTreeDelta? {
+        guard let tree = repository.head?.commit?.tree else {
+            return nil
+        }
+        return IndexTreeDelta(index: self, tree: tree)
     }
     
 }
@@ -184,6 +200,51 @@ extension Repository {
     
     public var index: Index? {
         return try? Index(repository: self)
+    }
+    
+}
+
+// MARK: - IndexTreeDelta
+
+public struct IndexTreeDelta {
+    
+    public enum FileStatus: String {
+        case added
+        case modified
+        case deleted
+    }
+    
+    public typealias DeltaFile = (name: String, status: FileStatus)
+    
+    public let deltaFiles: [DeltaFile]
+    
+    let index: Index
+    let tree: Tree
+    
+    init(index: Index, tree: Tree) {
+        var indexNames = Set(index.entries.map({ $0.name }))
+        
+        var deltaFiles: [DeltaFile] = []
+        
+        let recursiveTreeIterator = RecursiveTreeIterator(tree: tree)
+        while let treeEntry = recursiveTreeIterator.next() {
+            if let indexEntry = index[treeEntry.name] {
+                indexNames.remove(treeEntry.name)
+                if treeEntry.hash != indexEntry.hash {// || treeEntry.mode != indexEntry.
+                    deltaFiles.append((treeEntry.name, .modified))
+                }
+            } else {
+                deltaFiles.append((treeEntry.name, .deleted))
+            }
+        }
+        
+        for remainingName in indexNames {
+            deltaFiles.append((remainingName, .added))
+        }
+        
+        self.deltaFiles = deltaFiles
+        self.index = index
+        self.tree = tree
     }
     
 }

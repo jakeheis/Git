@@ -3,7 +3,10 @@ import SwiftCLI
 import FileKit
 import Core
 
-Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
+
+//let r = Repository(path: Path.Current)!
+//print(r.index!.changedFiles())
 
 CLI.setup(name: "Git")
 
@@ -16,11 +19,12 @@ let plumbing: [RepositoryCommand] = [
 let porcelain: [RepositoryCommand] = [
     BranchCommand(),
     LogCommand(),
+    StatusCommand(),
     TagCommand()
 ]
 
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git ls-tree 4795c021327edf6e9ef5f01f6cf9023edefde84d")
+let result = CLI.debugGo(with: "git status -b")
 exit(result)
