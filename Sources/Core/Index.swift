@@ -214,6 +214,10 @@ public struct IndexDelta {
         case modified
         case deleted
         case untracked
+        
+        public var shortStatus: String {
+            return rawValue.substring(to: rawValue.index(after: rawValue.startIndex)).capitalized
+        }
     }
     
     public typealias DeltaFile = (name: String, status: FileStatus)

@@ -34,11 +34,13 @@ class StatusCommand: RepositoryCommand {
         guard let index = repository?.index else {
             throw CLIError.error("Repository index could not be read")
         }
-        guard let delta = index.stagedChanges() else {
-            throw CLIError.error("Unable to compare index with most recent commit")
+        guard let staged = index.stagedChanges(),
+            let unstaged = index.unstagedChanges() else {
+            throw CLIError.error("Unable to resolve changes")
         }
         
-        let sortedFiles = delta.deltaFiles.sorted { $0.name < $1.name }
+        var stagedFiles = staged.deltaFiles.sorted { $0.name < $1.name }
+        var unstagedFiles = unstaged.deltaFiles.sorted { $0.name < $1.name }
         
         if short {
             if showBranchInShort {
@@ -47,20 +49,46 @@ class StatusCommand: RepositoryCommand {
                 case let .reference(reference): print("## \(reference.name)")
                 }
             }
-            for file in sortedFiles {
-                let status = String(file.status.rawValue.characters.first!).capitalized
-                print(status, file.name)
+            
+            while !stagedFiles.isEmpty || !unstagedFiles.isEmpty {
+                switch (stagedFiles.first, unstagedFiles.first) {
+                case let (s?, u?) where s.name == u.name:
+                    print("\(s.status.shortStatus)\(u.status.shortStatus)", s.name)
+                    stagedFiles.removeFirst()
+                    unstagedFiles.removeFirst()
+                case let (s?, u) where u == nil, let (s?, u) where s.name < u!.name:
+                    print("\(s.status.shortStatus) ", s.name)
+                    stagedFiles.removeFirst()
+                case let (s, u?) where s == nil, let (s, u?) where s!.name < u.name:
+                    print(" \(u.status.shortStatus)", u.name)
+                    unstagedFiles.removeFirst()
+                default: break
+                }
             }
         } else {
             switch head.kind {
             case let .hash(hash): print("HEAD detached at \(hash)")
             case let .reference(reference): print("On branch \(reference.name)")
             }
-            if !sortedFiles.isEmpty {
+            
+            if !stagedFiles.isEmpty {
                 print("Changes to be committed:")
                 print(" (use \"git reset HEAD <file>...\" to unstage)")
                 print()
-                for file in sortedFiles {
+                for file in stagedFiles {
+                    var status = file.status.rawValue + ":"
+                    status += String(repeating: " ", count: 12 - status.characters.count)
+                    print("\t\(status)\(file.name)")
+                }
+                print()
+            }
+            
+            if !unstagedFiles.isEmpty {
+                print("Changes not staged for commit:")
+                print(" (use \"git add <file>...\" to update what will be committed)")
+                print(" (use \"git checkout -- <file>...\" to discard changes in working directory)")
+                print()
+                for file in unstagedFiles {
                     var status = file.status.rawValue + ":"
                     status += String(repeating: " ", count: 12 - status.characters.count)
                     print("\t\(status)\(file.name)")

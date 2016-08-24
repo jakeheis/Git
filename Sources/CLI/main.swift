@@ -5,28 +5,28 @@ import Core
 
 Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 
-let r = Repository(path: Path.Current)!
+//let r = Repository(path: Path.Current)!
+//
+//print(r.index!.unstagedChanges())
+//print(r.index!.stagedChanges())
+//
+CLI.setup(name: "Git")
 
-print(r.index!.unstagedChanges())
-print(r.index!.stagedChanges())
-//
-//CLI.setup(name: "Git")
-//
-//let plumbing: [RepositoryCommand] = [
-//    CatFileCommand(),
-//    LsFilesCommand(),
-//    LsTreeCommand()
-//]
-//
-//let porcelain: [RepositoryCommand] = [
-//    BranchCommand(),
-//    LogCommand(),
-//    StatusCommand(),
-//    TagCommand()
-//]
-//
-//CLI.register(commands: plumbing)
-//CLI.register(commands: porcelain)
-//
-//let result = CLI.debugGo(with: "git status")
-//exit(result)
+let plumbing: [RepositoryCommand] = [
+    CatFileCommand(),
+    LsFilesCommand(),
+    LsTreeCommand()
+]
+
+let porcelain: [RepositoryCommand] = [
+    BranchCommand(),
+    LogCommand(),
+    StatusCommand(),
+    TagCommand()
+]
+
+CLI.register(commands: plumbing)
+CLI.register(commands: porcelain)
+
+let result = CLI.debugGo(with: "git status -s")
+exit(result)
