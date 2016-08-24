@@ -99,38 +99,38 @@ public class FlatTreeIterator: TreeIterator {
 
 public class RecursiveTreeIterator: TreeIterator {
     
-    private var iteratorStack: [FlatTreeIterator]
-    private var prefixStack: [String] = []
+    let iterator: FlatTreeIterator
+    var subtreeIterator: RecursiveTreeIterator?
     
-    public init(tree: Tree) {
-        iteratorStack = [FlatTreeIterator(tree: tree)]
+    let prefix: String?
+    
+    public init(tree: Tree, prefix: String? = nil) {
+        self.iterator = FlatTreeIterator(tree: tree)
+        self.prefix = prefix
     }
     
     override public func next() -> TreeEntry? {
-        while !iteratorStack.isEmpty {
-            let iterator = iteratorStack.last!
-            if let entry = iterator.next() {
-                if entry.mode == .directory, let subtree = entry.object as? Tree {
-                    let subtreeIterator = FlatTreeIterator(tree: subtree)
-                    iteratorStack.append(subtreeIterator)
-                    prefixStack.append(entry.name)
-                } else {
-                    if prefixStack.isEmpty {
-                        return entry
-                    } else {
-                        let prefix = prefixStack.joined(separator: "/") + "/"
-                        return TreeEntry(mode: entry.mode, hash: entry.hash, name: prefix + entry.name, repository: entry.repository)
-                    }
-                }
+        if let subtreeIterator = subtreeIterator {
+            if let entry = subtreeIterator.next() {
+                return entry
             } else {
-                iteratorStack.removeLast()
-                if !prefixStack.isEmpty {
-                    prefixStack.removeLast()
-                }
+                self.subtreeIterator = nil
             }
         }
         
-        return nil
+        guard let entry = iterator.next() else {
+            return nil
+        }
+        if entry.mode == .directory, let subtree = entry.object as? Tree {
+            let subprefix = prefix?.appending("/" + entry.name) ?? entry.name
+            subtreeIterator = RecursiveTreeIterator(tree: subtree, prefix: subprefix)
+            return subtreeIterator?.next()
+        }
+        if let prefix = prefix {
+            return TreeEntry(mode: entry.mode, hash: entry.hash, name: prefix + "/" + entry.name, repository: entry.repository)
+        }
+        
+        return entry
     }
     
 }
