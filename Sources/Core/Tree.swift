@@ -75,6 +75,13 @@ public struct TreeEntry {
         self.repository = repository
     }
     
+    init(mode: Mode, hash: String, name: String, repository: Repository) {
+        self.mode = mode
+        self.hash = hash
+        self.name = name
+        self.repository = repository
+    }
+    
 }
 
 extension TreeEntry: CustomStringConvertible {
@@ -83,3 +90,68 @@ extension TreeEntry: CustomStringConvertible {
     }
 }
 
+// MARK: - Tree iterators
+
+public class TreeIterator: IteratorProtocol {
+    public func next() -> TreeEntry? {
+        return nil
+    }
+}
+
+public class FlatTreeIterator: TreeIterator {
+    
+    let tree: Tree
+    private var index: Int = 0
+    
+    public init(tree: Tree) {
+        self.tree = tree
+    }
+    
+    override public func next() -> TreeEntry? {
+        guard index < tree.treeEntries.count else {
+            return nil
+        }
+        let entry = tree.treeEntries[index]
+        index += 1
+        return entry
+    }
+    
+}
+
+public class RecursiveTreeIterator: TreeIterator {
+    
+    private var iteratorStack: [FlatTreeIterator]
+    private var prefixStack: [String] = []
+    
+    public init(tree: Tree) {
+        iteratorStack = [FlatTreeIterator(tree: tree)]
+    }
+    
+    override public func next() -> TreeEntry? {
+        while !iteratorStack.isEmpty {
+            let iterator = iteratorStack.last!
+            if let entry = iterator.next() {
+                if entry.mode == .directory, let subtree = entry.object as? Tree {
+                    let subtreeIterator = FlatTreeIterator(tree: subtree)
+                    iteratorStack.append(subtreeIterator)
+                    prefixStack.append(entry.name)
+                } else {
+                    if prefixStack.isEmpty {
+                        return entry
+                    } else {
+                        let prefix = prefixStack.joined(separator: "/") + "/"
+                        return TreeEntry(mode: entry.mode, hash: entry.hash, name: prefix + entry.name, repository: entry.repository)
+                    }
+                }
+            } else {
+                iteratorStack.removeLast()
+                if !prefixStack.isEmpty {
+                    prefixStack.removeLast()
+                }
+            }
+        }
+        
+        return nil
+    }
+    
+}
