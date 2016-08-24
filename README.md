@@ -4,7 +4,7 @@
 
 #### 1. Read only git core (WIP)
 - [x] Repository
-- [ ] Index
+- [x] Index
 - [x] Objects
 - [ ] Packfile
 - [ ] Submodules
@@ -16,8 +16,8 @@
 - [x] ls-tree
 - [x] log
 - [x] branch
-- [ ] status
-- [ ] tag
+- [x] status
+- [x] tag
 - [ ] submodule
 - [ ] Probably much more
 
