@@ -14,11 +14,12 @@ let plumbing: [RepositoryCommand] = [
 
 let porcelain: [RepositoryCommand] = [
     BranchCommand(),
-    LogCommand()
+    LogCommand(),
+    TagCommand()
 ]
 
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git branch")
+let result = CLI.debugGo(with: "git tag")
 exit(result)
