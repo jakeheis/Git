@@ -7,7 +7,7 @@ Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 
 let r = Repository(path: Path.Current)!
 
-print(r.head!.commit!.tree.cat())
+print(r.index)
 
 //CLI.setup(name: "Git")
 //

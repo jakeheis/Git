@@ -32,14 +32,13 @@ public class Index {
             throw Error.parseError
         }
         
-        guard let version = dataReader.readInt(bytes: 4) else {
+        let version = dataReader.readInt(bytes: 4)
+        guard version == 2 else {
             throw Error.parseError
         }
         self.version = version
         
-        guard let count = dataReader.readInt(bytes: 4) else {
-            throw Error.parseError
-        }
+        let count = dataReader.readInt(bytes: 4)
         
         // 12 byte header
         
@@ -48,35 +47,30 @@ public class Index {
         var entries: [IndexEntry] = []
         var keyedEntries: [String: IndexEntry] = [:]
         for _ in 0 ..< count {
-            guard
-                let cSeconds = dataReader.readInt(bytes: 4),
-                let cNanoseconds = dataReader.readInt(bytes: 4),
-                let mSeconds = dataReader.readInt(bytes: 4),
-                let mNanoseconds = dataReader.readInt(bytes: 4),
-                let dev = dataReader.readInt(bytes: 4),
-                let ino = dataReader.readInt(bytes: 4) else {
-                    throw Error.parseError
-            }
+            let cSeconds = dataReader.readInt(bytes: 4)
+            let cNanoseconds = dataReader.readInt(bytes: 4)
             let cTimeInterval = Double(cSeconds) + Double(cNanoseconds) / 1_000_000_000
             let cDate = Date(timeIntervalSince1970: cTimeInterval)
             
+            let mSeconds = dataReader.readInt(bytes: 4)
+            let mNanoseconds = dataReader.readInt(bytes: 4)
             let mTimeInterval = Double(mSeconds) + Double(mNanoseconds) / 1_000_000_000
             let mDate = Date(timeIntervalSince1970: mTimeInterval)
+            
+            let dev = dataReader.readInt(bytes: 4)
+            let ino = dataReader.readInt(bytes: 4)
             
             // 24 bytes in entry
             
             guard let mode = FileMode(rawValue: dataReader.readOctal(bytes: 4)) else {
-                    throw Error.parseError
+                throw Error.parseError
             }
             
             // 28 bytes in entry
             
-            guard
-                let uid = dataReader.readInt(bytes: 4),
-                let gid = dataReader.readInt(bytes: 4),
-                let fileSize = dataReader.readInt(bytes: 4) else {
-                    throw Error.parseError
-            }
+            let uid = dataReader.readInt(bytes: 4)
+            let gid = dataReader.readInt(bytes: 4)
+            let fileSize = dataReader.readInt(bytes: 4)
             
             // 40 bytes in entry
             
@@ -91,9 +85,7 @@ public class Index {
             let firstStage = flags[2] > 0
             let secondStage = flags[3] > 0
             
-            guard let nameLength = dataReader.readInt(bytes: 1) else {
-                throw Error.parseError
-            }
+            let nameLength = dataReader.readInt(bytes: 1)
             
             // 62 bytes in entry
             

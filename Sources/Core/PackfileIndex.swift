@@ -27,8 +27,8 @@ public class PackfileIndex {
         }
         
         let header = dataReader.readData(bytes: 4)
-        guard Array(header) == [255, 116, 79, 99],
-            let version = dataReader.readInt(bytes: 4) else {
+        let version = dataReader.readInt(bytes: 4)
+        guard Array(header) == [255, 116, 79, 99] else {
             return nil
         }
         

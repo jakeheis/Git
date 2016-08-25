@@ -85,31 +85,28 @@ class DataReader {
         return bits
     }
     
-    func readNumberAsString(bytes: Int, radix: Int) -> String {
-        let binary = readBits(bytes: bytes).map({ String($0) }).joined()
-        let rawValue = Int(binary, radix: 2)! // Will only fail if overflow
-        return String(rawValue, radix: radix)
+    func readInt(bytes: Int) -> Int {
+        let bits = readBits(bytes: bytes)
+        var total = 0
+        for i in 0 ..< bits.count {
+            let multiplier = Int(pow(Double(2), Double(i)))
+            total += Int(bits[bits.count - i - 1]) * multiplier
+        }
+        return total
     }
     
     func readOctal(bytes: Int) -> String {
-        return readNumberAsString(bytes: bytes, radix: 8)
-    }
-    
-    func readDecimal(bytes: Int) -> String {
-        return readNumberAsString(bytes: bytes, radix: 10)
+        return String(readInt(bytes: bytes), radix: 8)
     }
     
     func readHex(bytes: Int) -> String {
+        // Can't use same line as readOctal becuase of Int overflow issues
         let hexData = readData(bytes: bytes)
         var hexString = ""
         for byte in hexData {
             hexString += String(format: "%02x", byte)
         }
         return hexString
-    }
-    
-    func readInt(bytes: Int) -> Int? {
-        return Int(readDecimal(bytes: bytes))
     }
     
 }
