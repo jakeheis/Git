@@ -64,17 +64,43 @@ class DataReader {
     }
     
     @discardableResult
-    func readData(length: Int) -> Data {
-        let subdata = data.subdata(in: byteCounter ..< (byteCounter + length))
+    func readData(bytes: Int) -> Data {
+        let subdata = data.subdata(in: byteCounter ..< (byteCounter + bytes))
         // Can't just use substring (like other read methods use) because String considers \r\n one character and messes up the offset
-        let remainingData = data.subdata(in: (byteCounter + length) ..< data.count)
+        let remainingData = data.subdata(in: (byteCounter + bytes) ..< data.count)
         unread = String(data: remainingData, encoding: .ascii)! // ! allowed 
-        byteCounter += length
+        byteCounter += bytes
         return subdata
     }
     
-    func readHex(length: Int) -> String {
-        let hexData = readData(length: length)
+    func readBits(bytes: Int) -> [UInt8] {
+        let data = readData(bytes: bytes)
+        var bits: [UInt8] = []
+        for byte in Array(data) {
+            for i in UInt8(0) ..< UInt8(8) {
+                let bit = (byte >> (7 - i)) & 0b1
+                bits.append(bit)
+            }
+        }
+        return bits
+    }
+    
+    func readNumberAsString(bytes: Int, radix: Int) -> String {
+        let binary = readBits(bytes: bytes).map({ String($0) }).joined()
+        let rawValue = Int(binary, radix: 2)! // Will only fail if overflow
+        return String(rawValue, radix: radix)
+    }
+    
+    func readOctal(bytes: Int) -> String {
+        return readNumberAsString(bytes: bytes, radix: 8)
+    }
+    
+    func readDecimal(bytes: Int) -> String {
+        return readNumberAsString(bytes: bytes, radix: 10)
+    }
+    
+    func readHex(bytes: Int) -> String {
+        let hexData = readData(bytes: bytes)
         var hexString = ""
         for byte in hexData {
             hexString += String(format: "%02x", byte)
@@ -82,23 +108,75 @@ class DataReader {
         return hexString
     }
     
-    func readHexInt(length: Int) -> Int? {
-        let hex = readHex(length: length)
-        return Int(hex, radix: 16)
-    }
-    
-    func readBinary(length: Int) -> String? {
-        guard let hex = readHexInt(length: length) else {
-            return nil
-        }
-        return String(hex, radix: 2)
-    }
-    
-    func readOctal(length: Int) -> String? {
-        guard let hex = readHexInt(length: length) else {
-            return nil
-        }
-        return String(hex, radix: 8)
+    func readInt(bytes: Int) -> Int? {
+        return Int(readDecimal(bytes: bytes))
     }
     
 }
+
+/*class BitReader {
+    
+    let bytes: [UInt8]
+    var bitCounter = 0
+    
+    var bitCount: Int {
+        return bytes.count * 8
+    }
+    
+    var remainingBitCount: Int {
+        return bitCount - bitCounter
+    }
+    
+    init(byte: UInt8) {
+        self.bytes = [byte]
+    }
+    
+    init(bytes: [UInt8]) {
+        self.bytes = bytes
+    }
+    
+    func readBits(count: Int) -> [UInt8] {
+        var bits: [UInt8] = []
+        for i in UInt8(bitCounter) ..< UInt8(bitCounter + count) {
+            let byte = bytes[Int(i / 8)]
+            let bit = (byte >> (7 - (i % 8))) & 0b1
+            bits.append(bit)
+        }
+        return bits
+    }
+    
+    func readChunks(bitCount: Int, chunkSize: Int) -> [[UInt8]] {
+        let bits = readBits(count: bitCount)
+        let padding = Array(repeating: UInt8(0), count: (chunkSize - bits.count % chunkSize))
+        let chunkBits = padding + bits
+        print(chunkBits)
+        var chunks: [[UInt8]] = []
+        for i in stride(from: 0, to: chunkBits.count, by: chunkSize) {
+            chunks.append(Array(chunkBits[i ..< (i + chunkSize)]))
+        }
+        return chunks
+    }
+    
+    func readNumber(bitCount: Int, radix: Int) -> String {
+        let chunkSize = Int(log(Double(radix)) / log(2))
+        let chunks = readChunks(bitCount: bitCount, chunkSize: chunkSize)
+        
+        print(chunks)
+        
+        var string = ""
+        for chunk in chunks {
+            var number = 0
+            for (index, bit) in chunk.reversed().enumerated() {
+                print(index, bit, Int(pow(Double(2), Double(index))))
+                number += Int(bit) * Int(pow(Double(2), Double(index)))
+            }
+            string += String(number)
+        }
+        return string
+    }
+    
+    func readBinary() -> String {
+        return readNumber(bitCount: bitCount, radix: 2)
+    }
+    
+}*/

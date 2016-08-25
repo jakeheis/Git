@@ -32,12 +32,12 @@ public class Index {
             throw Error.parseError
         }
         
-        guard let version = dataReader.readHexInt(length: 4) else {
+        guard let version = dataReader.readInt(bytes: 4) else {
             throw Error.parseError
         }
         self.version = version
         
-        guard let count = dataReader.readHexInt(length: 4) else {
+        guard let count = dataReader.readInt(bytes: 4) else {
             throw Error.parseError
         }
         
@@ -49,12 +49,12 @@ public class Index {
         var keyedEntries: [String: IndexEntry] = [:]
         for _ in 0 ..< count {
             guard
-                let cSeconds = dataReader.readHexInt(length: 4),
-                let cNanoseconds = dataReader.readHexInt(length: 4),
-                let mSeconds = dataReader.readHexInt(length: 4),
-                let mNanoseconds = dataReader.readHexInt(length: 4),
-                let dev = dataReader.readHexInt(length: 4),
-                let ino = dataReader.readHexInt(length: 4) else {
+                let cSeconds = dataReader.readInt(bytes: 4),
+                let cNanoseconds = dataReader.readInt(bytes: 4),
+                let mSeconds = dataReader.readInt(bytes: 4),
+                let mNanoseconds = dataReader.readInt(bytes: 4),
+                let dev = dataReader.readInt(bytes: 4),
+                let ino = dataReader.readInt(bytes: 4) else {
                     throw Error.parseError
             }
             let cTimeInterval = Double(cSeconds) + Double(cNanoseconds) / 1_000_000_000
@@ -65,48 +65,33 @@ public class Index {
             
             // 24 bytes in entry
             
-            guard let modeOctal = dataReader.readOctal(length: 4),
-                let rawValue = Int(modeOctal),
-                let mode = FileMode(rawValue: rawValue) else {
+            guard let mode = FileMode(rawValue: dataReader.readOctal(bytes: 4)) else {
                     throw Error.parseError
             }
             
             // 28 bytes in entry
             
             guard
-                let uid = dataReader.readHexInt(length: 4),
-                let gid = dataReader.readHexInt(length: 4),
-                let fileSize = dataReader.readHexInt(length: 4) else {
+                let uid = dataReader.readInt(bytes: 4),
+                let gid = dataReader.readInt(bytes: 4),
+                let fileSize = dataReader.readInt(bytes: 4) else {
                     throw Error.parseError
             }
             
             // 40 bytes in entry
             
-            let hash = dataReader.readHex(length: 20)
+            let hash = dataReader.readHex(bytes: 20)
             
             // 60 bytes in entry
             
-            guard var flags = dataReader.readBinary(length: 2) else {
-                throw Error.parseError
-            }
+            let flags = dataReader.readBits(bytes: 1)
             
-            while flags.characters.count < 16 {
-                flags = "0" + flags
-            }
+            let assumeValid = flags[0] > 0
+            let extended = flags[1] > 0
+            let firstStage = flags[2] > 0
+            let secondStage = flags[3] > 0
             
-            let assumeValidBinary = String(flags.remove(at: flags.startIndex))
-            let assumeValid = (Int(assumeValidBinary) ?? 0) > 0
-            
-            let extendedBinary = String(flags.remove(at: flags.startIndex))
-            let extended = (Int(extendedBinary) ?? 0) > 0
-            
-            let firstStageBinary = String(flags.remove(at: flags.startIndex))
-            let firstStage = (Int(firstStageBinary) ?? 0) > 0
-            
-            let secondStageBinary = String(flags.remove(at: flags.startIndex))
-            let secondStage = (Int(secondStageBinary) ?? 0) > 0
-            
-            guard let nameLength = Int(flags, radix: 2) else {
+            guard let nameLength = dataReader.readInt(bytes: 1) else {
                 throw Error.parseError
             }
             

@@ -6,15 +6,15 @@
 //
 //
 
-public enum FileMode: Int {
-    case directory = 40000
-    case blob = 100644
-    case executable = 100755
-    case link = 120000
+public enum FileMode: String { // Don't use Int because these aren't base 10 numbers
+    case directory = "40000"
+    case blob = "100644"
+    case executable = "100755"
+    case link = "120000"
     
     var intText: String {
         if self == .directory {
-            return "0" + String(rawValue)
+            return "0" + rawValue
         }
         return String(rawValue)
     }

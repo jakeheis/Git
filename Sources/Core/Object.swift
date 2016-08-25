@@ -81,7 +81,7 @@ public class Object {
                 fatalError("Could not hash file")
         }
         
-        self.hash = dataReader.readHex(length: 20)
+        self.hash = dataReader.readHex(bytes: 20)
         self.type = type
         self.repository = repository
     }

@@ -13,7 +13,7 @@ public class Tree: Object {
         while dataReader.canRead {
             let mode = dataReader.read(until: " ")
             let name = dataReader.read(until: "\0")
-            let entryHash = dataReader.readHex(length: 20)
+            let entryHash = dataReader.readHex(bytes: 20)
             let entry = TreeEntry(mode: mode, hash: entryHash, name: name, repository: repository)
             treeEntries.append(entry)
         }
@@ -45,7 +45,7 @@ public struct TreeEntry {
     }
     
     init(mode raw: String, hash: String, name: String, repository: Repository) {
-        guard let modeInt = Int(raw), let mode = FileMode(rawValue: modeInt) else {
+        guard let mode = FileMode(rawValue: raw) else {
             fatalError("Unrecognized mode: \(raw)")
         }
         self.mode = mode
