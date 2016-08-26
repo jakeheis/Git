@@ -87,12 +87,7 @@ class DataReader {
     
     func readInt(bytes: Int) -> Int {
         let bits = readBits(bytes: bytes)
-        var total = 0
-        for i in 0 ..< bits.count {
-            let multiplier = Int(pow(Double(2), Double(i)))
-            total += Int(bits[bits.count - i - 1]) * multiplier
-        }
-        return total
+        return intValueOfBits(bits: bits)
     }
     
     func readOctal(bytes: Int) -> String {
@@ -107,6 +102,15 @@ class DataReader {
             hexString += String(format: "%02x", byte)
         }
         return hexString
+    }
+    
+    func intValueOfBits(bits: [UInt8]) -> Int {
+        var total = 0
+        for i in 0 ..< bits.count {
+            let multiplier = Int(pow(Double(2), Double(i)))
+            total += Int(bits[bits.count - i - 1]) * multiplier
+        }
+        return total
     }
     
 }

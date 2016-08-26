@@ -3,11 +3,11 @@ import SwiftCLI
 import FileKit
 import Core
 
-Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
 
 let r = Repository(path: Path.Current)!
 
-print(r.index)
+print(r.packfileIndices)
 
 //CLI.setup(name: "Git")
 //
