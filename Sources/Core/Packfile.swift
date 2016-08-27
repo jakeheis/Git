@@ -31,7 +31,8 @@ public class Packfile {
             return nil
         }
         
-        guard dataReader.read(next: 4) == "PACK", dataReader.readInt(bytes: 4) == 2 else {
+        let pack: [UInt8] = [80, 65, 67, 75]
+        guard Array(dataReader.readData(bytes: 4)) == pack, dataReader.readInt(bytes: 4) == 2 else {
             return nil
         }
         
@@ -42,7 +43,7 @@ public class Packfile {
         let objectCount = dataReader.readInt(bytes: 4)
         
         for i in 0 ..< objectCount {
-            let objectMetadata = dataReader.readBits(bytes: 1)
+            let objectMetadata = dataReader.readByte()
             
             let packfileObjectType = PackfileObjectType(rawValue: objectMetadata.intValue(ofBits: 1 ..< 4))
             var objectLength = objectMetadata.intValue(ofBits: 4 ..< 8)
@@ -50,9 +51,9 @@ public class Packfile {
             var lengthByteCount = 1
             
             if objectMetadata[0] == 1 {
-                var nextByte: Bits
+                var nextByte: Byte
                 repeat {
-                    nextByte = dataReader.readBits(bytes: 1)
+                    nextByte = dataReader.readByte()
                     objectLength |= (nextByte.intValue(ofBits: 1 ..< 8) << shiftCount)
                     shiftCount += 7
                     lengthByteCount += 1
@@ -77,12 +78,12 @@ public class Packfile {
                 chunks[entry.offset] = PackfileChunk(data: data, object: object)
             } else {
                 if packfileObjectType == .ofsDelta {
-                    var currentByte = dataReader.readBits(bytes: 1)
+                    var currentByte = dataReader.readByte()
                     var negativeOffset = currentByte.intValue(ofBits: 1 ..< 8)
                     var backwardsDistanceByteCount = 1
                     
                     while currentByte[0] == 1 {
-                        currentByte = dataReader.readBits(bytes: 1)
+                        currentByte = dataReader.readByte()
                         negativeOffset += 1
                         negativeOffset <<= 7
                         negativeOffset += currentByte.intValue(ofBits: 1 ..< 8)
@@ -96,14 +97,14 @@ public class Packfile {
                     let thisOffset = entry.offset + lengthByteCount + backwardsDistanceByteCount
                     let data = dataReader.readData(bytes: nextOffset - thisOffset)
                     let deltaData = data.uncompressed()!
-                    let deltaReader = DataReader(data: deltaData)!
+                    let deltaReader = DataReader(data: deltaData)
                     _ = deltaReader.readVariableLengthInt() // Source length
                     _ = deltaReader.readVariableLengthInt() // Target length
                     
                     var builtData = Data()
                     
                     while deltaReader.canRead {
-                        let instructionByte = deltaReader.readBits(bytes: 1)
+                        let instructionByte = deltaReader.readByte()
                         
                         if instructionByte[0] == 0 { // Insertion
                             let insertionByteCount = instructionByte.intValue(ofBits: 1 ..< 8)
@@ -132,7 +133,7 @@ public class Packfile {
                         }
                     }
                     
-                    print(chunk.object.type.objectClass.init(hash: entry.hash, data: builtData, repository: repository).cat())
+                    print(chunk.object.type.objectClass.init(hash: entry.hash, data: builtData, repository: repository))
                 } else {
                     let parent = dataReader.readHex(bytes: 20)
                     print("delta from", parent)

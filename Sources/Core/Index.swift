@@ -28,7 +28,8 @@ public class Index {
         guard let dataReader = DataReader(path: indexPath) else {
             throw Error.readError
         }
-        guard dataReader.read(next: 4) == "DIRC" else {
+        let dirc: [UInt8] = [68, 73, 82, 67] // "DIRC"
+        guard Array(dataReader.readData(bytes: 4)) == dirc else {
             throw Error.parseError
         }
         
@@ -78,7 +79,7 @@ public class Index {
             
             // 60 bytes in entry
             
-            let flags = dataReader.readBits(bytes: 1)
+            let flags = dataReader.readByte()
             
             let assumeValid = flags[0] > 0
             let extended = flags[1] > 0
@@ -89,17 +90,22 @@ public class Index {
             
             // 62 bytes in entry
             
-            let name: String
-            if nameLength == 0xFFF { // Length too big to store; do it manually
-                name = dataReader.read(until: "\0", skipCharacter: false)
+            let rawName: String?
+            if nameLength == 0xFFFF { // Length too big to store; do it manually
+                let data = dataReader.readUntil(byte: 0, skipByte: false) // Read until null byte
+                rawName = String(data: data, encoding: .ascii)
             } else {
-                name = dataReader.read(next: nameLength)
+                rawName = String(data: dataReader.readData(bytes: nameLength), encoding: .ascii)
             }
             
+            guard let name = rawName else {
+                fatalError("Couldn't decode name")
+            }
+        
             let bytesIn = 62 + name.characters.count
             
             let paddingCount = 8 - (bytesIn % 8)
-            dataReader.read(next: paddingCount)
+            dataReader.readData(bytes: paddingCount)
             
             let entry = IndexEntry(cDate: cDate, mDate: mDate, dev: dev, ino: ino, mode: mode, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
             entries.append(entry)

@@ -5,14 +5,16 @@ public class Tree: Object {
     public let treeEntries: [TreeEntry]
     
     public required init(hash: String, data: Data, repository: Repository) {
-        guard let dataReader = DataReader(data: data) else {
-            fatalError("Couldn't read data of tree: \(hash)")
-        }
+        let dataReader = DataReader(data: data)
         
         var treeEntries: [TreeEntry] = []
         while dataReader.canRead {
-            let mode = dataReader.read(until: " ")
-            let name = dataReader.read(until: "\0")
+            let modeData = dataReader.readUntil(byte: 32) // Read until space
+            let nameData = dataReader.readUntil(byte: 0)
+            guard let mode = String(data: modeData, encoding: .ascii),
+                let name = String(data: nameData, encoding: .ascii) else {
+                    fatalError("Couldn't parse tree \(hash)")
+            }
             let entryHash = dataReader.readHex(bytes: 20)
             let entry = TreeEntry(mode: mode, hash: entryHash, name: name, repository: repository)
             treeEntries.append(entry)
