@@ -86,8 +86,7 @@ class DataReader {
     }
     
     func readInt(bytes: Int) -> Int {
-        let bits = readBits(bytes: bytes)
-        return intValueOfBits(bits: bits)
+        return readBits(bytes: bytes).bitIntValue()
     }
     
     func readOctal(bytes: Int) -> String {
@@ -104,13 +103,31 @@ class DataReader {
         return hexString
     }
     
-    func intValueOfBits(bits: [UInt8]) -> Int {
+    func readVariableLengthInt() -> (value: Int, bytes: Int) {
+        var allBits: [UInt8] = []
+        var byteCount = 0
+        var currentBits: [UInt8]
+        repeat {
+            currentBits = readBits(bytes: 1)
+            allBits = currentBits[1 ..< 8] + allBits
+            byteCount += 1
+        } while currentBits[0] == 1
+        
+        return (allBits.bitIntValue(), byteCount)
+    }
+    
+}
+
+protocol BitToIntConvertible {}
+extension UInt8: BitToIntConvertible {}
+
+extension Array where Element : BitToIntConvertible {
+    func bitIntValue() -> Int {
         var total = 0
-        for i in 0 ..< bits.count {
+        for i in 0 ..< count {
             let multiplier = Int(pow(Double(2), Double(i)))
-            total += Int(bits[bits.count - i - 1]) * multiplier
+            total += Int(self[count - i - 1] as! UInt8) * multiplier
         }
         return total
     }
-    
 }

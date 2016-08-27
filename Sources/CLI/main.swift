@@ -7,7 +7,7 @@ Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
 
 let r = Repository(path: Path.Current)!
 
-print(r.packfileIndices)
+print(r.packfiles)
 
 //CLI.setup(name: "Git")
 //

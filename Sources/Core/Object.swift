@@ -61,6 +61,13 @@ public class Object {
         return type.objectClass.init(hash: hash, data: contentData, repository: repository)
     }
     
+    public static func from(data: Data, hash: String, type: ObjectType, repository: Repository) throws -> Object {
+        guard let uncompressed = try? (data as NSData).gzipUncompressed() as Data else {
+            throw Error.compressionError
+        }
+        return type.objectClass.init(hash: hash, data: uncompressed, repository: repository)
+    }
+    
     public required init(hash: String, data: Data, repository: Repository) {
         fatalError("Use subclass")
     }

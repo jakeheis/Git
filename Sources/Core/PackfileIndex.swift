@@ -57,10 +57,8 @@ public class PackfileIndex {
         
         var entries: [PackfileIndexEntry] = []
         for i in 0 ..< cumulative {
-            var offsetBits = dataReader.readBits(bytes: 4)
-            let firstBit = offsetBits.removeFirst()
-            if firstBit == 0 {
-                let offset = dataReader.intValueOfBits(bits: offsetBits)
+            let offset = dataReader.readInt(bytes: 4)
+            if offset < 0b1000_0000_0000_0000 { // Basically check if first bit is 0
                 let entry = PackfileIndexEntry(hash: hashes[i], crc: crcs[i], offset: offset)
                 entries.append(entry)
             } else {
@@ -70,7 +68,7 @@ public class PackfileIndex {
         }
         
         self.fanOutTable = fanOutTable
-        self.entries = entries
+        self.entries = entries.sorted { $0.offset < $1.offset }
     }
     
 }
@@ -82,14 +80,14 @@ struct PackfileIndexEntry {
     let offset: Int
     
 }
-
-extension Repository {
-    
-    public var packfileIndices: [PackfileIndex] {
-        let packDirectory = Path(PackfileIndex.packDirectory)
-        return packDirectory.flatMap { (packIndexPath) in
-            return PackfileIndex(path: packIndexPath, repository: self)
-        }
-    }
-    
-}
+//
+//extension Repository {
+//    
+//    public var packfileIndices: [PackfileIndex] {
+//        let packDirectory = Path(PackfileIndex.packDirectory)
+//        return packDirectory.flatMap { (packIndexPath) in
+//            return PackfileIndex(path: packIndexPath, repository: self)
+//        }
+//    }
+//    
+//}
