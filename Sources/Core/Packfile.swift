@@ -37,16 +37,14 @@ public class Packfile {
         
         print(packfileIndex.entries.map { $0.hash + " -- " + String(describing: $0.offset) })
         
-        var chunks: [Int: Data] = [:]
+        var chunks: [Int: PackfileChunk] = [:]
         
         let objectCount = dataReader.readInt(bytes: 4)
         
         for i in 0 ..< objectCount {
-            print("NEXT", i)
             let objectMetadata = dataReader.readBits(bytes: 1)
             let packfileObjectType = PackfileObjectType(rawValue: Array(objectMetadata[1 ..< 4]).bitIntValue())
             var numberBits = Array(objectMetadata[4 ..< 8])
-            print(objectMetadata)
             var numberByteCount = 1
             if objectMetadata[0] == 1 {
                 var nextByte: [UInt8]
@@ -65,14 +63,16 @@ public class Packfile {
             
             if let objectType = packfileObjectType?.objectType {
                 let thisOffset = entry.offset + numberByteCount
-                let data = dataReader.readData(bytes: nextOffset - thisOffset)
-                chunks[entry.offset] = try! (data as NSData).gzipUncompressed() as Data
-                let object = try! Object.from(data: data, hash: entry.hash, type: objectType, repository: repository)
-                
-                if let blob = object as? Blob, blob.data.count != length {
-                    fatalError("Inflated blob should be correct length")
+                guard let data = dataReader.readData(bytes: nextOffset - thisOffset).uncompressed() else {
+                    fatalError("Couldn't uncompress data")
                 }
-//                print(object.cat())
+                if data.count != length {
+                    fatalError("Inflated object should be correct length")
+                }
+                
+                let object = objectType.objectClass.init(hash: entry.hash, data: data, repository: repository)
+                
+                chunks[entry.offset] = PackfileChunk(data: data, object: object)
             } else {
                 if packfileObjectType == .ofsDelta {
                     var currentByte: [UInt8] = dataReader.readBits(bytes: 1)
@@ -89,7 +89,8 @@ public class Packfile {
                     }
                     
                     let deltaFromObjectOffset = entry.offset - negativeOffset
-                    let baseObject = chunks[deltaFromObjectOffset]!
+                    let chunk = chunks[deltaFromObjectOffset]!
+                    let baseObject = chunk.data
                     
                     let thisOffset = entry.offset + numberByteCount + backwardsDistanceByteCount
                     let data = dataReader.readData(bytes: nextOffset - thisOffset)
@@ -130,10 +131,7 @@ public class Packfile {
                         }
                     }
                     
-                    print(Tree(hash: entry.hash, data: builtData, repository: repository).cat())
-                    
-                    break
-                    
+                    print(chunk.object.type.objectClass.init(hash: entry.hash, data: builtData, repository: repository).cat())
                 } else {
                     let parent = dataReader.readHex(bytes: 20)
                     print("delta from", parent)
@@ -142,6 +140,11 @@ public class Packfile {
         }
     }
     
+}
+
+struct PackfileChunk {
+    let data: Data
+    let object: Object
 }
 
 enum PackfileObjectType: Int {
@@ -170,6 +173,14 @@ extension Repository {
         return packDirectory.flatMap { (packIndexPath) in
             return Packfile(path: packIndexPath, repository: self)
         }
+    }
+    
+}
+
+extension Data {
+    
+    func uncompressed() -> Data? {
+        return (try? (self as NSData).gzipUncompressed()) as Data?
     }
     
 }
