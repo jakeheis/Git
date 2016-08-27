@@ -94,7 +94,7 @@ public class Packfile {
                     
                     let thisOffset = entry.offset + numberByteCount + backwardsDistanceByteCount
                     let data = dataReader.readData(bytes: nextOffset - thisOffset)
-                    let deltaData = try! (data as NSData).gzipUncompressed() as Data
+                    let deltaData = data.uncompressed()!
                     let deltaReader = DataReader(data: deltaData)!
                     _ = deltaReader.readVariableLengthInt() // Source length
                     _ = deltaReader.readVariableLengthInt() // Target length
@@ -103,31 +103,35 @@ public class Packfile {
                     
                     while deltaReader.canRead {
                         let byte = deltaReader.readBits(bytes: 1)
-                        let instructionInt = byte.bitIntValue()
                         
-                        // TODO: Swift-ify; this is translated directrly from dulwich
-                        if instructionInt & 0x80 == 0 { // Insertion
+                        if byte[0] == 0 { // Insertion
                             let insertionByteCount = Array(byte[1 ..< 8]).bitIntValue()
                             builtData.append(deltaReader.readData(bytes: insertionByteCount))
                         } else { // Copy
-                            var cp_off = 0
-                            for i in 0 ..< 4 {
-                                if instructionInt & (1 << i) > 0 {
-                                    let byte = deltaReader.readInt(bytes: 1)
-                                    cp_off |= byte << (i * 8)
+                            var offsetBits: [UInt8] = []
+                            for bitIndex in 0 ..< 4 {
+                                if byte[7 - bitIndex] == 1 {
+                                    let byte = deltaReader.readBits(bytes: 1)
+                                    offsetBits = byte + offsetBits
+                                } else {
+                                    offsetBits = Array(repeating: 0, count: 8) + offsetBits // Add empty byte
                                 }
                             }
-                            var cp_size = 0
-                            for i in 0 ..< 3 {
-                                if instructionInt & (1 << (4 + i)) > 0 {
-                                    let byte = deltaReader.readInt(bytes: 1)
-                                    cp_size |= byte << (i * 8)
+                            let offset = offsetBits.bitIntValue()
+                            
+                            var sizeBits: [UInt8] = []
+                            for bitIndex in 0 ..< 3 {
+                                if byte[3 - bitIndex] == 1 {
+                                    let byte = deltaReader.readBits(bytes: 1)
+                                    sizeBits = byte + sizeBits
+                                } else {
+                                    sizeBits = Array(repeating: 0, count: 8) + sizeBits // Add empty byte
                                 }
                             }
-                            if cp_size == 0 {
-                                cp_size = 0x10000
-                            }
-                            builtData.append(baseObject.subdata(in: cp_off ..< (cp_off + cp_size)))
+                            let bitValue = sizeBits.bitIntValue()
+                            let size = bitValue == 0 ? 0x10000 : bitValue
+                            
+                            builtData.append(baseObject.subdata(in: offset ..< (offset + size)))
                         }
                     }
                     
