@@ -73,20 +73,25 @@ class DataReader {
         return subdata
     }
     
-    func readBits(bytes: Int) -> [UInt8] {
+    func readBits(bytes: Int) -> Bits {
         let data = readData(bytes: bytes)
-        var bits: [UInt8] = []
-        for byte in Array(data) {
-            for i in UInt8(0) ..< UInt8(8) {
-                let bit = (byte >> (7 - i)) & 0b1
-                bits.append(bit)
-            }
-        }
-        return bits
+//        var bits: [UInt8] = []
+//        for byte in Array(data) {
+//            for i in UInt8(0) ..< UInt8(8) {
+//                let bit = (byte >> (7 - i)) & 0b1
+//                bits.append(bit)
+//            }
+//        }
+        return Bits(bytes: Array(data))
     }
     
     func readInt(bytes: Int) -> Int {
-        return readBits(bytes: bytes).bitIntValue()
+        let raw = Array(readData(bytes: bytes))
+        var int: Int = 0
+        for i in 0 ..< raw.count {
+            int |= Int(raw[raw.count - i - 1]) << (i * 8)
+        }
+        return int
     }
     
     func readOctal(bytes: Int) -> String {
@@ -104,30 +109,137 @@ class DataReader {
     }
     
     func readVariableLengthInt() -> (value: Int, bytes: Int) {
-        var allBits: [UInt8] = []
+        var currentByte: Bits
+        var sum = 0
         var byteCount = 0
-        var currentBits: [UInt8]
         repeat {
-            currentBits = readBits(bytes: 1)
-            allBits = currentBits[1 ..< 8] + allBits
+            currentByte = readBits(bytes: 1)
+            sum |= (currentByte.intValue(ofBits: 1 ..< 8) << byteCount * 8)
             byteCount += 1
-        } while currentBits[0] == 1
+        } while currentByte[0] == 1
         
-        return (allBits.bitIntValue(), byteCount)
+        return (sum, byteCount)
     }
     
 }
 
-protocol BitToIntConvertible {}
+struct Bits {
+    
+//    let bytes: [UInt8]
+    let bits: [UInt8]
+    
+    init(byte: UInt8) {
+        self.init(bytes: [byte])
+    }
+    
+    init(bytes: [UInt8]) {
+//        self.bytes = bytes
+        
+        var bits: [UInt8] = []
+        for byte in bytes {
+            for i in UInt8(0) ..< UInt8(8) {
+                let bit = (byte >> (7 - i)) & 0b1
+                bits.append(bit)
+            }
+        }
+        self.bits = bits
+    }
+    
+    init(bits: [UInt8]) {
+        self.bits = bits
+    }
+    
+//    var raw: [UInt8] {
+//        var bits: [UInt8] = []
+//        for byte in bytes {
+//            for i in UInt8(0) ..< UInt8(8) {
+//                let bit = (byte >> (7 - i)) & 0b1
+//                bits.append(bit)
+//            }
+//        }
+//        return bits
+//    }
+    
+//    var intValue: Int {
+//        var total = 0
+//        for i in 0 ..< bytes.count {
+////            let multiplier = Int(pow(Double(2), Double(i)))
+////            let byte = bytes[bytes.count - i / 8 - 1]
+////            let bit = 8 - i % 8
+////            total += Int(byte[bit]) * multiplier
+//            
+//        }
+//        return total
+//    }
+    
+    func intValue(ofBits range: CountableRange<Int>) -> Int {
+        var sum = 0
+        for i in range {
+            if bits[i] == 1 {
+                sum |= 1 << (range.upperBound - i - 1)
+            }
+        }
+        return sum
+    }
+    
+}
+
+extension Bits {
+    
+//    var startIndex: Int {
+//        return bytes.startIndex
+//    }
+//    
+//    var endIndex: Int {
+//        return bytes.endIndex * 8
+//    }
+//    
+//    subscript(index: Int) -> UInt8 {
+//        let byte = bytes[index / 8]
+//        let bitIndex = UInt8(7 - index % 8)
+//        return byte & (1 << bitIndex)
+//    }
+////
+//    subscript(bounds: Range<Int>) -> Bits {
+//        return self
+//    }
+//    
+//    func index(after i: Int) -> Int {
+//        return i + 1
+//    }
+    
+//    var startIndex: Int {
+//        return bits.startIndex
+//    }
+//    
+//    var endIndex: Int {
+//        return bits.endIndex
+//    }
+//    
+    subscript(index: Int) -> UInt8 {
+        return bits[index]
+    }
+//    
+//    subscript(bounds: Range<Int>) -> Bits {
+//        return Bits(bits: Array(bits[bounds]))
+//    }
+//    
+//    func index(after i: Int) -> Int {
+//        return i + 1
+//    }
+    
+}
+
+public protocol BitToIntConvertible {}
 extension UInt8: BitToIntConvertible {}
 
-extension Array where Element : BitToIntConvertible {
-    func bitIntValue() -> Int {
-        var total = 0
-        for i in 0 ..< count {
-            let multiplier = Int(pow(Double(2), Double(i)))
-            total += Int(self[count - i - 1] as! UInt8) * multiplier
-        }
-        return total
-    }
+public extension Array where Element : BitToIntConvertible {
+//    public func bitIntValue() -> Int {
+//        var total = 0
+//        for i in 0 ..< count {
+//            let multiplier = Int(pow(Double(2), Double(i)))
+//            total += Int(self[count - i - 1] as! UInt8) * multiplier
+//        }
+//        return total
+//    }
 }

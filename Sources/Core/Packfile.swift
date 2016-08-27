@@ -43,48 +43,49 @@ public class Packfile {
         
         for i in 0 ..< objectCount {
             let objectMetadata = dataReader.readBits(bytes: 1)
-            let packfileObjectType = PackfileObjectType(rawValue: Array(objectMetadata[1 ..< 4]).bitIntValue())
-            var numberBits = Array(objectMetadata[4 ..< 8])
-            var numberByteCount = 1
+            
+            let packfileObjectType = PackfileObjectType(rawValue: objectMetadata.intValue(ofBits: 1 ..< 4))
+            var objectLength = objectMetadata.intValue(ofBits: 4 ..< 8)
+            var shiftCount = 4
+            var lengthByteCount = 1
+            
             if objectMetadata[0] == 1 {
-                var nextByte: [UInt8]
+                var nextByte: Bits
                 repeat {
                     nextByte = dataReader.readBits(bytes: 1)
-                    numberBits = nextByte[1 ..< 8] + numberBits
-                    numberByteCount += 1
+                    objectLength |= (nextByte.intValue(ofBits: 1 ..< 8) << shiftCount)
+                    shiftCount += 7
+                    lengthByteCount += 1
                 } while nextByte[0] == 1
             }
-            
-            let length = numberBits.bitIntValue()
             
             let entry = packfileIndex.entries[i]
             
             let nextOffset = i + 1 < objectCount ? packfileIndex.entries[i + 1].offset : dataReader.data.count - 20
             
             if let objectType = packfileObjectType?.objectType {
-                let thisOffset = entry.offset + numberByteCount
-                guard let data = dataReader.readData(bytes: nextOffset - thisOffset).uncompressed() else {
+                let dataOffset = entry.offset + lengthByteCount
+                guard let data = dataReader.readData(bytes: nextOffset - dataOffset).uncompressed() else {
                     fatalError("Couldn't uncompress data")
                 }
-                if data.count != length {
+                if data.count != objectLength {
                     fatalError("Inflated object should be correct length")
                 }
                 
                 let object = objectType.objectClass.init(hash: entry.hash, data: data, repository: repository)
-                
+                print(object)
                 chunks[entry.offset] = PackfileChunk(data: data, object: object)
             } else {
                 if packfileObjectType == .ofsDelta {
-                    var currentByte: [UInt8] = dataReader.readBits(bytes: 1)
-                    var negativeOffset = Array(currentByte[1 ..< 8]).bitIntValue()
+                    var currentByte = dataReader.readBits(bytes: 1)
+                    var negativeOffset = currentByte.intValue(ofBits: 1 ..< 8)
                     var backwardsDistanceByteCount = 1
-                    
                     
                     while currentByte[0] == 1 {
                         currentByte = dataReader.readBits(bytes: 1)
                         negativeOffset += 1
                         negativeOffset <<= 7
-                        negativeOffset += Array(currentByte[1 ..< 8]).bitIntValue()
+                        negativeOffset += currentByte.intValue(ofBits: 1 ..< 8)
                         backwardsDistanceByteCount += 1
                     }
                     
@@ -92,7 +93,7 @@ public class Packfile {
                     let chunk = chunks[deltaFromObjectOffset]!
                     let baseObject = chunk.data
                     
-                    let thisOffset = entry.offset + numberByteCount + backwardsDistanceByteCount
+                    let thisOffset = entry.offset + lengthByteCount + backwardsDistanceByteCount
                     let data = dataReader.readData(bytes: nextOffset - thisOffset)
                     let deltaData = data.uncompressed()!
                     let deltaReader = DataReader(data: deltaData)!
@@ -102,34 +103,30 @@ public class Packfile {
                     var builtData = Data()
                     
                     while deltaReader.canRead {
-                        let byte = deltaReader.readBits(bytes: 1)
+                        let instructionByte = deltaReader.readBits(bytes: 1)
                         
-                        if byte[0] == 0 { // Insertion
-                            let insertionByteCount = Array(byte[1 ..< 8]).bitIntValue()
+                        if instructionByte[0] == 0 { // Insertion
+                            let insertionByteCount = instructionByte.intValue(ofBits: 1 ..< 8)
                             builtData.append(deltaReader.readData(bytes: insertionByteCount))
                         } else { // Copy
-                            var offsetBits: [UInt8] = []
+                            var offset = 0
                             for bitIndex in 0 ..< 4 {
-                                if byte[7 - bitIndex] == 1 {
-                                    let byte = deltaReader.readBits(bytes: 1)
-                                    offsetBits = byte + offsetBits
-                                } else {
-                                    offsetBits = Array(repeating: 0, count: 8) + offsetBits // Add empty byte
+                                if instructionByte[7 - bitIndex] == 1 {
+                                    let byte = deltaReader.readInt(bytes: 1)
+                                    offset |= byte << (bitIndex * 8)
                                 }
                             }
-                            let offset = offsetBits.bitIntValue()
                             
-                            var sizeBits: [UInt8] = []
+                            var size = 0
                             for bitIndex in 0 ..< 3 {
-                                if byte[3 - bitIndex] == 1 {
-                                    let byte = deltaReader.readBits(bytes: 1)
-                                    sizeBits = byte + sizeBits
-                                } else {
-                                    sizeBits = Array(repeating: 0, count: 8) + sizeBits // Add empty byte
+                                if instructionByte[3 - bitIndex] == 1 {
+                                    let byte = deltaReader.readInt(bytes: 1)
+                                    size |= byte << (bitIndex * 8)
                                 }
                             }
-                            let bitValue = sizeBits.bitIntValue()
-                            let size = bitValue == 0 ? 0x10000 : bitValue
+                            if size == 0 {
+                                size = 0x10000
+                            }
                             
                             builtData.append(baseObject.subdata(in: offset ..< (offset + size)))
                         }
