@@ -36,8 +36,8 @@ class VerifyPackCommand: RepositoryCommand {
             throw CLIError.error("Couldn't read Packfile")
         }
         
-        for object in pack.readAll() {
-            print(object.hash, object.type)
+        for chunk in pack.readAll() {
+            print(chunk)
         }
     }
     

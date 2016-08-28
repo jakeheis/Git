@@ -41,7 +41,7 @@ public class Packfile {
         self.repository = repository
     }
     
-    public func readAll() -> [Object] {
+    public func readAll() -> [PackfileChunk] {
         let dataReader = DataReader(data: data)
         
         let pack: [UInt8] = [80, 65, 67, 75] // PACK
@@ -74,7 +74,6 @@ public class Packfile {
             }
             
             let entry = index.entries[i]
-            
             let nextOffset = i + 1 < objectCount ? index.entries[i + 1].offset : dataReader.data.count - 20
             
             let chunk: PackfileChunk
@@ -88,7 +87,7 @@ public class Packfile {
                 }
                 
                 let object = objectType.objectClass.init(hash: entry.hash, data: data, repository: repository)
-                chunk = PackfileChunk(data: data, object: object)
+                chunk = PackfileChunk(data: data, object: object, offset: entry.offset, packfileSize: nextOffset - entry.offset)
             } else {
                 let parentChunkIndex: Int?
                 let deltaDataLength: Int
@@ -105,7 +104,7 @@ public class Packfile {
                     deltaDataLength = nextOffset - (entry.offset + lengthByteCount + 20)
                 }
                 
-                guard let data = dataReader.readData(bytes: deltaDataLength).uncompressed() else {
+                guard let deltaData = dataReader.readData(bytes: deltaDataLength).uncompressed() else {
                     fatalError("Couldn't decompress delta")
                 }
                 
@@ -114,12 +113,12 @@ public class Packfile {
                 }
                 let parentChunk = chunks[index]
                 
-                let delta = Delta(data: data)
+                let delta = Delta(data: deltaData)
                 let result = delta.apply(to: parentChunk.data)
                 
                 let objectType = parentChunk.object.type.objectClass
                 let object = objectType.init(hash: entry.hash, data: result, repository: repository)
-                chunk = PackfileChunk(data: result, object: object)
+                chunk = PackfileChunk(data: result, object: object, offset: entry.offset, packfileSize: nextOffset - entry.offset, parentHash: parentChunk.object.hash, deltaCount: parentChunk.deltaCount + 1)
             }
             
             chunks.append(chunk)
@@ -127,14 +126,42 @@ public class Packfile {
             hashChunkIndexMap[entry.hash] = chunks.endIndex - 1
         }
         
-        return chunks.map { $0.object }
+        return chunks
     }
     
 }
 
-struct PackfileChunk {
-    let data: Data
-    let object: Object
+public struct PackfileChunk {
+    public let data: Data
+    public let object: Object
+    public let offset: Int
+    public let packfileSize: Int
+    public let parentHash: String?
+    public let deltaCount: Int
+    
+    init(data: Data, object: Object, offset: Int, packfileSize: Int, parentHash: String? = nil, deltaCount: Int = 0) {
+        self.data = data
+        self.object = object
+        self.offset = offset
+        self.packfileSize = packfileSize
+        self.parentHash = parentHash
+        self.deltaCount = deltaCount
+    }
+}
+
+extension PackfileChunk: CustomStringConvertible {
+    
+    public var description: String {
+        var type = object.type.rawValue
+        type += String(repeating: " ", count: 6 - type.characters.count)
+        var components = [object.hash, type, String(data.count), String(packfileSize), String(offset)]
+        if let parentHash = parentHash {
+            components.append(String(deltaCount))
+            components.append(parentHash)
+        }
+        return components.joined(separator: " ")
+    }
+    
 }
 
 enum PackfileObjectType: Int {
