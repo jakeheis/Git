@@ -7,39 +7,28 @@ Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
 
 let r = Repository(path: Path.Current)!
 
-print(r.packfiles)
+//print(r.packfiles)
 
-//let bytes: [UInt8] = [0x10, 0xaa, 0x12, 0x14]
+CLI.setup(name: "Git")
 
+let plumbing: [RepositoryCommand] = [
+    CatFileCommand(),
+    LsFilesCommand(),
+    LsTreeCommand(),
+    VerifyPackCommand()
+]
 
+let porcelain: [RepositoryCommand] = [
+    BranchCommand(),
+    LogCommand(),
+    StatusCommand(),
+    TagCommand()
+]
 
-//print(bytes.bitIntValue())
-//
-//var int: Int = 0
-//for i in 0 ..< bytes.count {
-//    print(Int(bytes[bytes.count - i - 1]))
-//    int |= Int(bytes[bytes.count - i - 1]) << (i * 8)
-//    print(int)
-//}
-//print(int)
-//
-//CLI.setup(name: "Git")
-//
-//let plumbing: [RepositoryCommand] = [
-//    CatFileCommand(),
-//    LsFilesCommand(),
-//    LsTreeCommand()
-//]
-//
-//let porcelain: [RepositoryCommand] = [
-//    BranchCommand(),
-//    LogCommand(),
-//    StatusCommand(),
-//    TagCommand()
-//]
-//
-//CLI.register(commands: plumbing)
-//CLI.register(commands: porcelain)
-//
-//let result = CLI.go()
-//exit(result)
+CLI.register(commands: plumbing)
+CLI.register(commands: porcelain)
+
+let result = CLI.debugGo(with: "git verify-pack .git/objects/pack/pack-c306e51883808302ac35419b19ffc776a504d5eb.idx")
+exit(result)
+
+// xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

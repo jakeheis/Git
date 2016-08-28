@@ -11,29 +11,42 @@ import FileKit
 
 public class Packfile {
     
+    let data: Data
+    let index: PackfileIndex
+    let repository: Repository
+    
     convenience init?(name: String, repository: Repository) {
         let path = repository.subpath(with: PackfileIndex.packDirectory + name)
         self.init(path: path, repository: repository)
     }
     
-    init?(path: Path, repository: Repository) {
+    public init?(path: Path, repository: Repository) {
         guard path.pathExtension == "pack" else {
             return nil
         }
         
-        let url = path.url.deletingPathExtension().appendingPathExtension("idx")
-        guard let packfileIndexPath = Path(url: url),
-            let packfileIndex = PackfileIndex(path: packfileIndexPath, repository: repository) else {
-                return nil
-        }
-        
-        guard let dataReader = DataReader(path: path) else {
+        guard let data = try? NSData.readFromPath(path) as Data else {
             return nil
         }
+        
+        var packfileIndexPath = path
+        packfileIndexPath.pathExtension = "idx"
+        
+        guard let index = PackfileIndex(path: packfileIndexPath, repository: repository) else {
+            return nil
+        }
+        
+        self.data = data
+        self.index = index
+        self.repository = repository
+    }
+    
+    public func readAll() -> [Object] {
+        let dataReader = DataReader(data: data)
         
         let pack: [UInt8] = [80, 65, 67, 75] // PACK
         guard Array(dataReader.readData(bytes: 4)) == pack, dataReader.readInt(bytes: 4) == 2 else {
-            return nil
+            fatalError("Broken pack")
         }
         
         var chunks: [PackfileChunk] = []
@@ -60,9 +73,9 @@ public class Packfile {
                 } while nextByte[0] == 1
             }
             
-            let entry = packfileIndex.entries[i]
+            let entry = index.entries[i]
             
-            let nextOffset = i + 1 < objectCount ? packfileIndex.entries[i + 1].offset : dataReader.data.count - 20
+            let nextOffset = i + 1 < objectCount ? index.entries[i + 1].offset : dataReader.data.count - 20
             
             let chunk: PackfileChunk
             if let objectType = packfileObjectType?.objectType {
@@ -114,7 +127,7 @@ public class Packfile {
             hashChunkIndexMap[entry.hash] = chunks.endIndex - 1
         }
         
-        print(chunks.map({ $0.object }))
+        return chunks.map { $0.object }
     }
     
 }

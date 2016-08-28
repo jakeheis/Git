@@ -3,7 +3,7 @@ import FileKit
 
 public class Repository {
     
-    let path: Path
+    public let path: Path
     
     private var internalDirectory: Path {
         return path + ".git"
