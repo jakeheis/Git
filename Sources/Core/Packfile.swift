@@ -31,14 +31,14 @@ public class Packfile {
             return nil
         }
         
-        let pack: [UInt8] = [80, 65, 67, 75]
+        let pack: [UInt8] = [80, 65, 67, 75] // PACK
         guard Array(dataReader.readData(bytes: 4)) == pack, dataReader.readInt(bytes: 4) == 2 else {
             return nil
         }
         
-        print(packfileIndex.entries.map { $0.hash + " -- " + String(describing: $0.offset) })
-        
-        var chunks: [Int: PackfileChunk] = [:]
+        var chunks: [PackfileChunk] = []
+        var offsetChunkIndexMap: [Int: Int] = [:]
+        var hashChunkIndexMap: [String: Int] = [:]
         
         let objectCount = dataReader.readInt(bytes: 4)
         
@@ -64,6 +64,7 @@ public class Packfile {
             
             let nextOffset = i + 1 < objectCount ? packfileIndex.entries[i + 1].offset : dataReader.data.count - 20
             
+            let chunk: PackfileChunk
             if let objectType = packfileObjectType?.objectType {
                 let dataOffset = entry.offset + lengthByteCount
                 guard let data = dataReader.readData(bytes: nextOffset - dataOffset).uncompressed() else {
@@ -74,72 +75,46 @@ public class Packfile {
                 }
                 
                 let object = objectType.objectClass.init(hash: entry.hash, data: data, repository: repository)
-                print(object)
-                chunks[entry.offset] = PackfileChunk(data: data, object: object)
+                chunk = PackfileChunk(data: data, object: object)
             } else {
+                let parentChunkIndex: Int?
+                let deltaDataLength: Int
                 if packfileObjectType == .ofsDelta {
-                    var currentByte = dataReader.readByte()
-                    var negativeOffset = currentByte.intValue(ofBits: 1 ..< 8)
-                    var backwardsDistanceByteCount = 1
+                    let offset = Delta.offset(using: dataReader)
+                    let absoluteOffset = entry.offset - offset.value
                     
-                    while currentByte[0] == 1 {
-                        currentByte = dataReader.readByte()
-                        negativeOffset += 1
-                        negativeOffset <<= 7
-                        negativeOffset += currentByte.intValue(ofBits: 1 ..< 8)
-                        backwardsDistanceByteCount += 1
-                    }
-                    
-                    let deltaFromObjectOffset = entry.offset - negativeOffset
-                    let chunk = chunks[deltaFromObjectOffset]!
-                    let baseObject = chunk.data
-                    
-                    let thisOffset = entry.offset + lengthByteCount + backwardsDistanceByteCount
-                    let data = dataReader.readData(bytes: nextOffset - thisOffset)
-                    let deltaData = data.uncompressed()!
-                    let deltaReader = DataReader(data: deltaData)
-                    _ = deltaReader.readVariableLengthInt() // Source length
-                    _ = deltaReader.readVariableLengthInt() // Target length
-                    
-                    var builtData = Data()
-                    
-                    while deltaReader.canRead {
-                        let instructionByte = deltaReader.readByte()
-                        
-                        if instructionByte[0] == 0 { // Insertion
-                            let insertionByteCount = instructionByte.intValue(ofBits: 1 ..< 8)
-                            builtData.append(deltaReader.readData(bytes: insertionByteCount))
-                        } else { // Copy
-                            var offset = 0
-                            for bitIndex in 0 ..< 4 {
-                                if instructionByte[7 - bitIndex] == 1 {
-                                    let byte = deltaReader.readInt(bytes: 1)
-                                    offset |= byte << (bitIndex * 8)
-                                }
-                            }
-                            
-                            var size = 0
-                            for bitIndex in 0 ..< 3 {
-                                if instructionByte[3 - bitIndex] == 1 {
-                                    let byte = deltaReader.readInt(bytes: 1)
-                                    size |= byte << (bitIndex * 8)
-                                }
-                            }
-                            if size == 0 {
-                                size = 0x10000
-                            }
-                            
-                            builtData.append(baseObject.subdata(in: offset ..< (offset + size)))
-                        }
-                    }
-                    
-                    print(chunk.object.type.objectClass.init(hash: entry.hash, data: builtData, repository: repository))
+                    parentChunkIndex = offsetChunkIndexMap[absoluteOffset]
+                    deltaDataLength = nextOffset - (entry.offset + lengthByteCount + offset.byteCount)
                 } else {
-                    let parent = dataReader.readHex(bytes: 20)
-                    print("delta from", parent)
+                    let baseHash = dataReader.readHex(bytes: 20)
+                    
+                    parentChunkIndex = hashChunkIndexMap[baseHash]
+                    deltaDataLength = nextOffset - (entry.offset + lengthByteCount + 20)
                 }
+                
+                guard let data = dataReader.readData(bytes: deltaDataLength).uncompressed() else {
+                    fatalError("Couldn't decompress delta")
+                }
+                
+                guard let index = parentChunkIndex else {
+                    fatalError("Couldn't find base object")
+                }
+                let parentChunk = chunks[index]
+                
+                let delta = Delta(data: data)
+                let result = delta.apply(to: parentChunk.data)
+                
+                let objectType = parentChunk.object.type.objectClass
+                let object = objectType.init(hash: entry.hash, data: result, repository: repository)
+                chunk = PackfileChunk(data: result, object: object)
             }
+            
+            chunks.append(chunk)
+            offsetChunkIndexMap[entry.offset] = chunks.endIndex - 1
+            hashChunkIndexMap[entry.hash] = chunks.endIndex - 1
         }
+        
+        print(chunks.map({ $0.object }))
     }
     
 }
