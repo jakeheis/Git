@@ -14,8 +14,9 @@ extension Repository {
     
     public var branches: [Branch] {
         get {
-            let branchesDirectory = subpath(with: "refs/heads")
-            return branchesDirectory.flatMap { Branch(path: $0, repository: self) }
+            let branchRefs = "refs/heads"
+            let branchesDirectory = subpath(with: branchRefs)
+            return branchesDirectory.flatMap { Branch(ref: branchRefs + "/" + $0.fileName, repository: self) }
         }
     }
     

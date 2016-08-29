@@ -9,8 +9,9 @@ extension Repository {
     
     public var tags: [Tag] {
         get {
-            let tagsDirectory = subpath(with: "refs/tags")
-            return tagsDirectory.flatMap { Tag(path: $0, repository: self) }
+            let tagRefs = "refs/tags"
+            let tagsDirectory = subpath(with: tagRefs)
+            return tagsDirectory.flatMap { Tag(ref: tagRefs + "/" + $0.fileName, repository: self) }
         }
     }
     

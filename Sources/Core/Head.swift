@@ -32,11 +32,10 @@ public class Head {
     
     init(text: String, repository: Repository) {
         if text.hasPrefix("ref: "), let refSpace = text.characters.index(of: " ") {
-            let startIndex = text.index(refSpace, offsetBy: 1)
-            let endIndex = text.characters.index(of: "\n") ?? text.endIndex
-            let refText = text.substring(with: startIndex ..< endIndex)
+            let startIndex = text.index(after: refSpace)
+            let refText = text.substring(with: startIndex ..< text.endIndex).trimmingCharacters(in: .whitespacesAndNewlines)
             
-            guard let reference = Reference(path: repository.subpath(with: refText), repository: repository) else {
+            guard let reference = Reference(ref: refText, repository: repository) else {
                 fatalError("Broken HEAD: \(refText)")
             }
             self.kind = .reference(reference)

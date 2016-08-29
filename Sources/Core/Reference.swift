@@ -11,12 +11,12 @@ import FileKit
 
 public class Reference {
     
-    public let path: Path
+    public let ref: String
     public let hash: String
     let repository: Repository
     
     public var name: String {
-        return path.fileName
+        return ref.components(separatedBy: "/").last ?? ref
     }
     
     public var object: Object {
@@ -26,13 +26,30 @@ public class Reference {
         return object
     }
     
-    public init?(path: Path, repository: Repository) {
-        guard let hash = try? String.readFromPath(path) else {
-            return nil
+    public init?(ref: String, repository: Repository) {
+        if let hash = try? String.readFromPath(repository.subpath(with: ref)) {
+            self.hash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
+        } else {
+            guard let packedRefs = try? String.readFromPath(repository.subpath(with: "packed-refs")) else {
+                return nil
+            }
+            let lines = packedRefs.components(separatedBy: "\n")
+            
+            var possibleHash: String?
+            for line in lines where !line.hasPrefix("#") { // No comments
+                let words = line.components(separatedBy: " ")
+                if let word = words.last, word == ref, let hash = words.first {
+                    possibleHash = hash
+                }
+            }
+            
+            guard let hash = possibleHash else {
+                return nil
+            }
+            self.hash = hash
         }
         
-        self.path = path
-        self.hash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.ref = ref
         self.repository = repository
     }
     
