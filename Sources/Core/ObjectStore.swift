@@ -21,8 +21,25 @@ public class ObjectStore {
     
     public subscript(hash: String) -> Object? {
         get {
-            return try? Object.from(file: path(for: hash), in: repository)
+            if let fromFile = objectFromFile(hash: hash) {
+                return fromFile
+            }
+            
+            return objectFromPackfile(hash: hash)
         }
+    }
+    
+    public func objectFromFile(hash: String) -> Object? {
+        return try? Object.from(file: path(for: hash), in: repository)
+    }
+    
+    public func objectFromPackfile(hash: String) -> Object? {
+        for packfileIndex in repository.packfileIndices {
+            if let offset = packfileIndex.offset(for: hash) {
+                return packfileIndex.packfile?.readObject(at: offset, hash: hash)
+            }
+        }
+        return nil
     }
     
     public func path(for hash: String) -> Path {

@@ -14,6 +14,10 @@ class DataReader {
     let data: Data
     var byteCounter = 0
     
+    var remainingBytes: Int {
+        return data.count - byteCounter
+    }
+    
     var canRead: Bool {
         return byteCounter != data.count
     }

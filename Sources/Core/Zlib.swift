@@ -190,13 +190,16 @@ extension GzipProcessor {
                         
             _stream.pointee.avail_out = uInt(availOut)
             _stream.pointee.next_out = output.mutableBytes.assumingMemoryBound(to: Bytef.self).advanced(by: Int(writtenBeforeThisChunk))
-                        
+            
             result = processChunk()
 
             guard result >= 0 || (result == Z_BUF_ERROR && _stream.pointee.avail_out == 0) else {
                 throw GzipError(code: result, message: _stream.pointee.msg)
             }
             
+            if _stream.pointee.total_out - chunkStart == writtenBeforeThisChunk { // Didn't read any
+                break
+            }
         } while loop(result)
         
         guard result == Z_STREAM_END || result == Z_OK else {

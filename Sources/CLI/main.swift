@@ -28,7 +28,7 @@ let porcelain: [RepositoryCommand] = [
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git verify-pack .git/objects/pack/pack-33f6348e282fa3392dcdf4a016faa8ae85f9e242.idx")
+let result = CLI.debugGo(with: "git cat-file -p 5c55fef977975f927c3e7ada2b3a35e837e59ce6")
 exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

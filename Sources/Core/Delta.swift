@@ -12,7 +12,7 @@ class Delta {
     
     let data: Data
     
-    static func offset(using dataReader: DataReader) -> (value: Int, byteCount: Int) {
+    static func readOffset(using dataReader: DataReader) -> (value: Int, byteCount: Int) {
         var currentByte = dataReader.readByte()
         var offset = currentByte.intValue(ofBits: 1 ..< 8)
         var byteCount = 1

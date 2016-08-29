@@ -41,6 +41,70 @@ public class Packfile {
         self.repository = repository
     }
     
+    func readObjectData(at offset: Int) -> (data: Data, type: Object.ObjectType)? {
+        let dataReader = DataReader(data: data)
+        dataReader.byteCounter = offset
+        
+        let objectMetadata = dataReader.readByte()
+        
+        let packfileObjectType = PackfileObjectType(rawValue: objectMetadata.intValue(ofBits: 1 ..< 4))
+        var objectLength = objectMetadata.intValue(ofBits: 4 ..< 8)
+        var shiftCount = 4
+        
+        if objectMetadata[0] == 1 {
+            var nextByte: Byte
+            repeat {
+                nextByte = dataReader.readByte()
+                objectLength |= (nextByte.intValue(ofBits: 1 ..< 8) << shiftCount)
+                shiftCount += 7
+            } while nextByte[0] == 1
+        }
+        
+        if let objectType = packfileObjectType?.objectType {
+            guard let data = dataReader.readData(bytes: dataReader.remainingBytes).uncompressed() else {
+                fatalError("Couldn't uncompress data")
+            }
+            
+            if data.count != objectLength {
+                fatalError("Inflated object should be correct length")
+            }
+            
+            return (data, objectType)
+        }
+        
+        let parentData: Data
+        let parentType: Object.ObjectType
+        if packfileObjectType == .ofsDelta {
+            let deltaOffset = Delta.readOffset(using: dataReader)
+            let absoluteOffset = offset - deltaOffset.value
+            
+            (parentData, parentType) = readObjectData(at: absoluteOffset)!
+        } else {
+//            let parentHash = dataReader.readHex(bytes: 20)
+//            guard let object = repository.objectStore[parentHash] else {
+//                fatalError("Couldn't find parent of delta")
+//            }
+//            parentType = object.type
+            fatalError("Don't suppoprt lookup of objects with hash based deltas yet")
+        }
+        
+        guard let deltaData = dataReader.readData(bytes: dataReader.remainingBytes).uncompressed() else {
+            fatalError("Couldn't decompress delta")
+        }
+        
+        let delta = Delta(data: deltaData)
+        let result = delta.apply(to: parentData)
+        
+        return (result, parentType)
+    }
+    
+    func readObject(at offset: Int, hash: String) -> Object? {
+        guard let (data, type) = readObjectData(at: offset) else {
+            return nil
+        }
+        return type.objectClass.init(hash: hash, data: data, repository: repository)
+    }
+    
     public func readAll() -> [PackfileChunk] {
         let dataReader = DataReader(data: data)
         
@@ -54,6 +118,7 @@ public class Packfile {
         var hashChunkIndexMap: [String: Int] = [:]
         
         let objectCount = dataReader.readInt(bytes: 4)
+        let entries = index.readAll()
         
         for i in 0 ..< objectCount {
             let objectMetadata = dataReader.readByte()
@@ -73,8 +138,8 @@ public class Packfile {
                 } while nextByte[0] == 1
             }
             
-            let entry = index.entries[i]
-            let nextOffset = i + 1 < objectCount ? index.entries[i + 1].offset : dataReader.data.count - 20
+            let entry = entries[i]
+            let nextOffset = i + 1 < objectCount ? entries[i + 1].offset : dataReader.data.count - 20
             
             let chunk: PackfileChunk
             if let objectType = packfileObjectType?.objectType {
@@ -92,7 +157,7 @@ public class Packfile {
                 let parentChunkIndex: Int?
                 let deltaDataLength: Int
                 if packfileObjectType == .ofsDelta {
-                    let offset = Delta.offset(using: dataReader)
+                    let offset = Delta.readOffset(using: dataReader)
                     let absoluteOffset = entry.offset - offset.value
                     
                     parentChunkIndex = offsetChunkIndexMap[absoluteOffset]
