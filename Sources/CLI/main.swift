@@ -28,7 +28,7 @@ let porcelain: [RepositoryCommand] = [
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git log")
+let result = CLI.debugGo(with: "git cat-file -p 2b73c95bd4eb0aa3a4e4fe4919eece1e380f5165")
 exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

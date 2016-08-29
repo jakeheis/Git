@@ -20,17 +20,20 @@ public class ObjectStore {
     }
     
     public subscript(hash: String) -> Object? {
-        get {
-            if let fromFile = objectFromFile(hash: hash) {
-                return fromFile
-            }
-            
-            return objectFromPackfile(hash: hash)
+        if let fromFile = objectFromFile(hash: hash) {
+            return fromFile
         }
+        
+        return objectFromPackfile(hash: hash)
     }
     
     public func objectFromFile(hash: String) -> Object? {
-        return try? Object.from(file: path(for: hash), in: repository)
+        let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
+        let firstTwo = hash.substring(to: breakIndex)
+        let hashEnd = hash.substring(from: breakIndex)
+        let path = repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)/\(hashEnd)")
+        
+        return try? Object.from(file: path, in: repository)
     }
     
     public func objectFromPackfile(hash: String) -> Object? {
@@ -40,13 +43,6 @@ public class ObjectStore {
             }
         }
         return nil
-    }
-    
-    public func path(for hash: String) -> Path {
-        let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
-        let firstTwo = hash.substring(to: breakIndex)
-        let hashEnd = hash.substring(from: breakIndex)
-        return repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)/\(hashEnd)")
     }
     
     public func allObjects() -> [Object] {

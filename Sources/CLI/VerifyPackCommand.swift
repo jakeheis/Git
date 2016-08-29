@@ -30,9 +30,8 @@ class VerifyPackCommand: RepositoryCommand {
             throw CLIError.error("Repository index could not be read")
         }
         
-        var packPath = repository.path + arguments.requiredArgument("packPath")
-        packPath.pathExtension = "pack"
-        guard let pack = Packfile(path: packPath, repository: repository) else {
+        let packPath = repository.path + arguments.requiredArgument("packPath")
+        guard let pack = PackfileIndex(path: packPath, repository: repository)?.packfile else {
             throw CLIError.error("Couldn't read Packfile")
         }
         

@@ -17,7 +17,7 @@ public class PackfileIndex {
     let path: Path
     let repository: Repository
     
-    var packfile: Packfile? {
+    public var packfile: Packfile? {
         var packfilePath = path
         packfilePath.pathExtension = "pack"
         return Packfile(path: packfilePath, repository: repository)
@@ -28,7 +28,7 @@ public class PackfileIndex {
         self.init(path: path, repository: repository)
     }
     
-    init?(path: Path, repository: Repository) {
+    public init?(path: Path, repository: Repository) {
         guard path.pathExtension == "idx" else {
             return nil
         }
@@ -96,28 +96,21 @@ public class PackfileIndex {
             fatalError("Corrupt packfile index or invalid version")
         }
         
-        var fanOutTable: [String: Int] = [:]
-        var cumulative = 0
-        for i in 0 ..< 256 {
-            let count = dataReader.readInt(bytes: 4)
-            if count > cumulative {
-                fanOutTable[String(format: "%02x", i)] = count - cumulative
-                cumulative = count
-            }
-        }
+        dataReader.byteCounter = 8 + 255 * 4
+        let objectCount = dataReader.readInt(bytes: 4) // Read last entry
         
         var hashes: [String] = []
-        for _ in 0 ..< cumulative {
+        for _ in 0 ..< objectCount {
             hashes.append(dataReader.readHex(bytes: 20))
         }
         
         var crcs: [Data] = []
-        for _ in 0 ..< cumulative {
+        for _ in 0 ..< objectCount {
             crcs.append(dataReader.readData(bytes: 4))
         }
         
         var entries: [PackfileIndexEntry] = []
-        for i in 0 ..< cumulative {
+        for i in 0 ..< objectCount {
             let offset = dataReader.readInt(bytes: 4)
             if offset < 0b1000_0000_0000_0000 { // Basically check if first bit is 0
                 let entry = PackfileIndexEntry(hash: hashes[i], crc: crcs[i], offset: offset)

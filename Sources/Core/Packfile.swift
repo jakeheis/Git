@@ -15,6 +15,8 @@ public class Packfile {
     let index: PackfileIndex
     let repository: Repository
     
+    var offsetHashCache: [Int: String] = [:]
+    
     convenience init?(name: String, repository: Repository) {
         let path = repository.subpath(with: PackfileIndex.packDirectory + name)
         self.init(path: path, repository: repository)
@@ -41,7 +43,12 @@ public class Packfile {
         self.repository = repository
     }
     
-    func readObjectData(at offset: Int) -> (data: Data, type: Object.ObjectType)? {
+    func readChunk(at offset: Int, hash potentialHash: String? = nil, packfileSize: Int? = nil) -> PackfileChunk? {
+        if let hash = potentialHash {
+            offsetHashCache[offset] = hash
+        }
+        let hash = potentialHash ?? offsetHashCache[offset]
+        
         let dataReader = DataReader(data: data)
         dataReader.byteCounter = offset
         
@@ -69,23 +76,32 @@ public class Packfile {
                 fatalError("Inflated object should be correct length")
             }
             
-            return (data, objectType)
+            return PackfileChunk(data: data, objectType: objectType, hash: hash, offset: offset, packfileSize: packfileSize ?? 0)
         }
         
-        let parentData: Data
-        let parentType: Object.ObjectType
+        let parentChunk: PackfileChunk
         if packfileObjectType == .ofsDelta {
             let deltaOffset = Delta.readOffset(using: dataReader)
             let absoluteOffset = offset - deltaOffset.value
             
-            (parentData, parentType) = readObjectData(at: absoluteOffset)!
+            guard let chunk = readChunk(at: absoluteOffset) else {
+                fatalError("Couldn't read parent chunk of delta")
+            }
+            parentChunk = chunk
         } else {
-//            let parentHash = dataReader.readHex(bytes: 20)
-//            guard let object = repository.objectStore[parentHash] else {
-//                fatalError("Couldn't find parent of delta")
-//            }
-//            parentType = object.type
-            fatalError("Don't suppoprt lookup of objects with hash based deltas yet")
+            let parentHash = dataReader.readHex(bytes: 20)
+            var potentialParentOffset: Int?
+            for (offset, offsetHash) in offsetHashCache {
+                if offsetHash == parentHash {
+                    potentialParentOffset = offset
+                    break
+                }
+            }
+            guard let parentOffset = potentialParentOffset,
+                let chunk = readChunk(at: parentOffset, hash: parentHash) else {
+                    fatalError("Couldn't read parent chunk of delta")
+            }
+            parentChunk = chunk
         }
         
         guard let deltaData = dataReader.readData(bytes: dataReader.remainingBytes).uncompressed() else {
@@ -93,16 +109,15 @@ public class Packfile {
         }
         
         let delta = Delta(data: deltaData)
-        let result = delta.apply(to: parentData)
+        let result = delta.apply(to: parentChunk.data)
         
-        return (result, parentType)
+        let deltaInfo = PackfileChunk.DeltaInfo(parentHash: parentChunk.hash, depth: (parentChunk.deltaInfo?.depth ?? 0) + 1, deltaDataLength: deltaData.count)
+        
+        return PackfileChunk(data: result, objectType: parentChunk.objectType, hash: hash, offset: offset, packfileSize: packfileSize ?? 0, deltaInfo: deltaInfo)
     }
     
     func readObject(at offset: Int, hash: String) -> Object? {
-        guard let (data, type) = readObjectData(at: offset) else {
-            return nil
-        }
-        return type.objectClass.init(hash: hash, data: data, repository: repository)
+        return readChunk(at: offset, hash: hash)?.object(in: repository)
     }
     
     public func readAll() -> [PackfileChunk] {
@@ -110,85 +125,22 @@ public class Packfile {
         
         let pack: [UInt8] = [80, 65, 67, 75] // PACK
         guard Array(dataReader.readData(bytes: 4)) == pack, dataReader.readInt(bytes: 4) == 2 else {
-            fatalError("Broken pack")
+            fatalError("Broken pack - missing header")
         }
         
         var chunks: [PackfileChunk] = []
-        var offsetChunkIndexMap: [Int: Int] = [:]
-        var hashChunkIndexMap: [String: Int] = [:]
         
         let objectCount = dataReader.readInt(bytes: 4)
         let entries = index.readAll()
         
         for i in 0 ..< objectCount {
-            let objectMetadata = dataReader.readByte()
-            
-            let packfileObjectType = PackfileObjectType(rawValue: objectMetadata.intValue(ofBits: 1 ..< 4))
-            var objectLength = objectMetadata.intValue(ofBits: 4 ..< 8)
-            var shiftCount = 4
-            var lengthByteCount = 1
-            
-            if objectMetadata[0] == 1 {
-                var nextByte: Byte
-                repeat {
-                    nextByte = dataReader.readByte()
-                    objectLength |= (nextByte.intValue(ofBits: 1 ..< 8) << shiftCount)
-                    shiftCount += 7
-                    lengthByteCount += 1
-                } while nextByte[0] == 1
-            }
-            
             let entry = entries[i]
-            let nextOffset = i + 1 < objectCount ? entries[i + 1].offset : dataReader.data.count - 20
-            
-            let chunk: PackfileChunk
-            if let objectType = packfileObjectType?.objectType {
-                let dataOffset = entry.offset + lengthByteCount
-                guard let data = dataReader.readData(bytes: nextOffset - dataOffset).uncompressed() else {
-                    fatalError("Couldn't uncompress data")
-                }
-                if data.count != objectLength {
-                    fatalError("Inflated object should be correct length")
-                }
-                
-                let object = objectType.objectClass.init(hash: entry.hash, data: data, repository: repository)
-                chunk = PackfileChunk(data: data, object: object, offset: entry.offset, packfileSize: nextOffset - entry.offset)
-            } else {
-                let parentChunkIndex: Int?
-                let deltaDataLength: Int
-                if packfileObjectType == .ofsDelta {
-                    let offset = Delta.readOffset(using: dataReader)
-                    let absoluteOffset = entry.offset - offset.value
-                    
-                    parentChunkIndex = offsetChunkIndexMap[absoluteOffset]
-                    deltaDataLength = nextOffset - (entry.offset + lengthByteCount + offset.byteCount)
-                } else {
-                    let baseHash = dataReader.readHex(bytes: 20)
-                    
-                    parentChunkIndex = hashChunkIndexMap[baseHash]
-                    deltaDataLength = nextOffset - (entry.offset + lengthByteCount + 20)
-                }
-                
-                guard let deltaData = dataReader.readData(bytes: deltaDataLength).uncompressed() else {
-                    fatalError("Couldn't decompress delta")
-                }
-                
-                guard let index = parentChunkIndex else {
-                    fatalError("Couldn't find base object")
-                }
-                let parentChunk = chunks[index]
-                
-                let delta = Delta(data: deltaData)
-                let result = delta.apply(to: parentChunk.data)
-                
-                let objectType = parentChunk.object.type.objectClass
-                let object = objectType.init(hash: entry.hash, data: result, repository: repository)
-                chunk = PackfileChunk(data: result, object: object, offset: entry.offset, packfileSize: nextOffset - entry.offset, parentHash: parentChunk.object.hash, deltaCount: parentChunk.deltaCount + 1)
+            let nextOffset = i + 1 < entries.count ? entries[i + 1].offset : dataReader.data.count - 20
+            guard let chunk = readChunk(at: entry.offset, hash: entry.hash, packfileSize: nextOffset - entry.offset) else {
+                fatalError("Couldn't read packfile")
             }
             
             chunks.append(chunk)
-            offsetChunkIndexMap[entry.offset] = chunks.endIndex - 1
-            hashChunkIndexMap[entry.hash] = chunks.endIndex - 1
         }
         
         return chunks
@@ -198,31 +150,48 @@ public class Packfile {
 
 public struct PackfileChunk {
     public let data: Data
-    public let object: Object
+    public let objectType: Object.ObjectType
+    public let hash: String?
     public let offset: Int
     public let packfileSize: Int
-    public let parentHash: String?
-    public let deltaCount: Int
     
-    init(data: Data, object: Object, offset: Int, packfileSize: Int, parentHash: String? = nil, deltaCount: Int = 0) {
+    public struct DeltaInfo {
+        public let parentHash: String?
+        public let depth: Int
+        public let deltaDataLength: Int
+    }
+    
+    public let deltaInfo: DeltaInfo?
+    
+    init(data: Data, objectType: Object.ObjectType, hash: String?, offset: Int, packfileSize: Int, deltaInfo: DeltaInfo? = nil) {
         self.data = data
-        self.object = object
+        self.objectType = objectType
+        self.hash = hash
         self.offset = offset
         self.packfileSize = packfileSize
-        self.parentHash = parentHash
-        self.deltaCount = deltaCount
+        
+        self.deltaInfo = deltaInfo
     }
+    
+    public func object(in repository: Repository) -> Object? {
+        guard let hash = hash else {
+            return nil
+        }
+        return objectType.objectClass.init(hash: hash, data: data, repository: repository)
+    }
+    
 }
 
 extension PackfileChunk: CustomStringConvertible {
     
     public var description: String {
-        var type = object.type.rawValue
+        var type = objectType.rawValue
         type += String(repeating: " ", count: 6 - type.characters.count)
-        var components = [object.hash, type, String(data.count), String(packfileSize), String(offset)]
-        if let parentHash = parentHash {
-            components.append(String(deltaCount))
-            components.append(parentHash)
+        let uncompressedLength = deltaInfo?.deltaDataLength ?? data.count
+        var components = [hash ?? "(no hash)", type, String(uncompressedLength), String(packfileSize), String(offset)]
+        if let deltaInfo = deltaInfo {
+            components.append(String(deltaInfo.depth))
+            components.append(deltaInfo.parentHash ?? "(no parent hash)")
         }
         return components.joined(separator: " ")
     }
