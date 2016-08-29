@@ -7,7 +7,7 @@ Path.Current = "/Users/jakeheiser/Documents/Swift/initgit copy"
 
 let r = Repository(path: Path.Current)!
 
-//print(r.packfiles)
+print(r.index!.first!.mode.split())
 
 CLI.setup(name: "Git")
 

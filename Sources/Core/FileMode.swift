@@ -12,31 +12,27 @@ public enum FileMode: String { // Don't use Int because these aren't base 10 num
     case executable = "100755"
     case link = "120000"
     
-    var intText: String {
+    public var intText: String {
         if self == .directory {
             return "0" + rawValue
         }
         return String(rawValue)
     }
     
-    var name: String {
+    public var name: String {
         switch self {
         case .directory: return "tree"
         case .blob, .link, .executable: return "blob"
         }
     }
     
-    func split() -> (objectType: ObjectType, unixPermission: UnixPermission) {
-        let modeValue = Int(String(rawValue), radix: 8)!
+    public func split() -> (objectType: ObjectType, unixPermission: UnixPermission) {
+        let modeValue = Int(rawValue, radix: 8)!
         
-        let modeBinary = String(modeValue, radix: 2)
-        let objectTypeBinary = modeBinary.substring(to: modeBinary.index(modeBinary.startIndex, offsetBy: 4))
-        let objectTypeInt = Int(objectTypeBinary, radix: 2)!
+        let objectType = modeValue >> 12
+        let unixPermission = modeValue & 0x1FF
         
-        let unixPermissionBinary = modeBinary.substring(from: modeBinary.index(modeBinary.startIndex, offsetBy: 7))
-        let unixPermissionInt = Int(unixPermissionBinary, radix: 2)!
-        
-        return (ObjectType(rawValue: objectTypeInt)!, UnixPermission(rawValue: unixPermissionInt)!)
+        return (ObjectType(rawValue: objectType)!, UnixPermission(rawValue: unixPermission)!)
     }
     
     public enum ObjectType: Int {
