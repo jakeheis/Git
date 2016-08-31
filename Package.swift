@@ -12,5 +12,8 @@ let package = Package(
         .Package(url: "https://github.com/jakeheis/CryptoSwift", Version(0, 6, 0, prereleaseIdentifiers: ["beta"])),
         .Package(url: "/Users/jakeheiser/Documents/Swift/Cncurses", majorVersion: 1, minor: 0),
         .Package(url: "/Users/jakeheiser/Documents/Swift/Czlib", majorVersion: 1, minor: 0)
+    ],
+    exclude: [
+        "Tests/Repositories"
     ]
 )
