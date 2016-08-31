@@ -3,16 +3,21 @@ import FileKit
 
 public class Tag: Reference {
     
+    static let refPrefix = "refs/tags"
+    
 }
 
 extension Repository {
     
     public var tags: [Tag] {
-        get {
-            let tagRefs = "refs/tags"
-            let tagsDirectory = subpath(with: tagRefs)
-            return tagsDirectory.flatMap { Tag(ref: tagRefs + "/" + $0.fileName, repository: self) }
-        }
+        var tags: [Tag] = []
+        
+        let tagsDirectory = subpath(with: Tag.refPrefix)
+        tags += tagsDirectory.flatMap { Tag(path: $0, repository: self) }
+        
+        tags += Reference.packedRefs(in: self).flatMap { $0 as? Tag }
+        
+        return tags
     }
     
 }

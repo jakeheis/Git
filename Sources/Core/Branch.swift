@@ -7,17 +7,22 @@
 //
 
 public class Branch: Reference {
+    
+    static let refPrefix = "refs/heads"
 
 }
 
 extension Repository {
     
     public var branches: [Branch] {
-        get {
-            let branchRefs = "refs/heads"
-            let branchesDirectory = subpath(with: branchRefs)
-            return branchesDirectory.flatMap { Branch(ref: branchRefs + "/" + $0.fileName, repository: self) }
-        }
+        var branches: [Branch] = []
+        
+        let branchesDirectory = subpath(with: Branch.refPrefix)
+        branches += branchesDirectory.flatMap { Branch(path: $0, repository: self) }
+        
+        branches += Reference.packedRefs(in: self).flatMap { $0 as? Branch }
+        
+        return branches
     }
     
 }
