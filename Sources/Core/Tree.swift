@@ -1,3 +1,11 @@
+//
+//  Tree.swift
+//  Git
+//
+//  Created by Jake Heiser on 8/30/16.
+//
+//
+
 import Foundation
 
 public class Tree: Object {

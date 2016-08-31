@@ -33,16 +33,4 @@ class TagTests: XCTestCase {
         XCTAssert(secondTag.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
     }
     
-    func testObjectRetrieval() {
-        let firstTag = testRepository.tags[0]
-        let firstTagCommit = firstTag.object as! Commit
-        
-        XCTAssert(firstTagCommit.hash == "041383a1bfc1f3ded2318db09d11b1dc8de629dd")
-        
-        let secondTag = testRepository.tags[1]
-        let secondTagCommit = secondTag.object as! Commit
-        
-        XCTAssert(secondTagCommit.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
-    }
-    
 }
