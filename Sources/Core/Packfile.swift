@@ -81,7 +81,7 @@ public class Packfile {
         
         let parentChunk: PackfileChunk
         if packfileObjectType == .ofsDelta {
-            let deltaOffset = Delta.readOffset(using: dataReader)
+            let deltaOffset = Delta.readBaseOffset(using: dataReader)
             let absoluteOffset = offset - deltaOffset.value
             
             guard let chunk = readChunk(at: absoluteOffset) else {

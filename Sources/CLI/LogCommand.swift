@@ -24,34 +24,38 @@ class LogCommand: RepositoryCommand {
         guard let headCommit = repository?.head?.commit else {
             throw CLIError.error("HEAD does not point to a valid commit")
         }
-        printCommit(headCommit)
         
-        var lastCommit = headCommit
-        for _ in 0..<5 { // Arbitrary for now
-            guard let commit = lastCommit.parent else {
-                break
+        var currentCommit: Commit? = headCommit
+        let less = Less { () -> [String]? in
+            guard let commit = currentCommit else {
+                return nil
             }
-            printCommit(commit)
-            lastCommit = commit
+            currentCommit = commit.parent
+            return self.log(of: commit)
         }
+        less.go()
     }
     
-    func printCommit(_ commit: Commit) {
-        print("commit", commit.hash)
-        print("Author:", commit.authorSignature.name, "<\(commit.authorSignature.email)>")
-        
+    func log(of commit: Commit) -> [String] {
+        var lines = [
+            "commit \(commit.hash)",
+            "Author: \(commit.authorSignature.name) (<\(commit.authorSignature.email)>)"
+        ]
+    
         let dateFormatter = DateFormatter()
         dateFormatter.dateStyle = .medium
         dateFormatter.timeStyle = .medium
         dateFormatter.timeZone = commit.authorSignature.timeZone
-        print("Date:", dateFormatter.string(from: commit.authorSignature.time))
+        lines.append("Date: " + dateFormatter.string(from: commit.authorSignature.time))
         
-        print()
+        lines.append("")
         
         let message = commit.message.components(separatedBy: "\n").map({ "\t\($0)" }).joined(separator: "\n")
-        print(message)
+        lines.append(message)
         
-        print()
+        lines.append("")
+        
+        return lines
     }
     
 }
