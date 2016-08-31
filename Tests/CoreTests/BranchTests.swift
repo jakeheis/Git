@@ -19,10 +19,6 @@ class BranchTests: XCTestCase {
     }
     
     func testParse() {
-        let firstBranch = testRepository.branches[0]
-        XCTAssert(firstBranch.ref == "refs/heads/master")
-        XCTAssert(firstBranch.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
-        
         let secondBranch = testRepository.branches[1]
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
