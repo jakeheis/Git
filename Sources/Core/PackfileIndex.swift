@@ -11,7 +11,7 @@ import FileKit
 
 public class PackfileIndex {
     
-    static let packDirectory = ".git/objects/pack/"
+    static let packDirectory = "objects/pack/"
     
     let data: Data
     let path: Path
