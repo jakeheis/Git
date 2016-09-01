@@ -3,6 +3,11 @@ import Foundation
 public class Commit: Object {
     
     public let treeHash: String
+    public let parentHash: String?
+    public let authorSignature: Signature
+    public let committerSignature: Signature
+    public let message: String
+    
     public var tree: Tree {
         guard let tree = repository.objectStore[treeHash] as? Tree else {
             fatalError("Couldn't resolve tree hash \(treeHash)")
@@ -10,17 +15,12 @@ public class Commit: Object {
         return tree
     }
     
-    public let parentHash: String?
     public var parent: Commit? {
         guard let parentHash = parentHash else {
             return nil
         }
         return repository.objectStore[parentHash] as? Commit
     }
-    
-    public let authorSignature: Signature
-    public let committerSignature: Signature
-    public let message: String
     
     public required init(hash: String, data: Data, repository: Repository) {
         guard let contents = String(data: data, encoding: .ascii) else {

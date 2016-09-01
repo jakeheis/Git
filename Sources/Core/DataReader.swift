@@ -68,19 +68,6 @@ class DataReader {
         return hexString
     }
     
-    func readVariableLengthInt() -> (value: Int, bytes: Int) {
-        var currentByte: Byte
-        var sum = 0
-        var byteCount = 0
-        repeat {
-            currentByte = readByte()
-            sum |= (currentByte.intValue(ofBits: 1 ..< 8) << byteCount * 8)
-            byteCount += 1
-        } while currentByte[0] == 1
-        
-        return (sum, byteCount)
-    }
-    
     func readUntil(byte stopByte: UInt8, skipByte: Bool = true) -> Data {
         var subdata: Data = Data()
         for i in byteCounter ..< data.count {

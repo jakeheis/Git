@@ -73,21 +73,6 @@ public class Object {
         self.repository = repository
     }
     
-    // MARK: - Creating objects
-    
-    public init(contentData: Data, type: ObjectType, repository: Repository) {
-        let header = "\(type.rawValue) \(contentData.count)\0"
-        guard let headerData = header.data(using: .utf8) else {
-            fatalError("Could not generate header data for blob")
-        }
-        guard let sha = (headerData + contentData).sha1() else {
-            fatalError("Could not hash file")
-        }
-        self.hash = DataReader(data: sha).readHex(bytes: 20)
-        self.type = type
-        self.repository = repository
-    }
-    
     // MARK: -
     
     public func cat() -> String {

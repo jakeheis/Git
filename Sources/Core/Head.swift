@@ -1,3 +1,11 @@
+//
+//  Head.swift
+//  Git
+//
+//  Created by Jake Heiser on 8/24/16.
+//
+//
+
 import Foundation
 import FileKit
 
@@ -19,14 +27,9 @@ public class Head {
     }
     
     convenience init?(repository: Repository) {
-        self.init(path: repository.subpath(with: "HEAD"), repository: repository)
-    }
-    
-    convenience init?(path: Path, repository: Repository) {
-        guard let contents = try? String.readFromPath(path) else {
+        guard let contents = try? String.readFromPath(repository.subpath(with: "HEAD")) else {
             return nil
         }
-        
         self.init(text: contents, repository: repository)
     }
     

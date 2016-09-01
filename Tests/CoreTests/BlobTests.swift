@@ -25,5 +25,13 @@ class BlobTests: XCTestCase {
         XCTAssert(secondBlob.hash == "e20f5916c1cb235a7f26cd91e09a40e277d38306")
         XCTAssert(String(data: secondBlob.data, encoding: .utf8) == "other file in other branch\n")
     }
+    
+    func testCreation() {
+        guard let blob = Blob.formBlob(from: basicRepository.path + "third.txt", in: basicRepository) else {
+            XCTFail()
+            return
+        }
+        XCTAssert(blob.hash == "234496b1caf2c7682b8441f9b866a7e2420d9748")
+    }
 
 }

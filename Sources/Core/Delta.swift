@@ -34,8 +34,8 @@ class Delta {
     
     func apply(to base: Data) -> Data {
         let deltaReader = DataReader(data: data)
-        _ = deltaReader.readVariableLengthInt() // Source length
-        _ = deltaReader.readVariableLengthInt() // Target length
+        _ = readVariableLengthInt(using: deltaReader) // Source length
+        _ = readVariableLengthInt(using: deltaReader) // Target length
         
         var builtData = Data()
         
@@ -70,6 +70,21 @@ class Delta {
         }
         
         return builtData
+    }
+    
+    // MARK: - Helpers
+    
+    private func readVariableLengthInt(using dataReader: DataReader) -> Int {
+        var currentByte: Byte
+        var sum = 0
+        var byteCount = 0
+        repeat {
+            currentByte = dataReader.readByte()
+            sum |= (currentByte.intValue(ofBits: 1 ..< 8) << byteCount * 8)
+            byteCount += 1
+        } while currentByte[0] == 1
+        
+        return sum
     }
     
 }

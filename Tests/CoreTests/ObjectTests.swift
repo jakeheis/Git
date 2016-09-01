@@ -28,14 +28,5 @@ class ObjectTests: XCTestCase {
         XCTAssert(tree.hash == "1209fb65536f4ef7f72c8f87a7724074ffb5e57e")
         XCTAssert(tree.type == .tree)
     }
-
-    func testObjectCreation() {
-        let blobPath = basicRepository.subpath(with: "objects/aa/3350c980eda0524c9ec6db48a613425f756b68")
-        let existingBlob = try! Object.from(file: blobPath, in: basicRepository) as! Blob
-        
-        let blob = Object(contentData: existingBlob.data, type: .blob, repository: basicRepository)
-        XCTAssert(blob.hash == "aa3350c980eda0524c9ec6db48a613425f756b68")
-        XCTAssert(blob.type == .blob)
-    }
     
 }

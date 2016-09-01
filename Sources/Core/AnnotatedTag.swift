@@ -14,7 +14,7 @@ public class AnnotatedTag: Object {
     public let objectHash: String
     public let tagType: ObjectType
     public let name: String
-    public let tagger: Signature
+    public let taggerSignature: Signature
     public let message: String
     
     public var object: Object {
@@ -43,14 +43,22 @@ public class AnnotatedTag: Object {
         }
         self.tagType = tagType
         self.name = lineValues[2]
-        self.tagger = Signature(signature: lineValues[3])
+        self.taggerSignature = Signature(signature: lineValues[3])
         self.message = lines[5 ..< lines.index(before: lines.endIndex)].joined(separator: "\n")
         
         super.init(hash: hash, type: .blob, repository: repository)
     }
     
-    public func print() {
-        Swift.print(objectHash, tagType, name, tagger, message)
+    public override func cat() -> String {
+        let lines = [
+            "object \(objectHash)",
+            "type \(tagType.rawValue)",
+            "tag \(name)",
+            "tagger \(taggerSignature)",
+            "",
+            message
+        ]
+        return lines.joined(separator: "\n")
     }
     
 }
