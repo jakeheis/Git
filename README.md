@@ -6,11 +6,11 @@
 - [x] Repository
 - [x] Index
 - [x] Objects
-- [ ] Packfile
+- [x] Packfile
 - [x] Tags
-- [ ] Git ignore
+- [x] Git ignore
 - [x] Signature
-- [ ] Probably much more
+- [x] Probably much more
 
 #### 2. Read only CLI (WIP)
 - [x] cat-file
@@ -20,7 +20,7 @@
 - [x] log
 - [x] status
 - [x] tag
-- [ ] Probably much more
+- [x] Probably much more
 
 #### 3. Read/write git core
 - [ ] Repository
