@@ -11,7 +11,7 @@ import FileKit
 
 public class PackfileIndex {
     
-    static let packDirectory = "objects/pack"
+    static let packDirectory = "objects/pack/"
     
     let data: Data
     let path: Path
@@ -20,7 +20,7 @@ public class PackfileIndex {
     public var packfile: Packfile? {
         var packfilePath = path
         packfilePath.pathExtension = "pack"
-        return Packfile(path: packfilePath, repository: repository)
+        return Packfile(path: packfilePath, index: self, repository: repository)
     }
     
     convenience init?(name: String, repository: Repository) {

@@ -3,7 +3,7 @@ import SwiftCLI
 import FileKit
 import Core
 
-Path.Current = "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Basic"
+Path.Current = "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed"
 
 //let r = Repository(path: Path.Current)!
 
@@ -26,7 +26,7 @@ let porcelain: [RepositoryCommand] = [
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git cat-file -p b1cab66f094cc38fe71fdc425de075851e69bee2")
+let result = CLI.debugGo(with: "git verify-pack -v .git/objects/pack/pack-a74bd7bba3ae75e0093b5b120b103cbab5340e59.idx")
 exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

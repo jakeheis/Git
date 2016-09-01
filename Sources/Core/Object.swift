@@ -41,7 +41,7 @@ public class Object {
         guard let data = try? NSData.readFromPath(path) else {
             throw Error.readError
         }
-        guard let uncompressed = try? data.gzipUncompressed() as Data,
+        guard let uncompressed = try? data.gzipUncompressed().data as Data,
             let unparsed = String(data: uncompressed, encoding: .ascii) else {
                 throw Error.compressionError
         }

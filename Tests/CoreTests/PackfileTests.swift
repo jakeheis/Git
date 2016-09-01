@@ -28,6 +28,7 @@ class PackfileTests: XCTestCase {
         XCTAssert(treeChunk?.objectType == .tree)
         XCTAssert(treeChunk?.hash == "1f1ace28d590693be994c10b3c2895cb62da6229")
         XCTAssert(treeChunk?.offset == 1104)
+        XCTAssert(treeChunk?.sizeInPackfile == 146)
         
         let tree = treeChunk!.object(in: packedRepository) as! Tree
         XCTAssert(tree.hash == "1f1ace28d590693be994c10b3c2895cb62da6229")
@@ -40,6 +41,7 @@ class PackfileTests: XCTestCase {
         XCTAssert(blobChunk?.objectType == .blob)
         XCTAssert(blobChunk?.hash == "234496b1caf2c7682b8441f9b866a7e2420d9748")
         XCTAssert(blobChunk?.offset == 1544)
+        XCTAssert(blobChunk?.sizeInPackfile == 15)
         
         let blob = blobChunk!.object(in: packedRepository) as! Blob
         XCTAssert(blob.hash == "234496b1caf2c7682b8441f9b866a7e2420d9748")
@@ -47,13 +49,14 @@ class PackfileTests: XCTestCase {
     }
     
     func testDeltifiedChunk() {
-        let deltifiedChunk = packfile.readChunk(at: 1300, hash: "11bbaed2e1c68b714e12e35615aedbe3c2a4e760")
-        XCTAssert(deltifiedChunk?.objectType == .tree)
-        XCTAssert(deltifiedChunk?.hash == "11bbaed2e1c68b714e12e35615aedbe3c2a4e760")
-        XCTAssert(deltifiedChunk?.offset == 1300)
-        XCTAssert(deltifiedChunk?.deltaInfo?.depth == 1)
+        let deltifiedChunk = packfile.readChunk(at: 1300, hash: "11bbaed2e1c68b714e12e35615aedbe3c2a4e760") as! DeltifiedPackfileChunk
+        XCTAssert(deltifiedChunk.objectType == .tree)
+        XCTAssert(deltifiedChunk.hash == "11bbaed2e1c68b714e12e35615aedbe3c2a4e760")
+        XCTAssert(deltifiedChunk.offset == 1300)
+        XCTAssert(deltifiedChunk.deltaDepth == 1)
+        XCTAssert(deltifiedChunk.sizeInPackfile == 17)
         
-        let tree = deltifiedChunk!.object(in: packedRepository) as! Tree
+        let tree = deltifiedChunk.object(in: packedRepository) as! Tree
         XCTAssert(tree.treeEntries.count == 3)
         XCTAssert(tree.treeEntries[0].equals(mode: .blob, hash: "aa3350c980eda0524c9ec6db48a613425f756b68", name: "file.txt"))
         XCTAssert(tree.treeEntries[1].equals(mode: .blob, hash: "e20f5916c1cb235a7f26cd91e09a40e277d38306", name: "other_file.txt"))
@@ -61,13 +64,14 @@ class PackfileTests: XCTestCase {
     }
     
     func testDepthDeltifiedChunk() {
-        let deltifiedChunk = packfile.readChunk(at: 1317, hash: "1f9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
-        XCTAssert(deltifiedChunk?.objectType == .tree)
-        XCTAssert(deltifiedChunk?.hash == "1f9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
-        XCTAssert(deltifiedChunk?.offset == 1317)
-        XCTAssert(deltifiedChunk?.deltaInfo?.depth == 2)
+        let deltifiedChunk = packfile.readChunk(at: 1317, hash: "1f9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5") as! DeltifiedPackfileChunk
+        XCTAssert(deltifiedChunk.objectType == .tree)
+        XCTAssert(deltifiedChunk.hash == "1f9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
+        XCTAssert(deltifiedChunk.offset == 1317)
+        XCTAssert(deltifiedChunk.deltaDepth == 2)
+        XCTAssert(deltifiedChunk.sizeInPackfile == 17)
         
-        let tree = deltifiedChunk!.object(in: packedRepository) as! Tree
+        let tree = deltifiedChunk.object(in: packedRepository) as! Tree
         XCTAssert(tree.treeEntries.count == 2)
         XCTAssert(tree.treeEntries[0].equals(mode: .blob, hash: "aa3350c980eda0524c9ec6db48a613425f756b68", name: "file.txt"))
         XCTAssert(tree.treeEntries[1].equals(mode: .blob, hash: "6b3b273987213e28230958801876aff0876376e7", name: "second.txt"))
@@ -81,14 +85,15 @@ class PackfileTests: XCTestCase {
         XCTAssert(chunks[2].offset == 267)
         XCTAssert(chunks[2].hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
         XCTAssert(chunks[2].objectType == .commit)
+        XCTAssert(chunks[2].sizeInPackfile == 156)
         
-        XCTAssert(chunks[10].offset == 1300)
-        XCTAssert(chunks[10].hash == "11bbaed2e1c68b714e12e35615aedbe3c2a4e760")
-        XCTAssert(chunks[10].objectType == .tree)
-        XCTAssert(chunks[10].packfileSize == 17)
-        XCTAssert(chunks[10].deltaInfo?.depth == 1)
-        XCTAssert(chunks[10].deltaInfo?.parentHash == "1f1ace28d590693be994c10b3c2895cb62da6229")
-        XCTAssert(chunks[10].deltaInfo?.deltaDataLength == 6)
+        let deltifiedChunk = chunks[10] as! DeltifiedPackfileChunk
+        XCTAssert(deltifiedChunk.offset == 1300)
+        XCTAssert(deltifiedChunk.hash == "11bbaed2e1c68b714e12e35615aedbe3c2a4e760")
+        XCTAssert(deltifiedChunk.objectType == .tree)
+        XCTAssert(deltifiedChunk.sizeInPackfile == 17)
+        XCTAssert(deltifiedChunk.deltaDepth == 1)
+        XCTAssert(deltifiedChunk.parentHash == "1f1ace28d590693be994c10b3c2895cb62da6229")
     }
     
     func testCount() {

@@ -25,9 +25,13 @@ public class Index {
     
     init(repository: Repository) throws {
         let indexPath = repository.subpath(with: "index")
+        
         guard let dataReader = DataReader(path: indexPath) else {
             throw Error.readError
         }
+        
+        // Read 12 byte header
+        
         let dirc: [UInt8] = [68, 73, 82, 67] // "DIRC"
         guard Array(dataReader.readData(bytes: 4)) == dirc else {
             throw Error.parseError
@@ -41,9 +45,7 @@ public class Index {
         
         let count = dataReader.readInt(bytes: 4)
         
-        // 12 byte header
-        
-        // TODO: Initial ugly implementation; refactor
+        // Read entries
         
         var entries: [IndexEntry] = []
         var keyedEntries: [String: IndexEntry] = [:]
@@ -61,26 +63,17 @@ public class Index {
             let dev = dataReader.readInt(bytes: 4)
             let ino = dataReader.readInt(bytes: 4)
             
-            // 24 bytes in entry
-            
             guard let mode = FileMode(rawValue: dataReader.readOctal(bytes: 4)) else {
                 throw Error.parseError
             }
-            
-            // 28 bytes in entry
             
             let uid = dataReader.readInt(bytes: 4)
             let gid = dataReader.readInt(bytes: 4)
             let fileSize = dataReader.readInt(bytes: 4)
             
-            // 40 bytes in entry
-            
             let hash = dataReader.readHex(bytes: 20)
             
-            // 60 bytes in entry
-            
             let flags = dataReader.readByte()
-            
             let assumeValid = flags[0] > 0
             let extended = flags[1] > 0
             let firstStage = flags[2] > 0
@@ -88,22 +81,20 @@ public class Index {
             
             let nameLength = dataReader.readInt(bytes: 1)
             
-            // 62 bytes in entry
-            
-            let rawName: String?
+            let potentialName: String?
             if nameLength == 0xFFFF { // Length too big to store; do it manually
                 let data = dataReader.readUntil(byte: 0, skipByte: false) // Read until null byte
-                rawName = String(data: data, encoding: .ascii)
+                potentialName = String(data: data, encoding: .ascii)
             } else {
-                rawName = String(data: dataReader.readData(bytes: nameLength), encoding: .ascii)
+                potentialName = String(data: dataReader.readData(bytes: nameLength), encoding: .ascii)
             }
             
-            guard let name = rawName else {
-                fatalError("Couldn't decode name")
+            guard let name = potentialName else {
+                fatalError("Couldn't parse index entry name")
             }
-        
+            
+            // Entry byte lengths are multiples of 8, so pad to multiple of 8
             let bytesIn = 62 + name.characters.count
-            
             let paddingCount = 8 - (bytesIn % 8)
             dataReader.readData(bytes: paddingCount)
             
@@ -117,7 +108,7 @@ public class Index {
         self.repository = repository
     }
     
-    subscript(name: String) -> IndexEntry? {
+    public subscript(name: String) -> IndexEntry? {
         return keyedEntries[name]
     }
     
@@ -184,103 +175,12 @@ extension IndexEntry: CustomStringConvertible {
     
 }
 
+// MARK: -
+
 extension Repository {
     
     public var index: Index? {
         return try? Index(repository: self)
-    }
-    
-}
-
-// MARK: - IndexDelta
-
-public struct IndexDelta {
-    
-    public enum FileStatus: String {
-        case added
-        case modified
-        case deleted
-        case untracked
-        
-        public var shortStatus: String {
-            return rawValue.substring(to: rawValue.index(after: rawValue.startIndex)).capitalized
-        }
-    }
-    
-    public typealias DeltaFile = (name: String, status: FileStatus)
-    
-    public let deltaFiles: [DeltaFile]
-    
-    let index: Index
-    
-    init(index: Index, tree: Tree) {
-        var indexNames = Set(index.entries.map({ $0.name }))
-        
-        var deltaFiles: [DeltaFile] = []
-        
-        let recursiveTreeIterator = RecursiveTreeIterator(tree: tree)
-        while let treeEntry = recursiveTreeIterator.next() {
-            if let indexEntry = index[treeEntry.name] {
-                indexNames.remove(treeEntry.name)
-                if treeEntry.hash != indexEntry.hash || treeEntry.mode != indexEntry.mode {
-                    deltaFiles.append((treeEntry.name, .modified))
-                }
-            } else {
-                deltaFiles.append((treeEntry.name, .deleted))
-            }
-        }
-        
-        for remainingName in indexNames {
-            deltaFiles.append((remainingName, .added))
-        }
-        
-        self.deltaFiles = deltaFiles
-        self.index = index
-    }
-    
-    init(index: Index, repository: Repository) {
-        var indexNames = Set(index.map { $0.name })
-        
-        var deltaFiles: [DeltaFile] = []
-        let gitIgnore = repository.gitIgnore
-        
-        guard let fileIterator = FileManager.default.enumerator(atPath: repository.path.rawValue) else {
-            fatalError("Couldn't iterate the files of the working directory")
-        }
-        for file in fileIterator {
-            guard let file = file as? String else {
-                continue
-            }
-            
-            if (repository.path + file).isDirectory {
-                if gitIgnore.ignoreDirectory(file) {
-                    fileIterator.skipDescendants()
-                }
-                continue
-            }
-            if let indexEntry = index[file] {
-                indexNames.remove(file)
-                
-                guard let blob = Blob.formBlob(from: repository.path + file, in: repository) else {
-                    fatalError("Blob could not be created for file: \(file)")
-                }
-                
-                if indexEntry.hash != blob.hash {
-                    deltaFiles.append((file, .modified))
-                }
-            } else {
-                if !gitIgnore.ignoreFile(file) {
-                    deltaFiles.append((file, .untracked))
-                }
-            }
-        }
-        
-        for remainingName in indexNames {
-            deltaFiles.append((remainingName, .deleted))
-        }
-        
-        self.deltaFiles = deltaFiles
-        self.index = index
     }
     
 }

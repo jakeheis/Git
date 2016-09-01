@@ -5,15 +5,15 @@ import Czlib
 
 public protocol Gzippable {
     associatedtype DataType
-    func gzipCompressed() throws -> DataType
-    func gzipUncompressed() throws -> DataType
+    func gzipCompressed() throws -> (data: DataType, bytesProcessed: Int)
+    func gzipUncompressed() throws -> (data: DataType, bytesProcessed: Int)
 }
 
 extension NSData: Gzippable {
     
-    public func gzipCompressed() throws -> NSData {
+    public func gzipCompressed() throws -> (data: NSData, bytesProcessed: Int) {
         return try autoreleasepoolIfAvailable {
-            guard self.length > 0 else { return NSData() }
+            guard self.length > 0 else { return (NSData(), 0) }
             let uncompressor = GzipCompressor()
             try uncompressor.initialize()
             let outData = try uncompressor.process(data: self, isLast: true)
@@ -21,9 +21,9 @@ extension NSData: Gzippable {
         }
     }
     
-    public func gzipUncompressed() throws -> NSData {
+    public func gzipUncompressed() throws -> (data: NSData, bytesProcessed: Int) {
         return try autoreleasepoolIfAvailable {
-            guard self.length > 0 else { return NSData() }
+            guard self.length > 0 else { return (NSData(), 0) }
             let uncompressor = GzipUncompressor()
             try uncompressor.initialize()
             let outData = try uncompressor.process(data: self, isLast: true)
@@ -66,7 +66,7 @@ final class GzipUncompressor: GzipProcessor {
         }
     }
     
-    func process(data: NSData, isLast: Bool) throws -> NSData {
+    func process(data: NSData, isLast: Bool) throws -> (data: NSData, bytesProcessed: Int) {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
         let processChunk: () -> Int32 = { return inflate(&self._stream.pointee, mode) }
         let loop: (_ result: Int32) -> Bool = { _ in self._stream.pointee.avail_in > 0 }
@@ -115,7 +115,7 @@ final class GzipCompressor: GzipProcessor {
         }
     }
     
-    func process(data: NSData, isLast: Bool) throws -> NSData {
+    func process(data: NSData, isLast: Bool) throws -> (data: NSData, bytesProcessed: Int) {
         let mode = isLast ? Z_FINISH : Z_SYNC_FLUSH
         let processChunk: () -> Int32 = { return deflate(&self._stream.pointee, mode) }
         let loop: (_ result: Int32) -> Bool = { _ in self._stream.pointee.avail_out == 0 }
@@ -148,7 +148,7 @@ func _makeStream() -> UnsafeMutablePointer<z_stream> {
 
 protocol GzipProcessor: class {
     func initialize() throws
-    func process(data: NSData, isLast: Bool) throws -> NSData
+    func process(data: NSData, isLast: Bool) throws -> (data: NSData, bytesProcessed: Int)
     func close()
     var closed: Bool { get set }
     var _stream: UnsafeMutablePointer<z_stream> { get }
@@ -165,8 +165,8 @@ extension GzipProcessor {
                   processChunk: () -> Int32,
                   loop: (_ result: Int32) -> Bool,
                   shouldEnd: (_ result: Int32) -> Bool,
-                  end: () -> ()) throws -> NSData {
-        guard data.length > 0 else { return NSData() }
+                  end: () -> ()) throws -> (data: NSData, bytesProcessed: Int) {
+        guard data.length > 0 else { return (NSData(), 0) }
         
         let rawInput = UnsafeMutableRawPointer(mutating: data.bytes).assumingMemoryBound(to: Bytef.self)
         _stream.pointee.next_in = rawInput
@@ -211,7 +211,8 @@ extension GzipProcessor {
         }
         let chunkCount = _stream.pointee.total_out - chunkStart
         output.length = Int(chunkCount)
-        return output
+        
+        return (output, data.length - Int(_stream.pointee.avail_in))
     }
 }
 
