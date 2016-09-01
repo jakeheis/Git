@@ -90,5 +90,9 @@ class PackfileTests: XCTestCase {
         XCTAssert(chunks[10].deltaInfo?.parentHash == "1f1ace28d590693be994c10b3c2895cb62da6229")
         XCTAssert(chunks[10].deltaInfo?.deltaDataLength == 6)
     }
+    
+    func testCount() {
+        XCTAssert(packedRepository.packfiles.count == 1)
+    }
 
 }

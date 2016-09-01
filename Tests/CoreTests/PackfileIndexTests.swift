@@ -57,5 +57,9 @@ class PackfileIndexTests: XCTestCase {
         XCTAssert(index.offset(for: "220f4aa98a71f6767d753148383fc4c941d4d071") == 1717)
         XCTAssert(index.offset(for: "22aaaaa98a71faaa7d753148383fc4c941aaa071") == nil) // Random hash not in pack
     }
+    
+    func testCount() {
+        XCTAssert(packedRepository.packfileIndices.count == 1)
+    }
 
 }
