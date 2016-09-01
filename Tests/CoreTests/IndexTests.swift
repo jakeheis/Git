@@ -13,7 +13,7 @@ import FileKit
 class IndexTests: XCTestCase {
     
     func testParse() {
-        executeGitCommand(with: ["checkout", "29287d7a61db5b55e66f707a01b7fb4b11efcb40"])
+        gitCheckout("29287d7a61db5b55e66f707a01b7fb4b11efcb40", in: basicRepository)
         
         let index = basicRepository.index!
         XCTAssert(index[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 29, hash: "3a79a681b63d71c6c7c22bdefcb3e4e8d3988a5b", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "Subdirectory/subfile.txt"))
@@ -23,7 +23,7 @@ class IndexTests: XCTestCase {
     }
     
     func testIndexTreeDelta() {
-        executeGitCommand(with: ["checkout", "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"])
+        gitCheckout("db69d97956555ed0ebf9e4a7ff4fedd8c08ba717", in: basicRepository)
 
         let index = basicRepository.index!
         let treePath = basicRepository.subpath(with: "objects/1f/9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
@@ -37,7 +37,7 @@ class IndexTests: XCTestCase {
     }
     
     func testIndexWorkingDirectoryDelta() {
-        executeGitCommand(with: ["checkout", "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"])
+        gitCheckout("db69d97956555ed0ebf9e4a7ff4fedd8c08ba717", in: basicRepository)
         
         let hiFile = basicRepository.path + "hi.txt"
         try! "hi".writeToPath(hiFile)
@@ -51,13 +51,13 @@ class IndexTests: XCTestCase {
         XCTAssert(delta.deltaFiles[1] == ("hi.txt", .untracked))
         XCTAssert(delta.deltaFiles[2] == ("third.txt", .deleted))
         
-        executeGitCommand(with: ["checkout", "."])
+        gitCheckout(".", in: basicRepository)
         
         try! hiFile.deleteFile()
     }
     
     override func tearDown() {
-        executeGitCommand(with: ["checkout", "master"])
+        gitCheckout("master", in: basicRepository)
     }
 
 }

@@ -25,7 +25,7 @@ class ObjectStoreTests: XCTestCase {
     
     func testReadAllFromFiles() {
         let all = basicRepository.objectStore.allObjects()
-        XCTAssert(all.count == 23)
+        XCTAssert(all.count == 24)
     }
     
     func testReadAllFromPackfile() {

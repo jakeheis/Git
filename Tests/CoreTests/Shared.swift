@@ -13,10 +13,14 @@ import Foundation
 let basicRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Basic")!
 let packedRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed")!
 
-func executeGitCommand(with additionalArguments: [String]) {
-    let arguments = ["-C", basicRepository.path.rawValue] + additionalArguments
+func executeGitCommand(in repository: Repository, with additionalArguments: [String]) {
+    let arguments = ["-C", repository.path.rawValue] + additionalArguments
     let process = Process.launchedProcess(launchPath: "/usr/local/bin/git", arguments: arguments)
     process.waitUntilExit()
+}
+
+func gitCheckout(_ co: String, in repository: Repository) {
+    executeGitCommand(in: repository, with: ["checkout", co])
 }
 
 extension TreeEntry {

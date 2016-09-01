@@ -13,7 +13,7 @@ import FileKit
 class TagTests: XCTestCase {
     
     func testRepositoryTags() {
-        XCTAssert(basicRepository.tags.count == 2)
+        XCTAssert(basicRepository.tags.count == 3)
         
         XCTAssert(basicRepository.tags[0].name == "0.0.1")
         XCTAssert(basicRepository.tags[1].name == "0.0.2")

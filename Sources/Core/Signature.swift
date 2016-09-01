@@ -18,7 +18,8 @@ public class Signature {
     init(signature: String) {
         var words = signature.components(separatedBy: " ")
         
-        guard let timeZone = TimeZone(stringOffset: words.removeLast()),
+        let timeZoneIdentifier = "GMT" + words.removeLast()
+        guard let timeZone = TimeZone(identifier: timeZoneIdentifier),
             let seconds = TimeInterval(words.removeLast()) else {
                 fatalError("Corrupt signature: \(signature)")
         }
@@ -36,22 +37,6 @@ extension Signature: CustomStringConvertible {
     
     public var description: String {
         return "\(name) <\(email)> \(time) \(timeZone)"
-    }
-    
-}
-
-extension TimeZone {
-    
-    init?(stringOffset: String) {
-        let signBreakIndex = stringOffset.index(after: stringOffset.startIndex)
-        let hourBreakIndex = stringOffset.index(stringOffset.startIndex, offsetBy: 3)
-        
-        let sign = stringOffset.hasPrefix("-") ? -1 : 1
-        let hours = Int(stringOffset.substring(with: signBreakIndex ..< hourBreakIndex)) ?? 0
-        let minutes = Int(stringOffset.substring(from: hourBreakIndex)) ?? 0
-        
-        let secondOffset = (hours * 3600 + minutes * 60) * sign
-        self.init(secondsFromGMT: secondOffset)
     }
     
 }

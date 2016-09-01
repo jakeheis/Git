@@ -32,19 +32,5 @@ class BranchTests: XCTestCase {
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
     }
-    
-    func testHeadReference() {
-        guard case let .reference(reference) = basicRepository.head!.kind else {
-            XCTFail()
-            return
-        }
-        XCTAssert(reference.hash == "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717")
-        
-        guard case let .reference(packedReference) = packedRepository.head!.kind else {
-            XCTFail()
-            return
-        }
-        XCTAssert(packedReference.hash == "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717")
-    }
 
 }

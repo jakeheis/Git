@@ -2,30 +2,30 @@ import Foundation
 import FileKit
 import CryptoSwift
 
-public class Object {
+public enum ObjectType: String {
+    case blob
+    case commit
+    case tree
+    case tag
     
-    public enum ObjectType: String {
-        case blob
-        case commit
-        case tree
-        case tag
-        
-        init?(header: String) {
-            guard let firstWord = header.components(separatedBy: " ").first else {
-                return nil
-            }
-            self.init(rawValue: firstWord)
+    init?(header: String) {
+        guard let firstWord = header.components(separatedBy: " ").first else {
+            return nil
         }
-        
-        var objectClass: Object.Type {
-            switch self {
-            case .blob: return Blob.self
-            case .commit: return Commit.self
-            case .tree: return Tree.self
-            case .tag: return AnnotatedTag.self
-            }
+        self.init(rawValue: firstWord)
+    }
+    
+    var objectClass: Object.Type {
+        switch self {
+        case .blob: return Blob.self
+        case .commit: return Commit.self
+        case .tree: return Tree.self
+        case .tag: return AnnotatedTag.self
         }
     }
+}
+
+public class Object {
     
     public enum Error: Swift.Error {
         case readError
@@ -36,6 +36,8 @@ public class Object {
     public let hash: String
     public let type: ObjectType
     let repository: Repository
+    
+    // MARK: Parsing saved objects
     
     public static func from(file path: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(path) else {
@@ -61,13 +63,6 @@ public class Object {
         return type.objectClass.init(hash: hash, data: contentData, repository: repository)
     }
     
-    public static func from(compressed data: Data, hash: String, type: ObjectType, repository: Repository) throws -> Object {
-        guard let uncompressed = data.uncompressed() else {
-            throw Error.compressionError
-        }
-        return type.objectClass.init(hash: hash, data: uncompressed, repository: repository)
-    }
-    
     public required init(hash: String, data: Data, repository: Repository) {
         fatalError("Use subclass")
     }
@@ -77,6 +72,8 @@ public class Object {
         self.type = type
         self.repository = repository
     }
+    
+    // MARK: - Creating objects
     
     public init(contentData: Data, type: ObjectType, repository: Repository) {
         let header = "\(type.rawValue) \(contentData.count)\0"
@@ -90,6 +87,8 @@ public class Object {
         self.type = type
         self.repository = repository
     }
+    
+    // MARK: -
     
     public func cat() -> String {
         return description

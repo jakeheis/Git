@@ -1,0 +1,41 @@
+//
+//  ObjectTests.swift
+//  Git
+//
+//  Created by Jake Heiser on 8/31/16.
+//
+//
+
+import XCTest
+@testable import Core
+
+class ObjectTests: XCTestCase {
+
+    func testFileParse() {
+        let commitPath = basicRepository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
+        guard let commit = try? Object.from(file: commitPath, in: basicRepository) else {
+            XCTFail()
+            return
+        }
+        XCTAssert(commit.hash == "39f6140dee77ffed9539d61aead2e1239ac7ad13")
+        XCTAssert(commit.type == .commit)
+        
+        let treePath = basicRepository.subpath(with: "objects/12/09fb65536f4ef7f72c8f87a7724074ffb5e57e")
+        guard let tree = try? Object.from(file: treePath, in: basicRepository) else {
+            XCTFail()
+            return
+        }
+        XCTAssert(tree.hash == "1209fb65536f4ef7f72c8f87a7724074ffb5e57e")
+        XCTAssert(tree.type == .tree)
+    }
+
+    func testObjectCreation() {
+        let blobPath = basicRepository.subpath(with: "objects/aa/3350c980eda0524c9ec6db48a613425f756b68")
+        let existingBlob = try! Object.from(file: blobPath, in: basicRepository) as! Blob
+        
+        let blob = Object(contentData: existingBlob.data, type: .blob, repository: basicRepository)
+        XCTAssert(blob.hash == "aa3350c980eda0524c9ec6db48a613425f756b68")
+        XCTAssert(blob.type == .blob)
+    }
+    
+}

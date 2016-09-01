@@ -150,7 +150,7 @@ public class Packfile {
 
 public struct PackfileChunk {
     public let data: Data
-    public let objectType: Object.ObjectType
+    public let objectType: ObjectType
     public let hash: String?
     public let offset: Int
     public let packfileSize: Int
@@ -163,7 +163,7 @@ public struct PackfileChunk {
     
     public let deltaInfo: DeltaInfo?
     
-    init(data: Data, objectType: Object.ObjectType, hash: String?, offset: Int, packfileSize: Int, deltaInfo: DeltaInfo? = nil) {
+    init(data: Data, objectType: ObjectType, hash: String?, offset: Int, packfileSize: Int, deltaInfo: DeltaInfo? = nil) {
         self.data = data
         self.objectType = objectType
         self.hash = hash
@@ -206,7 +206,7 @@ enum PackfileObjectType: Int {
     case ofsDelta = 0b110
     case refDelta = 0b111
     
-    var objectType: Object.ObjectType? {
+    var objectType: ObjectType? {
         switch self {
         case .commit: return .commit
         case .tree: return .tree
