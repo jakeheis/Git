@@ -135,7 +135,7 @@ struct PackfileIndexEntry {
 extension Repository {
     
     public var packfileIndices: [PackfileIndex] {
-        let packDirectory = Path(PackfileIndex.packDirectory)
+        let packDirectory = subpath(with: PackfileIndex.packDirectory)
         return packDirectory.flatMap { (packIndexPath) in
             return PackfileIndex(path: packIndexPath, repository: self)
         }

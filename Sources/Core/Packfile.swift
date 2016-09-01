@@ -220,7 +220,7 @@ enum PackfileObjectType: Int {
 extension Repository {
     
     public var packfiles: [Packfile] {
-        let packDirectory = Path(PackfileIndex.packDirectory)
+        let packDirectory = subpath(with: PackfileIndex.packDirectory)
         return packDirectory.flatMap { (packIndexPath) in
             return Packfile(path: packIndexPath, repository: self)
         }

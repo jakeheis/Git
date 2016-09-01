@@ -49,15 +49,16 @@ public class ObjectStore {
         let objectsDirectory = repository.subpath(with: ObjectStore.directory)
         var objects: [Object] = []
         for objectFile in objectsDirectory {
-            guard objectFile.isRegular && objectFile.fileName != ".DS_Store" else {
+            guard objectFile.isRegular && objectFile.fileName.characters.count == 38 else {
                 continue
             }
-            do {
-                let object = try Object.from(file: objectFile, in: repository)
-                objects.append(object)
-            } catch {
-                print(error, "for", objectFile)
+            guard let object = try? Object.from(file: objectFile, in: repository) else {
+                fatalError("Corrupt object: \(objectFile)")
             }
+            objects.append(object)
+        }
+        for pack in repository.packfiles {
+            objects += pack.readAll().flatMap { $0.object(in: repository) }
         }
         return objects
     }
