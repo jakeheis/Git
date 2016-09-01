@@ -3,9 +3,12 @@ import SwiftCLI
 import FileKit
 import Core
 
-Path.Current = "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed"
+Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
 
 //let r = Repository(path: Path.Current)!
+//
+//let b = Blob.formBlob(from: Path.Current + "RelNotes", in: r)!
+//print(String(data: b.data, encoding: .ascii))
 
 CLI.setup(name: "Git")
 
@@ -26,7 +29,7 @@ let porcelain: [RepositoryCommand] = [
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git verify-pack -v .git/objects/pack/pack-a74bd7bba3ae75e0093b5b120b103cbab5340e59.idx")
+let result = CLI.debugGo(with: "git status")
 exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

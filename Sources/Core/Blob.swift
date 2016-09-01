@@ -5,9 +5,18 @@ public class Blob: Object {
     
     public let data: Data
     
-    static func formBlob(from file: Path, in repository: Repository) -> Blob? {
-        guard let contentData = try? NSData.readFromPath(file) as Data else {
-            return nil
+    public static func formBlob(from file: Path, in repository: Repository) -> Blob? {
+        let contentData: Data
+        if file.isSymbolicLink {
+            guard let data = (try? FileManager.default.destinationOfSymbolicLink(atPath: file.rawValue))?.data(using: .ascii) else {
+                return nil
+            }
+            contentData = data
+        } else {
+            guard let data = try? NSData.readFromPath(file) as Data else {
+                return nil
+            }
+            contentData = data
         }
         
         let header = "\(ObjectType.blob.rawValue) \(contentData.count)\0"

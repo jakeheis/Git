@@ -107,4 +107,19 @@ class GitIgnoreTests: XCTestCase {
         XCTAssert(!entry.matches("a/b"))
     }
     
+    func testSpecialRegexCharacters() {
+        let plustEntry = GitIgnoreEntry("abc+")!
+        
+        XCTAssert(plustEntry.matches("abc+"))
+        XCTAssert(plustEntry.matches("abc+/hi"))
+        XCTAssert(!plustEntry.matches("abcc"))
+        
+        let periodEntry = GitIgnoreEntry("abc.txt")!
+        
+        XCTAssert(periodEntry.matches("abc.txt"))
+        XCTAssert(!periodEntry.matches("abc_txt"))
+        XCTAssert(!periodEntry.matches("abcctxt"))
+        
+    }
+    
 }

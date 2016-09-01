@@ -95,6 +95,10 @@ class StatusCommand: RepositoryCommand {
                 }
                 print()
             }
+            
+            if stagedFiles.isEmpty && unstagedFiles.isEmpty {
+                print("nothing to commit, working directory clean")
+            }
         }
     }
     

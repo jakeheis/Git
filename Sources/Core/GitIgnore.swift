@@ -101,6 +101,8 @@ public struct GitIgnoreEntry {
         
         let placeholder = "\0\0\0"
         var wildText = originalText.replacingOccurrences(of: "/**", with: placeholder) // /** in the middle of a path matches zero or more directories
+        wildText = wildText.replacingOccurrences(of: "+", with: "\\+") // Escape special regex characters
+        wildText = wildText.replacingOccurrences(of: ".", with: "\\.") // Escape special regex characters
         wildText = wildText.replacingOccurrences(of: "*", with: "[^\\/]*") // Wildcards can be any character besides /
         wildText = wildText.replacingOccurrences(of: placeholder, with: "(\\/.*)*") // Wildcards can be any character besides /
         
