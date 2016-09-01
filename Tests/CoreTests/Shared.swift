@@ -19,8 +19,14 @@ func executeGitCommand(in repository: Repository, with additionalArguments: [Str
     process.waitUntilExit()
 }
 
-func gitCheckout(_ co: String, in repository: Repository) {
-    executeGitCommand(in: repository, with: ["checkout", co])
+extension Repository {
+    
+    func checkout(_ co: String, block: () -> ()) {
+        executeGitCommand(in: self, with: ["checkout", "-q", co])
+        block()
+        executeGitCommand(in: self, with: ["checkout", "-qf", "master"])
+    }
+    
 }
 
 extension TreeEntry {
