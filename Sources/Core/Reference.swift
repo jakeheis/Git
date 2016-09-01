@@ -37,9 +37,9 @@ public class Reference {
         for line in lines where !line.hasPrefix("#") { // No comments
             let words = line.components(separatedBy: " ")
             if let ref = words.last, let hash = words.first {
-                if ref.hasPrefix(Tag.refPrefix) {
+                if ref.hasPrefix(Tag.directory) {
                     refs.append(Tag(ref: ref, hash: hash, repository: repository))
-                } else if ref.hasPrefix(Branch.refPrefix) {
+                } else if ref.hasPrefix(Branch.directory) {
                     refs.append(Branch(ref: ref, hash: hash, repository: repository))
                 }
             }
@@ -71,7 +71,7 @@ public class Reference {
             return nil
         }
         
-        self.ref = (path[Range(uncheckedBounds: (path.endIndex - 3, path.endIndex - 1))] + path.fileName).rawValue
+        self.ref = (path[(path.endIndex - 3) ..< (path.endIndex - 1)] + path.fileName).rawValue
         self.hash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
         self.repository = repository
     }

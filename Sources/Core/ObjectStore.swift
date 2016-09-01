@@ -65,6 +65,8 @@ public class ObjectStore {
     
 }
 
+// MARK: -
+
 extension Repository {
     
     public var objectStore: ObjectStore {

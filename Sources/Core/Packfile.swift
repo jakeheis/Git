@@ -148,7 +148,10 @@ public class Packfile {
     
 }
 
+// MARK: - PackfileChunk
+
 public struct PackfileChunk {
+    
     public let data: Data
     public let objectType: ObjectType
     public let hash: String?
@@ -217,6 +220,8 @@ enum PackfileObjectType: Int {
     }
 }
 
+// MARK: -
+
 extension Repository {
     
     public var packfiles: [Packfile] {
@@ -224,14 +229,6 @@ extension Repository {
         return packDirectory.flatMap { (packIndexPath) in
             return Packfile(path: packIndexPath, repository: self)
         }
-    }
-    
-}
-
-extension Data {
-    
-    func uncompressed() -> Data? {
-        return (try? (self as NSData).gzipUncompressed()) as Data?
     }
     
 }

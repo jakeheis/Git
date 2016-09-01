@@ -58,12 +58,12 @@ extension Head: CustomStringConvertible {
     
 }
 
+// MARK: -
+
 extension Repository {
     
     public var head: Head? {
-        get {
-            return Head(repository: self)
-        }
+        return Head(repository: self)
     }
     
 }

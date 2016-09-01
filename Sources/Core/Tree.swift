@@ -40,6 +40,8 @@ public class Tree: Object {
     
 }
 
+// MARK: - TreeEntry
+
 public struct TreeEntry {
     
     public let mode: FileMode
@@ -74,17 +76,21 @@ public struct TreeEntry {
 }
 
 extension TreeEntry: CustomStringConvertible {
+    
     public var description: String {
         return "\(mode.intText) \(mode.name) \(hash) \(name)"
     }
+    
 }
 
 // MARK: - Tree iterators
 
 public class TreeIterator: IteratorProtocol {
+    
     public func next() -> TreeEntry? {
         return nil
     }
+    
 }
 
 public class FlatTreeIterator: TreeIterator {

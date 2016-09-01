@@ -8,16 +8,18 @@
 
 public class Branch: Reference {
     
-    static let refPrefix = "refs/heads"
+    static let directory = "refs/heads"
 
 }
+
+// MARK: -
 
 extension Repository {
     
     public var branches: [Branch] {
         var branches: [Branch] = []
         
-        let branchesDirectory = subpath(with: Branch.refPrefix)
+        let branchesDirectory = subpath(with: Branch.directory)
         branches += branchesDirectory.flatMap { Branch(path: $0, repository: self) }
         
         branches += Reference.packedRefs(in: self).flatMap { $0 as? Branch }

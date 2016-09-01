@@ -3,11 +3,9 @@ import FileKit
 
 public class Repository {
     
-    public let path: Path
+    static let internalDirectory = ".git"
     
-    private var internalDirectory: Path {
-        return path + ".git"
-    }
+    public let path: Path
     
     public convenience init?(path: String) {
         self.init(path: Path(path))
@@ -21,14 +19,14 @@ public class Repository {
     }
     
     public init?(path: Path) {
-        guard (path + ".git").isDirectory else {
+        guard (path + Repository.internalDirectory).isDirectory else {
             return nil
         }
         self.path = path
     }
     
     func subpath(with sub: String) -> Path {
-        return internalDirectory + sub
+        return path + Repository.internalDirectory + sub
     }
     
 }

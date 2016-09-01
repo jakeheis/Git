@@ -154,7 +154,10 @@ extension Index: Collection {
     
 }
 
+// MARK: - IndexEntry
+
 public struct IndexEntry {
+    
     public let cDate: Date
     public let mDate: Date
     public let dev: Int
@@ -169,6 +172,7 @@ public struct IndexEntry {
     public let firstStage: Bool
     public let secondStage: Bool
     public let name: String
+    
     
 }
 

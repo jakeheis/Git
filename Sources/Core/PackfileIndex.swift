@@ -11,7 +11,7 @@ import FileKit
 
 public class PackfileIndex {
     
-    static let packDirectory = "objects/pack/"
+    static let packDirectory = "objects/pack"
     
     let data: Data
     let path: Path
@@ -126,11 +126,15 @@ public class PackfileIndex {
     
 }
 
+// MARK: - PackfileIndexEntry
+
 struct PackfileIndexEntry {
     let hash: String
     let crc: Data
     let offset: Int
 }
+
+// MARK: -
 
 extension Repository {
     

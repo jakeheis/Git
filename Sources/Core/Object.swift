@@ -37,8 +37,6 @@ public class Object {
     public let type: ObjectType
     let repository: Repository
     
-    // MARK: Parsing saved objects
-    
     public static func from(file path: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(path) else {
             throw Error.readError
@@ -72,8 +70,6 @@ public class Object {
         self.type = type
         self.repository = repository
     }
-    
-    // MARK: -
     
     public func cat() -> String {
         return description
