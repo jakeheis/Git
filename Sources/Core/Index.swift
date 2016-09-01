@@ -244,7 +244,14 @@ public struct IndexDelta {
             fatalError("Couldn't iterate the files of the working directory")
         }
         for file in fileIterator {
-            guard let file = file as? String, !Path(file).isDirectory else {
+            guard let file = file as? String else {
+                continue
+            }
+            
+            if (repository.path + file).isDirectory {
+                if gitIgnore.ignoreDirectory(file) {
+                    fileIterator.skipDescendants()
+                }
                 continue
             }
             if let indexEntry = index[file] {

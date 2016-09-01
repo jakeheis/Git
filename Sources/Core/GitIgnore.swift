@@ -12,25 +12,41 @@ import FileKit
 public class GitIgnore {
     
     let ignoreEntries: [GitIgnoreEntry]
-    let repository: Repository
     
-    init(repository: Repository) {
-        var ignoreEntries = [GitIgnoreEntry(".git")!]
-        
+    convenience init(repository: Repository) {
         let ignoreFile = repository.path + ".gitignore"
+        
+        let lines: [String]
         if let contents = try? String.readFromPath(ignoreFile) {
-            ignoreEntries += contents.components(separatedBy: "\n").flatMap { (line) in
-                return GitIgnoreEntry(line)
-            }
+            lines = contents.components(separatedBy: "\n")
+        } else {
+            lines = []
+        }
+        
+        self.init(lines: lines)
+    }
+    
+    init(lines: [String]) {
+        var ignoreEntries = [GitIgnoreEntry(".git")!]
+        ignoreEntries += lines.flatMap { (line) in
+            return GitIgnoreEntry(line)
         }
         
         self.ignoreEntries = ignoreEntries
-        self.repository = repository
     }
     
     func ignoreFile(_ file: String) -> Bool {
         for entry in ignoreEntries {
             if entry.matches(file) {
+                return true
+            }
+        }
+        return false
+    }
+    
+    func ignoreDirectory(_ directory: String) -> Bool {
+        for entry in ignoreEntries {
+            if entry.matches(directory, directory: true) {
                 return true
             }
         }
@@ -49,28 +65,90 @@ extension Repository {
 
 public struct GitIgnoreEntry {
     
-    let regex: NSRegularExpression
+    let fileRegex: NSRegularExpression
+    let directoryRegex: NSRegularExpression?
+    
+    let negate: Bool
     
     init?(_ text: String) {
-        var regexText = text.trimmingCharacters(in: .whitespacesAndNewlines)
-        if regexText.hasPrefix("#") || regexText.isEmpty { // Comment
-            return nil
-        }
-        if regexText.hasPrefix("/") {
-            regexText = regexText.substring(from: regexText.index(after: regexText.startIndex))
-        }
-        // TODO: Make this work for all git ignore entries
+        // TODO: this is pretty ugly, kinda hacked together
         
-        regexText = "^(.*\\/)*" + regexText.replacingOccurrences(of: "*", with: "[^\\/]*")
-        regexText += "(\\/.*)*$" // If directory, match contained files
-        guard let regex = try? NSRegularExpression(pattern: regexText, options: []) else {
+        var originalText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        if originalText.hasPrefix("#") || originalText.isEmpty { // Comment or empty line
             return nil
         }
-        self.regex = regex
+        if originalText.hasPrefix("!") {
+            negate = true
+            originalText = originalText.substring(from: originalText.index(after: originalText.startIndex)) // Remove !
+        } else {
+            negate = false
+        }
+        
+        let startsWithDoubleAsterisk: Bool
+        if originalText.hasPrefix("**/") {
+            originalText = originalText.substring(from: originalText.index(originalText.startIndex, offsetBy: 3)) // Remove **/
+            startsWithDoubleAsterisk = true
+        } else {
+            startsWithDoubleAsterisk = false
+        }
+        
+        if originalText.hasSuffix("/**") {
+            originalText = originalText.substring(to: originalText.index(originalText.endIndex, offsetBy: -3)) // Remove /**
+            if !originalText.hasPrefix("/") {
+                originalText = "/" + originalText // Ending in /** is like starting with /
+            }
+        }
+        
+        let placeholder = "\0\0\0"
+        var wildText = originalText.replacingOccurrences(of: "/**", with: placeholder) // /** in the middle of a path matches zero or more directories
+        wildText = wildText.replacingOccurrences(of: "*", with: "[^\\/]*") // Wildcards can be any character besides /
+        wildText = wildText.replacingOccurrences(of: placeholder, with: "(\\/.*)*") // Wildcards can be any character besides /
+        
+        var regexText = "^"
+        if wildText.hasPrefix("/") {
+            regexText += wildText.substring(from: wildText.index(after: wildText.startIndex)) // Remove leading slash
+        } else {
+            let slashInMiddle = originalText.substring(with: originalText.index(after: originalText.startIndex) ..< originalText.index(before: originalText.endIndex)).contains("/")
+            if !slashInMiddle || startsWithDoubleAsterisk {
+                regexText += "(.*\\/)*" // Match matches within directories if no slash in entry
+            }
+            if wildText.hasPrefix("\\") {
+                regexText += wildText.substring(from: wildText.index(after: wildText.startIndex)) // Remove leading back slash
+            } else {
+                regexText += wildText
+            }
+        }
+        
+        if regexText.hasSuffix("/") {
+            regexText = regexText.substring(to: regexText.index(before: regexText.endIndex)) // Remove trailing slash
+            
+            let directoryText = regexText + "(\\/.*)*$" // Match directory itself and all contained files
+            guard let directoryRegex = try? NSRegularExpression(pattern: directoryText, options: []) else {
+                return nil
+            }
+            self.directoryRegex = directoryRegex
+            
+            regexText += "(\\/.*)+" // Only match contained files, not file with name itself
+        } else {
+            self.directoryRegex = nil
+            regexText += "(\\/.*)*" // Match directory itself and all contained files
+        }
+        
+        regexText += "$"
+        
+        guard let fileRegex = try? NSRegularExpression(pattern: regexText, options: []) else {
+            return nil
+        }
+        self.fileRegex = fileRegex
     }
     
-    func matches(_ path: String) -> Bool {
-        return !regex.matches(in: path, options: [], range: NSRange(location: 0, length: path.characters.count)).isEmpty
+    func matches(_ path: String, directory: Bool = false) -> Bool {
+        if directory {
+            if let directoryRegex = directoryRegex {
+                return !directoryRegex.matches(in: path, options: [], range: NSRange(location: 0, length: path.characters.count)).isEmpty
+            }
+        }
+        return !fileRegex.matches(in: path, options: [], range: NSRange(location: 0, length: path.characters.count)).isEmpty
     }
     
 }
