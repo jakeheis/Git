@@ -7,7 +7,9 @@ public class Blob: Object {
     
     public static func formBlob(from file: Path, in repository: Repository) -> Blob? {
         let contentData: Data
-        if file.isSymbolicLink {
+        
+        let isSymlink = (try? FileManager.default.attributesOfItem(atPath: file.rawValue)[FileAttributeKey.type]) as? String == FileAttributeType.typeSymbolicLink.rawValue // Don't use built in function on Path - it's slower
+        if isSymlink {
             guard let data = (try? FileManager.default.destinationOfSymbolicLink(atPath: file.rawValue))?.data(using: .ascii) else {
                 return nil
             }
@@ -20,10 +22,11 @@ public class Blob: Object {
         }
         
         let header = "\(ObjectType.blob.rawValue) \(contentData.count)\0"
-        guard let headerData = header.data(using: .utf8) else {
+        guard var fullData = header.data(using: .utf8) else {
             fatalError("Could not generate header data for blob")
         }
-        let sha = (headerData + contentData).sha1
+        fullData.append(contentData)
+        let sha = fullData.sha1
         let hash = DataReader(data: sha).readHex(bytes: 20)
         
         return Blob(hash: hash, data: contentData, repository: repository)

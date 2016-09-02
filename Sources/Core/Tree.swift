@@ -137,7 +137,10 @@ public class RecursiveTreeIterator: TreeIterator {
         guard let entry = iterator.next() else {
             return nil
         }
-        if entry.mode == .directory, let subtree = entry.object as? Tree {
+        if entry.mode == .directory {
+            guard let subtree = entry.object as? Tree else {
+                fatalError("Mode of file not matching type: \(entry.name)")
+            }
             let subprefix = prefix?.appending("/" + entry.name) ?? entry.name
             subtreeIterator = RecursiveTreeIterator(tree: subtree, prefix: subprefix)
             return subtreeIterator?.next()
