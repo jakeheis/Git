@@ -23,10 +23,8 @@ public class Blob: Object {
         guard let headerData = header.data(using: .utf8) else {
             fatalError("Could not generate header data for blob")
         }
-        guard let sha = (headerData + contentData).sha1() else {
-            fatalError("Could not hash file")
-        }
-         let hash = DataReader(data: sha).readHex(bytes: 20)
+        let sha = (headerData + contentData).sha1
+        let hash = DataReader(data: sha).readHex(bytes: 20)
         
         return Blob(hash: hash, data: contentData, repository: repository)
     }
