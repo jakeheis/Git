@@ -50,11 +50,11 @@ class PackfileIndexTests: XCTestCase {
     }
     
     func testIndividualOffset() {
-        XCTAssert(index.offset(for: "39f6140dee77ffed9539d61aead2e1239ac7ad13") == 12)
-        XCTAssert(index.offset(for: "f3be9f51189c34537e68df056f0cafae59d63b96") == 899)
-        XCTAssert(index.offset(for: "d2285a22610b068c9fd9f25fd548e76d27fee860") == 1412)
-        XCTAssert(index.offset(for: "1c59427adc4b205a270d8f810310394962e79a8b") == 1696)
-        XCTAssert(index.offset(for: "220f4aa98a71f6767d753148383fc4c941d4d071") == 1717)
+        XCTAssert(index.offset(for: "39f6140dee77ffed9539d61aead2e1239ac7ad13")?.offset == 12)
+        XCTAssert(index.offset(for: "f3be9f51189c34537e68df056f0cafae59d63b96")?.offset == 899)
+        XCTAssert(index.offset(for: "d2285a22610b068c9fd9f25fd548e76d27fee860")?.offset == 1412)
+        XCTAssert(index.offset(for: "1c59427adc4b205a270d8f810310394962e79a8b")?.offset == 1696)
+        XCTAssert(index.offset(for: "220f4aa98a71f6767d753148383fc4c941d4d071")?.offset == 1717)
         XCTAssert(index.offset(for: "22aaaaa98a71faaa7d753148383fc4c941aaa071") == nil) // Random hash not in pack
     }
     

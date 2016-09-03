@@ -32,5 +32,21 @@ class ObjectStoreTests: XCTestCase {
         let all = packedRepository.objectStore.allObjects()
         XCTAssert(all.count == 23)
     }
+    
+    func testReadShortHash() {
+        guard let blob = basicRepository.objectStore.objectFromFile(hash: "4260dd4") as? Blob else {
+            XCTFail()
+            return
+        }
+        XCTAssert(blob.hash == "4260dd4b89d8b3f9a231538664bd3d346fdd2ead")
+        XCTAssert(String(data: blob.data, encoding: .ascii) == "File\nmodification\nanother mod\n")
+        
+        guard let packedBlob = basicRepository.objectStore.objectFromFile(hash: "4260dd4") as? Blob else {
+            XCTFail()
+            return
+        }
+        XCTAssert(packedBlob.hash == "4260dd4b89d8b3f9a231538664bd3d346fdd2ead")
+        XCTAssert(String(data: packedBlob.data, encoding: .ascii) == "File\nmodification\nanother mod\n")
+    }
 
 }

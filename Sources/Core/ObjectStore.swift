@@ -28,18 +28,45 @@ public class ObjectStore {
     }
     
     public func objectFromFile(hash: String) -> Object? {
+        if hash.characters.count < 4 {
+            return nil
+        }
+        
         let breakIndex = hash.index(hash.startIndex, offsetBy: 2)
         let firstTwo = hash.substring(to: breakIndex)
-        let hashEnd = hash.substring(from: breakIndex)
-        let path = repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)/\(hashEnd)")
+        let parentDirectory = repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)")
         
-        return try? Object.from(file: path, in: repository)
+        let hashEnd = hash.substring(from: breakIndex)
+        
+        var path: Path?
+        if hashEnd.characters.count < 38 {
+            for child in parentDirectory.children() {
+                if child.fileName.hasPrefix(hashEnd) {
+                    if path != nil { // Ambiguous hash -- multiple matching objects
+                        return nil
+                    }
+                    path = child
+                } else {
+                    if path != nil { // Already found our object
+                        break
+                    }
+                }
+            }
+        } else {
+            path = parentDirectory + hashEnd
+        }
+        
+        guard let objectPath = path else {
+            return nil
+        }
+        
+        return try? Object.from(file: objectPath, in: repository)
     }
     
     public func objectFromPackfile(hash: String) -> Object? {
         for packfileIndex in repository.packfileIndices {
-            if let offset = packfileIndex.offset(for: hash) {
-                return packfileIndex.packfile?.readObject(at: offset, hash: hash)
+            if let (offset, fullHash) = packfileIndex.offset(for: hash) {
+                return packfileIndex.packfile?.readObject(at: offset, hash: fullHash)
             }
         }
         return nil

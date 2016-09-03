@@ -3,12 +3,12 @@ import SwiftCLI
 import FileKit
 import Core
 
-Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
+Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+//Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
 
-//let r = Repository(path: Path.Current)!
-//
-//let b = Blob.formBlob(from: Path.Current + "RelNotes", in: r)!
-//print(String(data: b.data, encoding: .ascii))
+let r = Repository(path: Path.Current)!
+
+print(r.objectStore["aadc60"])
 
 CLI.setup(name: "Git")
 

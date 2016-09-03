@@ -42,7 +42,7 @@ public class PackfileIndex {
         self.repository = repository
     }
     
-    func offset(for hash: String) -> Int? {
+    func offset(for hash: String) -> (offset: Int, fullHash: String)? {
         let dataReader = DataReader(data: data)
         
         let firstTwo = hash.substring(to: hash.index(hash.startIndex, offsetBy: 2))
@@ -66,14 +66,23 @@ public class PackfileIndex {
         dataReader.byteCounter = 8 + 256 * 4 + lastCount * 20
        
         var potentialIndex: Int?
+        var potentialFullHash: String?
         for i in lastCount ..< thisCount {
             let entryHash = dataReader.readHex(bytes: 20)
             if entryHash == hash {
                 potentialIndex = i
+                potentialFullHash = entryHash
+                break
+            } else if entryHash.hasPrefix(hash) { // In case hash prefix is passed
+                if potentialIndex != nil { // Already found a hash with the given prefix -- ambiguous
+                    return nil
+                }
+                potentialIndex = i
+                potentialFullHash = entryHash
             }
         }
         
-        guard let index = potentialIndex else {
+        guard let index = potentialIndex, let fullHash = potentialFullHash else {
             return nil
         }
         
@@ -84,7 +93,7 @@ public class PackfileIndex {
         
         let thisOffset = dataReader.readInt(bytes: 4)
         
-        return thisOffset
+        return (thisOffset, fullHash)
     }
     
     func readAll() -> [PackfileIndexEntry] {
