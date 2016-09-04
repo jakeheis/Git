@@ -8,7 +8,11 @@
 
 import Foundation
 
-public class Tree: Object {
+public class Tree: GitObject {
+    
+    public let hash: String
+    public let repository: Repository
+    public let type: ObjectType = .tree
     
     public let treeEntries: [TreeEntry]
     
@@ -30,10 +34,11 @@ public class Tree: Object {
         
         self.treeEntries = treeEntries
         
-        super.init(hash: hash, type: .tree, repository: repository)
+        self.hash = hash
+        self.repository = repository
     }
     
-    override public func cat() -> String {
+    public func cat() -> String {
         let lines = treeEntries.map { String(describing: $0) }
         return lines.joined(separator: "\n")
     }
@@ -49,7 +54,7 @@ public struct TreeEntry {
     public let name: String
     let repository: Repository
     
-    public var object: Object {
+    public var object: GitObject {
         guard let object = repository.objectStore[hash] else {
             fatalError("Could not resolve tree entry: \(hash)")
         }

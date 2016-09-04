@@ -1,6 +1,10 @@
 import Foundation
 
-public class Commit: Object {
+public class Commit: GitObject {
+    
+    public let hash: String
+    public let repository: Repository
+    public let type: ObjectType = .commit
     
     public let treeHash: String
     public let parentHash: String?
@@ -47,10 +51,11 @@ public class Commit: Object {
         _ = typeLines.removeFirst()
         message = typeLines.map({ $0.type + " " + $0.value }).joined(separator: "\n").trimmingCharacters(in: .whitespacesAndNewlines)
         
-        super.init(hash: hash, type: .commit, repository: repository)
+        self.hash = hash
+        self.repository = repository
     }
     
-    override public func cat() -> String {
+    public func cat() -> String {
         let lines = [
             "tree \(treeHash)",
             "parent \(parentHash ?? "(none)")",

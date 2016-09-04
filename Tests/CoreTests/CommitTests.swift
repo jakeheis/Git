@@ -14,7 +14,10 @@ class CommitTests: XCTestCase {
 
     func testParse() {
         let firstPath = basicRepository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
-        let firstCommit = try! Object.from(file: firstPath, in: basicRepository) as! Commit
+        guard let firstCommit = try? Commit.parse(from: firstPath, in: basicRepository) else {
+            XCTFail()
+            return
+        }
         
         XCTAssert(firstCommit.hash == "39f6140dee77ffed9539d61aead2e1239ac7ad13")
         XCTAssert(firstCommit.treeHash == "11bbaed2e1c68b714e12e35615aedbe3c2a4e760")
@@ -22,7 +25,10 @@ class CommitTests: XCTestCase {
         XCTAssert(firstCommit.message == "Commit on other branch")
         
         let secondPath = basicRepository.subpath(with: "objects/94/e72a122b9099798132e971eaccf727c1ff037d")
-        let secondCommit = try! Object.from(file: secondPath, in: basicRepository) as! Commit
+        guard let secondCommit = try? Commit.parse(from: secondPath, in: basicRepository) else {
+            XCTFail()
+            return
+        }
         
         XCTAssert(secondCommit.hash == "94e72a122b9099798132e971eaccf727c1ff037d")
         XCTAssert(secondCommit.treeHash == "1209fb65536f4ef7f72c8f87a7724074ffb5e57e")

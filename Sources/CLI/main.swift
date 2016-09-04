@@ -8,12 +8,11 @@ Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 
 let r = Repository(path: Path.Current)!
 
-print(r.objectStore["aadc60"])
-
 CLI.setup(name: "Git")
 
 let plumbing: [RepositoryCommand] = [
     CatFileCommand(),
+    HashObjectCommand(),
     LsFilesCommand(),
     LsTreeCommand(),
     VerifyPackCommand()
@@ -29,7 +28,7 @@ let porcelain: [RepositoryCommand] = [
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
-let result = CLI.debugGo(with: "git status")
+let result = CLI.debugGo(with: "git hash-object Package.swift")
 exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

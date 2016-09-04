@@ -1,8 +1,12 @@
 import Foundation
 import FileKit
 
-public class Blob: Object {
+final public class Blob: GitObject {
     
+    public let hash: String
+    public let type: ObjectType = .blob
+    public let repository: Repository
+
     public let data: Data
     
     public static func formBlob(from file: Path, in repository: Repository) -> Blob? {
@@ -32,13 +36,13 @@ public class Blob: Object {
         return Blob(hash: hash, data: contentData, repository: repository)
     }
     
-    public required init(hash: String, data: Data, repository: Repository) {
+    public init(hash: String, data: Data, repository: Repository) {
         self.data = data
-                
-        super.init(hash: hash, type: .blob, repository: repository)
+        self.hash = hash
+        self.repository = repository
     }
     
-    override public func cat() -> String {
+    public func cat() -> String {
         let contents = String(data: data, encoding: .utf8) ?? String(data: data, encoding: .ascii) ?? "(Could not represent blob data as string)"
         return contents
     }

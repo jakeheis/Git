@@ -13,7 +13,7 @@ class ObjectTests: XCTestCase {
 
     func testFileParse() {
         let commitPath = basicRepository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
-        guard let commit = try? Object.from(file: commitPath, in: basicRepository) else {
+        guard let commit = try? Commit.parse(from: commitPath, in: basicRepository) else {
             XCTFail()
             return
         }
@@ -21,7 +21,7 @@ class ObjectTests: XCTestCase {
         XCTAssert(commit.type == .commit)
         
         let treePath = basicRepository.subpath(with: "objects/12/09fb65536f4ef7f72c8f87a7724074ffb5e57e")
-        guard let tree = try? Object.from(file: treePath, in: basicRepository) else {
+        guard let tree = try? Tree.parse(from: treePath, in: basicRepository) else {
             XCTFail()
             return
         }

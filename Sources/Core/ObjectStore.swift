@@ -19,7 +19,7 @@ public class ObjectStore {
         self.repository = repository
     }
     
-    public subscript(hash: String) -> Object? {
+    public subscript(hash: String) -> GitObject? {
         if let fromFile = objectFromFile(hash: hash) {
             return fromFile
         }
@@ -27,7 +27,7 @@ public class ObjectStore {
         return objectFromPackfile(hash: hash)
     }
     
-    public func objectFromFile(hash: String) -> Object? {
+    public func objectFromFile(hash: String) -> GitObject? {
         if hash.characters.count < 4 {
             return nil
         }
@@ -60,10 +60,10 @@ public class ObjectStore {
             return nil
         }
         
-        return try? Object.from(file: objectPath, in: repository)
+        return try? parseObject(from: objectPath, in: repository)
     }
     
-    public func objectFromPackfile(hash: String) -> Object? {
+    public func objectFromPackfile(hash: String) -> GitObject? {
         for packfileIndex in repository.packfileIndices {
             if let (offset, fullHash) = packfileIndex.offset(for: hash) {
                 return packfileIndex.packfile?.readObject(at: offset, hash: fullHash)
@@ -72,14 +72,14 @@ public class ObjectStore {
         return nil
     }
     
-    public func allObjects() -> [Object] {
+    public func allObjects() -> [GitObject] {
         let objectsDirectory = repository.subpath(with: ObjectStore.directory)
-        var objects: [Object] = []
+        var objects: [GitObject] = []
         for objectFile in objectsDirectory {
             guard objectFile.isRegular && objectFile.fileName.characters.count == 38 else {
                 continue
             }
-            guard let object = try? Object.from(file: objectFile, in: repository) else {
+            guard let object = try? parseObject(from: objectFile, in: repository) else {
                 fatalError("Corrupt object: \(objectFile)")
             }
             objects.append(object)
@@ -88,6 +88,38 @@ public class ObjectStore {
             objects += pack.readAll().flatMap { $0.object(in: repository) }
         }
         return objects
+    }
+    
+    // MARK: - Helpers
+    
+    public enum Error: Swift.Error {
+        case readError
+        case compressionError
+        case parseError
+    }
+    
+    func parseObject(from file: Path, in repository: Repository) throws -> GitObject {
+        guard let data = try? NSData.readFromPath(file) else {
+            throw Error.readError
+        }
+        guard let uncompressed = try? data.gzipUncompressed().data as Data,
+            let unparsed = String(data: uncompressed, encoding: .ascii) else {
+                throw Error.compressionError
+        }
+        
+        guard let headerIndex = unparsed.characters.index(of: "\0") else {
+            throw Error.parseError
+        }
+        let header = unparsed.substring(to: headerIndex)
+        
+        guard let type = ObjectType(header: header) else {
+            throw Error.parseError
+        }
+        
+        let hash = file.parent.fileName + file.fileName
+        let contentData = uncompressed.subdata(in: (header.characters.count + 1)..<uncompressed.count)
+        
+        return type.objectClass.init(hash: hash, data: contentData, repository: repository)
     }
     
 }

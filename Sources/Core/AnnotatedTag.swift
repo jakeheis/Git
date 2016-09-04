@@ -9,7 +9,11 @@
 import Foundation
 import FileKit
 
-public class AnnotatedTag: Object {
+public class AnnotatedTag: GitObject {
+    
+    public let hash: String
+    public let repository: Repository
+    public let type: ObjectType = .tag
     
     public let objectHash: String
     public let tagType: ObjectType
@@ -17,7 +21,7 @@ public class AnnotatedTag: Object {
     public let taggerSignature: Signature
     public let message: String
     
-    public var object: Object {
+    public var object: GitObject {
         guard let object = repository.objectStore[objectHash] else {
             fatalError("Corrupt tag pointing to hash: \(objectHash)")
         }
@@ -46,10 +50,11 @@ public class AnnotatedTag: Object {
         self.taggerSignature = Signature(signature: lineValues[3])
         self.message = lines[5 ..< lines.index(before: lines.endIndex)].joined(separator: "\n")
         
-        super.init(hash: hash, type: .blob, repository: repository)
+        self.hash = hash
+        self.repository = repository
     }
     
-    public override func cat() -> String {
+    public func cat() -> String {
         let lines = [
             "object \(objectHash)",
             "type \(tagType.rawValue)",

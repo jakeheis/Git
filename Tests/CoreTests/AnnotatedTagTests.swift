@@ -14,7 +14,10 @@ class AnnotatedTagTests: XCTestCase {
 
     func testParse() {
         let firstPath = basicRepository.subpath(with: "objects/b1/cab66f094cc38fe71fdc425de075851e69bee2")
-        let tag = try! Object.from(file: firstPath, in: basicRepository) as! AnnotatedTag
+        guard let tag = try? AnnotatedTag.parse(from: firstPath, in: basicRepository) else {
+            XCTFail()
+            return
+        }
         
         XCTAssert(tag.hash == "b1cab66f094cc38fe71fdc425de075851e69bee2")
         XCTAssert(tag.objectHash == "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717")

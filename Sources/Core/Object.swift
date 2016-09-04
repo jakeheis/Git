@@ -1,6 +1,19 @@
 import Foundation
 import FileKit
-import CryptoSwift
+
+public protocol GitObject: CustomStringConvertible {
+    
+    var hash: String { get }
+    var type: ObjectType { get }
+    var repository: Repository { get }
+    
+    init(hash: String, data: Data, repository: Repository)
+    
+    func cat() -> String
+    
+}
+
+// MARK: - ObjectType
 
 public enum ObjectType: String {
     case blob
@@ -15,7 +28,7 @@ public enum ObjectType: String {
         self.init(rawValue: firstWord)
     }
     
-    var objectClass: Object.Type {
+    var objectClass: GitObject.Type {
         switch self {
         case .blob: return Blob.self
         case .commit: return Commit.self
@@ -25,59 +38,23 @@ public enum ObjectType: String {
     }
 }
 
-public class Object {
+// MARK: - Additional functionality
+
+extension GitObject {
     
-    public enum Error: Swift.Error {
-        case readError
-        case compressionError
-        case parseError
-    }
-    
-    public let hash: String
-    public let type: ObjectType
-    let repository: Repository
-    
-    public static func from(file path: Path, in repository: Repository) throws -> Object {
-        guard let data = try? NSData.readFromPath(path) else {
-            throw Error.readError
+    public static func parse(from file: Path, in repository: Repository) throws -> Self {
+        let object = try repository.objectStore.parseObject(from: file, in: repository)
+        guard let typedObject = object as? Self else {
+            throw ObjectStore.Error.parseError
         }
-        guard let uncompressed = try? data.gzipUncompressed().data as Data,
-            let unparsed = String(data: uncompressed, encoding: .ascii) else {
-                throw Error.compressionError
-        }
-        
-        guard let headerIndex = unparsed.characters.index(of: "\0") else {
-            throw Error.parseError
-        }
-        let header = unparsed.substring(to: headerIndex)
-        
-        guard let type = ObjectType(header: header) else {
-            throw Error.parseError
-        }
-        
-        let hash = path.parent.fileName + path.fileName
-        let contentData = uncompressed.subdata(in: (header.characters.count + 1)..<uncompressed.count)
-        
-        return type.objectClass.init(hash: hash, data: contentData, repository: repository)
-    }
-    
-    public required init(hash: String, data: Data, repository: Repository) {
-        fatalError("Use subclass")
-    }
-    
-    init(hash: String, type: ObjectType, repository: Repository) {
-        self.hash = hash
-        self.type = type
-        self.repository = repository
-    }
-    
-    public func cat() -> String {
-        return description
+        return typedObject
     }
     
 }
 
-extension Object: CustomStringConvertible {
+// MARK: - Defaults
+
+extension GitObject {
     
     public var description: String {
         return String(describing: type(of: self)) + " (\(hash))"

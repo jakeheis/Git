@@ -48,7 +48,7 @@ public class Packfile {
         self.repository = repository
     }
     
-    public func readObject(at offset: Int, hash: String) -> Object? {
+    public func readObject(at offset: Int, hash: String) -> GitObject? {
         return readChunk(at: offset, hash: hash)?.object(in: repository)
     }
     
@@ -222,7 +222,7 @@ public class PackfileChunk: CustomStringConvertible {
         self.sizeInPackfile = sizeInPackfile
     }
     
-    public func object(in repository: Repository) -> Object? {
+    public func object(in repository: Repository) -> GitObject? {
         guard let hash = hash else {
             return nil
         }
