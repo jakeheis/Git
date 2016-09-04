@@ -9,7 +9,7 @@
 import Foundation
 import FileKit
 
-public class AnnotatedTag: GitObject {
+public class AnnotatedTag: Object {
     
     public let hash: String
     public let repository: Repository
@@ -21,7 +21,7 @@ public class AnnotatedTag: GitObject {
     public let taggerSignature: Signature
     public let message: String
     
-    public var object: GitObject {
+    public var object: Object {
         guard let object = repository.objectStore[objectHash] else {
             fatalError("Corrupt tag pointing to hash: \(objectHash)")
         }

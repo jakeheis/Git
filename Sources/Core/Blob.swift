@@ -1,7 +1,7 @@
 import Foundation
 import FileKit
 
-final public class Blob: GitObject {
+final public class Blob: Object {
     
     public let hash: String
     public let type: ObjectType = .blob

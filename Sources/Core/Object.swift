@@ -1,7 +1,7 @@
 import Foundation
 import FileKit
 
-public protocol GitObject: CustomStringConvertible {
+public protocol Object: CustomStringConvertible {
     
     var hash: String { get }
     var type: ObjectType { get }
@@ -28,7 +28,7 @@ public enum ObjectType: String {
         self.init(rawValue: firstWord)
     }
     
-    var objectClass: GitObject.Type {
+    var objectClass: Object.Type {
         switch self {
         case .blob: return Blob.self
         case .commit: return Commit.self
@@ -40,7 +40,7 @@ public enum ObjectType: String {
 
 // MARK: - Additional functionality
 
-extension GitObject {
+extension Object {
     
     public static func parse(from file: Path, in repository: Repository) throws -> Self {
         let object = try repository.objectStore.parseObject(from: file, in: repository)
@@ -54,7 +54,7 @@ extension GitObject {
 
 // MARK: - Defaults
 
-extension GitObject {
+extension Object {
     
     public var description: String {
         return String(describing: type(of: self)) + " (\(hash))"

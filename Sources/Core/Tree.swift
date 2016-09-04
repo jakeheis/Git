@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class Tree: GitObject {
+public class Tree: Object {
     
     public let hash: String
     public let repository: Repository
@@ -54,7 +54,7 @@ public struct TreeEntry {
     public let name: String
     let repository: Repository
     
-    public var object: GitObject {
+    public var object: Object {
         guard let object = repository.objectStore[hash] else {
             fatalError("Could not resolve tree entry: \(hash)")
         }

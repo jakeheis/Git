@@ -1,6 +1,6 @@
 import Foundation
 
-public class Commit: GitObject {
+public class Commit: Object {
     
     public let hash: String
     public let repository: Repository

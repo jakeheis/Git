@@ -19,7 +19,7 @@ public class Reference {
         return ref.components(separatedBy: "/").last ?? ref
     }
     
-    public var object: GitObject {
+    public var object: Object {
         guard let object = repository.objectStore[hash] else {
             fatalError("Broken reference: \(hash)")
         }

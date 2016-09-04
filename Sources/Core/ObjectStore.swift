@@ -19,7 +19,7 @@ public class ObjectStore {
         self.repository = repository
     }
     
-    public subscript(hash: String) -> GitObject? {
+    public subscript(hash: String) -> Object? {
         if let fromFile = objectFromFile(hash: hash) {
             return fromFile
         }
@@ -27,7 +27,7 @@ public class ObjectStore {
         return objectFromPackfile(hash: hash)
     }
     
-    public func objectFromFile(hash: String) -> GitObject? {
+    public func objectFromFile(hash: String) -> Object? {
         if hash.characters.count < 4 {
             return nil
         }
@@ -63,7 +63,7 @@ public class ObjectStore {
         return try? parseObject(from: objectPath, in: repository)
     }
     
-    public func objectFromPackfile(hash: String) -> GitObject? {
+    public func objectFromPackfile(hash: String) -> Object? {
         for packfileIndex in repository.packfileIndices {
             if let (offset, fullHash) = packfileIndex.offset(for: hash) {
                 return packfileIndex.packfile?.readObject(at: offset, hash: fullHash)
@@ -72,9 +72,9 @@ public class ObjectStore {
         return nil
     }
     
-    public func allObjects() -> [GitObject] {
+    public func allObjects() -> [Object] {
         let objectsDirectory = repository.subpath(with: ObjectStore.directory)
-        var objects: [GitObject] = []
+        var objects: [Object] = []
         for objectFile in objectsDirectory {
             guard objectFile.isRegular && objectFile.fileName.characters.count == 38 else {
                 continue
@@ -98,7 +98,7 @@ public class ObjectStore {
         case parseError
     }
     
-    func parseObject(from file: Path, in repository: Repository) throws -> GitObject {
+    func parseObject(from file: Path, in repository: Repository) throws -> Object {
         guard let data = try? NSData.readFromPath(file) else {
             throw Error.readError
         }
