@@ -9,11 +9,15 @@
 import Foundation
 import FileKit
 
-public class Reference {
+public protocol Reference: CustomStringConvertible {
     
-    public let ref: String
-    public let hash: String
-    let repository: Repository
+    var ref: String { get }
+    var hash: String { get }
+    var repository: Repository { get }
+    
+}
+
+extension Reference {
     
     public var name: String {
         return ref.components(separatedBy: "/").last ?? ref
@@ -26,54 +30,32 @@ public class Reference {
         return object
     }
     
-    static func packedRefs(in repository: Repository) -> [Reference] {
-        guard let packedRefsText = try? String.readFromPath(repository.subpath(with: "packed-refs")) else {
-            return []
-        }
-        
-        let lines = packedRefsText.components(separatedBy: "\n")
-        var refs: [Reference] = []
-        
-        for line in lines where !line.hasPrefix("#") { // No comments
-            let words = line.components(separatedBy: " ")
-            if let ref = words.last, let hash = words.first {
-                if ref.hasPrefix(Tag.directory) {
-                    refs.append(Tag(ref: ref, hash: hash, repository: repository))
-                } else if ref.hasPrefix(Branch.directory) {
-                    refs.append(Branch(ref: ref, hash: hash, repository: repository))
-                }
-            }
-        }
-        
-        return refs
+}
+
+extension Reference {
+    
+    public var description: String {
+        return "\(name) (\(hash))"
     }
     
-    public convenience init?(ref: String, repository: Repository) {
-        let potentialPath = repository.subpath(with: ref)
-        if potentialPath.exists {
-            self.init(path: potentialPath, repository: repository)
-        } else {
-            var potentialHash: String? = nil
-            for reference in Reference.packedRefs(in: repository) {
-                if reference.ref == ref {
-                    potentialHash = reference.hash
-                }
-            }
-            guard let hash = potentialHash else {
-                return nil
-            }
-            self.init(ref: ref, hash: hash, repository: repository)
-        }
-    }
+}
+
+// MARK: - FolderedRefence
+
+public class FolderedRefence: Reference {
     
-    public init?(path: Path, repository: Repository) {
+    public let ref: String
+    public let hash: String
+    public let repository: Repository
+    
+    public convenience init?(path: Path, repository: Repository) {
         guard let hash = try? String.readFromPath(path) else {
             return nil
         }
         
-        self.ref = (path[(path.endIndex - 3) ..< (path.endIndex - 1)] + path.fileName).rawValue
-        self.hash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.repository = repository
+        let ref = (path[(path.endIndex - 3) ..< (path.endIndex - 1)] + path.fileName).rawValue
+        let trimmedHash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
+        self.init(ref: ref, hash: trimmedHash, repository: repository)
     }
     
     public init(ref: String, hash: String, repository: Repository) {
@@ -84,10 +66,49 @@ public class Reference {
     
 }
 
-extension Reference: CustomStringConvertible {
+// MARK: - ReferenceParser
+
+
+public class ReferenceParser {
     
-    public var description: String {
-        return "\(name) (\(hash))"
+    public static func from(name: String, repository: Repository) -> Reference? {
+        if let head = repository.head, name == head.name {
+            return head
+        }
+        if let tag = from(ref: "\(Tag.directory)/\(name)", repository: repository) {
+            return tag
+        }
+        if let branch = from(ref: "\(Branch.directory)/\(name)", repository: repository) {
+            return branch
+        }
+        
+        return nil
+    }
+    
+    public static func from(ref: String, repository: Repository) -> Reference? {
+        let isTag = ref.hasPrefix(Tag.directory)
+        
+        let potentialPath = repository.subpath(with: ref)
+        if potentialPath.exists {
+            if isTag {
+                return Tag(path: potentialPath, repository: repository)
+            }
+            return Branch(path: potentialPath, repository: repository)
+        }
+        
+        guard let packedReferences = repository.packedReferences else {
+            return nil
+        }
+        
+        let searchRefs: [Reference] = isTag ? packedReferences.tags : packedReferences.branches
+        
+        var matchingReference: Reference?
+        for reference in searchRefs {
+            if reference.ref == ref {
+                matchingReference = reference
+            }
+        }
+        return matchingReference
     }
     
 }

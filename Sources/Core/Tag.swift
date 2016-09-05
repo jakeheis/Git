@@ -1,7 +1,7 @@
 import Foundation
 import FileKit
 
-public class Tag: Reference {
+final public class Tag: FolderedRefence {
     
     static let directory = "refs/tags"
     
@@ -17,7 +17,9 @@ extension Repository {
         let tagsDirectory = subpath(with: Tag.directory)
         tags += tagsDirectory.flatMap { Tag(path: $0, repository: self) }
         
-        tags += Reference.packedRefs(in: self).flatMap { $0 as? Tag }
+        if let packedReferences = packedReferences {
+            tags += packedReferences.tags
+        }
         
         return tags
     }

@@ -6,7 +6,7 @@
 //
 //
 
-public class Branch: Reference {
+final public class Branch: FolderedRefence {
     
     static let directory = "refs/heads"
 
@@ -22,7 +22,9 @@ extension Repository {
         let branchesDirectory = subpath(with: Branch.directory)
         branches += branchesDirectory.flatMap { Branch(path: $0, repository: self) }
         
-        branches += Reference.packedRefs(in: self).flatMap { $0 as? Branch }
+        if let packedReferences = packedReferences {
+            branches += packedReferences.branches
+        }
         
         return branches
     }

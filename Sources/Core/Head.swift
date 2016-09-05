@@ -9,21 +9,26 @@
 import Foundation
 import FileKit
 
-public class Head {
+final public class Head: Reference {
    
     public enum Kind {
         case hash(String)
         case reference(Reference)
     }
     
+    public let ref = "HEAD"
+    public var hash: String {
+        switch kind {
+        case let .hash(hash): return hash
+        case let .reference(reference): return reference.hash
+        }
+    }
+    public let repository: Repository
+    
     public let kind: Kind
-    let repository: Repository
     
     public var commit: Commit? {
-        switch kind {
-        case let .hash(hash): return repository.objectStore[hash] as? Commit
-        case let .reference(reference): return reference.object as? Commit
-        }
+        return object as? Commit
     }
     
     convenience init?(repository: Repository) {
@@ -38,7 +43,7 @@ public class Head {
             let startIndex = text.index(after: refSpace)
             let refText = text.substring(with: startIndex ..< text.endIndex).trimmingCharacters(in: .whitespacesAndNewlines)
             
-            guard let reference = Reference(ref: refText, repository: repository) else {
+            guard let reference = ReferenceParser.from(ref: refText, repository: repository) else {
                 fatalError("Broken HEAD: \(refText)")
             }
             self.kind = .reference(reference)
@@ -46,14 +51,6 @@ public class Head {
             self.kind = .hash(text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
         self.repository = repository
-    }
-    
-}
-
-extension Head: CustomStringConvertible {
-    
-    public var description: String {
-        return "HEAD: \(commit?.hash ?? "(none)")"
     }
     
 }
