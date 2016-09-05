@@ -32,7 +32,16 @@ class HashObjectCommand: RepositoryCommand {
         guard let blob = Blob.formBlob(from: Path(rawPath), in: repository) else {
             throw CLIError.error("Could not hash object")
         }
+        
         print(blob.hash)
+        
+        if write {
+            do {
+                try blob.write()
+            } catch {
+                throw CLIError.error("Could not write blob")
+            }
+        }
     }
     
 }
