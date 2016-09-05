@@ -43,6 +43,10 @@ public class Tree: Object {
         return lines.joined(separator: "\n")
     }
     
+    public func generateContentData() -> Data {
+        return Data()
+    }
+    
 }
 
 // MARK: - TreeEntry

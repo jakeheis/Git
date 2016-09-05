@@ -29,7 +29,7 @@ class IndexTests: XCTestCase {
         basicRepository.checkout("db69d97956555ed0ebf9e4a7ff4fedd8c08ba717") {
             let treePath = basicRepository.subpath(with: "objects/1f/9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
             guard let index = basicRepository.index,
-                let tree = try? Tree.parse(from: treePath, in: basicRepository) else {
+                let tree = try? Tree.read(from: treePath, in: basicRepository) else {
                 XCTFail()
                 return
             }

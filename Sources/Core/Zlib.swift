@@ -102,9 +102,9 @@ final class GzipCompressor: GzipProcessor {
     func initialize() throws {
         let result = deflateInit2_(
             &_stream.pointee,
-            Z_DEFAULT_COMPRESSION,
+            Z_BEST_SPEED,
             Z_DEFLATED,
-            MAX_WBITS + 16, //+16 to specify gzip header
+            MAX_WBITS,
             MAX_MEM_LEVEL,
             Z_DEFAULT_STRATEGY,
             ZLIB_VERSION,

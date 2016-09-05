@@ -47,4 +47,8 @@ final public class Blob: Object {
         return contents
     }
     
+    public func generateContentData() -> Data {
+        return data
+    }
+    
 }

@@ -14,7 +14,7 @@ class CommitTests: XCTestCase {
 
     func testParse() {
         let firstPath = basicRepository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
-        guard let firstCommit = try? Commit.parse(from: firstPath, in: basicRepository) else {
+        guard let firstCommit = try? Commit.read(from: firstPath, in: basicRepository) else {
             XCTFail()
             return
         }
@@ -25,7 +25,7 @@ class CommitTests: XCTestCase {
         XCTAssert(firstCommit.message == "Commit on other branch")
         
         let secondPath = basicRepository.subpath(with: "objects/94/e72a122b9099798132e971eaccf727c1ff037d")
-        guard let secondCommit = try? Commit.parse(from: secondPath, in: basicRepository) else {
+        guard let secondCommit = try? Commit.read(from: secondPath, in: basicRepository) else {
             XCTFail()
             return
         }

@@ -14,7 +14,7 @@ class AnnotatedTagTests: XCTestCase {
 
     func testParse() {
         let firstPath = basicRepository.subpath(with: "objects/b1/cab66f094cc38fe71fdc425de075851e69bee2")
-        guard let tag = try? AnnotatedTag.parse(from: firstPath, in: basicRepository) else {
+        guard let tag = try? AnnotatedTag.read(from: firstPath, in: basicRepository) else {
             XCTFail()
             return
         }

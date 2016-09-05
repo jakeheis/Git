@@ -14,7 +14,7 @@ class BlobTests: XCTestCase {
 
     func testParse() {
         let firstPath = basicRepository.subpath(with: "objects/aa/3350c980eda0524c9ec6db48a613425f756b68")
-        guard let firstBlob = try? Blob.parse(from: firstPath, in: basicRepository) else {
+        guard let firstBlob = try? Blob.read(from: firstPath, in: basicRepository) else {
             XCTFail()
             return
         }
@@ -23,7 +23,7 @@ class BlobTests: XCTestCase {
         XCTAssert(String(data: firstBlob.data, encoding: .utf8) == "File\nmodification\n")
         
         let secondPath = basicRepository.subpath(with: "objects/e2/0f5916c1cb235a7f26cd91e09a40e277d38306")
-        guard let secondBlob = try? Blob.parse(from: secondPath, in: basicRepository) else {
+        guard let secondBlob = try? Blob.read(from: secondPath, in: basicRepository) else {
             XCTFail()
             return
         }

@@ -1,3 +1,11 @@
+//
+//  Object.swift
+//  Git
+//
+//  Created by Jake Heiser on 9/1/16.
+//
+//
+
 import Foundation
 import FileKit
 
@@ -10,44 +18,25 @@ public protocol Object: CustomStringConvertible {
     init(hash: String, data: Data, repository: Repository)
     
     func cat() -> String
+    func generateContentData() -> Data
     
 }
 
-// MARK: - ObjectType
-
-public enum ObjectType: String {
-    case blob
-    case commit
-    case tree
-    case tag
-    
-    init?(header: String) {
-        guard let firstWord = header.components(separatedBy: " ").first else {
-            return nil
-        }
-        self.init(rawValue: firstWord)
-    }
-    
-    var objectClass: Object.Type {
-        switch self {
-        case .blob: return Blob.self
-        case .commit: return Commit.self
-        case .tree: return Tree.self
-        case .tag: return AnnotatedTag.self
-        }
-    }
-}
 
 // MARK: - Additional functionality
 
 extension Object {
     
-    public static func parse(from file: Path, in repository: Repository) throws -> Self {
-        let object = try repository.objectStore.parseObject(from: file, in: repository)
+    public static func read(from file: Path, in repository: Repository) throws -> Self {
+        let object = try repository.objectStore.readObject(from: file)
         guard let typedObject = object as? Self else {
             throw ObjectStore.Error.parseError
         }
         return typedObject
+    }
+    
+    public func write() throws {
+        try repository.objectStore.write(object: self)
     }
     
 }
@@ -60,4 +49,22 @@ extension Object {
         return String(describing: type(of: self)) + " (\(hash))"
     }
     
+}
+
+// MARK: - ObjectType
+
+public enum ObjectType: String {
+    case blob
+    case commit
+    case tree
+    case tag
+    
+    var objectClass: Object.Type {
+        switch self {
+        case .blob: return Blob.self
+        case .commit: return Commit.self
+        case .tree: return Tree.self
+        case .tag: return AnnotatedTag.self
+        }
+    }
 }

@@ -14,7 +14,7 @@ class TreeTests: XCTestCase {
 
     func testParse() {
         let firstPath = basicRepository.subpath(with: "objects/12/09fb65536f4ef7f72c8f87a7724074ffb5e57e")
-        guard let firstTree = try? Tree.parse(from: firstPath, in: basicRepository) else {
+        guard let firstTree = try? Tree.read(from: firstPath, in: basicRepository) else {
             XCTFail()
             return
         }
@@ -24,7 +24,7 @@ class TreeTests: XCTestCase {
         XCTAssert(firstTree.treeEntries[1].equals(mode: .blob, hash: "1c59427adc4b205a270d8f810310394962e79a8b", name: "second.txt"))
         
         let secondPath = basicRepository.subpath(with: "objects/1f/1ace28d590693be994c10b3c2895cb62da6229")
-        guard let secondTree = try? Tree.parse(from: secondPath, in: basicRepository) else {
+        guard let secondTree = try? Tree.read(from: secondPath, in: basicRepository) else {
             XCTFail()
             return
         }

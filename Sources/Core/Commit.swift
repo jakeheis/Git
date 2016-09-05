@@ -67,4 +67,8 @@ public class Commit: Object {
         return lines.joined(separator: "\n")
     }
     
+    public func generateContentData() -> Data {
+        return Data()
+    }
+    
 }

@@ -12,6 +12,7 @@ import Foundation
 //let testRepository = Repository(path: Path.Current + "Tests/Repositories/Basic")!
 let basicRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Basic")!
 let packedRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed")!
+let writeRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Write")!
 
 func executeGitCommand(in repository: Repository, with additionalArguments: [String]) {
     let arguments = ["-C", repository.path.rawValue] + additionalArguments

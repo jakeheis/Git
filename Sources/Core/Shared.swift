@@ -7,6 +7,7 @@
 //
 
 import Foundation
+import FileKit
 
 extension Data {
     
@@ -19,6 +20,14 @@ extension Data {
             return nil
         }
         return (processed.data as Data, processed.bytesProcessed)
+    }
+    
+    func compressed() -> Data? {
+        return (try? (self as NSData).gzipCompressed())?.data as Data?
+    }
+    
+    func write(to path: Path) throws {
+        try (self as NSData).writeToPath(path)
     }
     
 }
