@@ -26,7 +26,8 @@ let plumbing: [RepositoryCommand] = [
     HashObjectCommand(),
     LsFilesCommand(),
     LsTreeCommand(),
-    VerifyPackCommand()
+    VerifyPackCommand(),
+    WriteTreeCommand()
 ]
 
 let porcelain: [RepositoryCommand] = [

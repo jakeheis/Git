@@ -10,6 +10,10 @@ import Foundation
 
 public class TreeWriter {
     
+    enum Error: Swift.Error {
+        case missingObject
+    }
+    
     private let indexEntryStack: IndexEntryStack
     private let repository: Repository
     
@@ -18,11 +22,12 @@ public class TreeWriter {
         self.repository = index.repository
     }
     
-    public func write(actuallyWrite: Bool = true) throws -> Tree {
-        return try recursiveWrite(parentComponents: [], actuallyWrite: actuallyWrite)
+    @discardableResult
+    public func write(checkMissing: Bool = true) throws -> Tree {
+        return try recursiveWrite(parentComponents: [], checkMissing: checkMissing)
     }
     
-    private func recursiveWrite(parentComponents: [String] = [], actuallyWrite: Bool) throws -> Tree {
+    private func recursiveWrite(parentComponents: [String] = [], checkMissing: Bool) throws -> Tree {
         var treeEntries: [TreeEntry] = []
         
         while !indexEntryStack.isEmpty {
@@ -36,10 +41,13 @@ public class TreeWriter {
             
             if components.count > 1, let directoryName = components.first {
                 let subParentComponents = parentComponents + [directoryName]
-                let subtree = try recursiveWrite(parentComponents: subParentComponents, actuallyWrite: actuallyWrite)
+                let subtree = try recursiveWrite(parentComponents: subParentComponents, checkMissing: checkMissing)
                 let directoryEntry = TreeEntry(mode: .directory, hash: subtree.hash, name: directoryName, repository: repository)
                 treeEntries.append(directoryEntry)
             } else if let fileName = components.first {
+                if checkMissing && repository.objectStore[entry.hash] == nil {
+                    throw Error.missingObject
+                }
                 let blobEntry = TreeEntry(mode: entry.mode, hash: entry.hash, name: fileName, repository: repository)
                 treeEntries.append(blobEntry)
                 indexEntryStack.advance()
@@ -47,13 +55,7 @@ public class TreeWriter {
         }
         
         let tree = Tree(entries: treeEntries, repository: repository)
-        if actuallyWrite {
-            try tree.write()
-        } else {
-            print("Tree for \(parentComponents)")
-            print(tree.cat())
-            print("/Tree")
-        }
+        try tree.write()
         return tree
     }
     

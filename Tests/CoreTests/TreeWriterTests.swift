@@ -16,7 +16,7 @@ class TreeWriterTests: XCTestCase {
         
         let tree: Tree
         do {
-           tree = try writer.write()
+            tree = try writer.write(checkMissing: false)
         } catch {
             XCTFail()
             return
