@@ -24,7 +24,7 @@ class LsFilesCommand: RepositoryCommand {
             throw CLIError.error("Repository index could not be read")
         }
         
-        for entry in index {
+        for entry in index.entries {
             print(entry.name)
         }
     }

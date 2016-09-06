@@ -58,15 +58,13 @@ class DataReader {
         return String(readInt(bytes: bytes), radix: 8)
     }
     
-    static let hexCharacters = ["0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "a", "b", "c", "d", "e", "f"]
-    
     func readHex(bytes: Int) -> String {
         let hexData = readData(bytes: bytes)
         
         var hexString = ""
         for byte in hexData {
-            hexString.append(DataReader.hexCharacters[Int(byte >> 4)])
-            hexString.append(DataReader.hexCharacters[Int(byte & 0xF)])
+            hexString.append(hexCharacters[Int(byte >> 4)])
+            hexString.append(hexCharacters[Int(byte & 0xF)])
         }
         
         return hexString

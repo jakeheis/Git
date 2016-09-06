@@ -19,7 +19,7 @@ class CatFileCommand: RepositoryCommand {
     }
     
     let name = "cat-file"
-    let signature = "<hash>"
+    let signature = "<id>"
     let shortDescription = "Cat a file"
     
     var mode: Mode = .none
@@ -38,8 +38,13 @@ class CatFileCommand: RepositoryCommand {
             throw CLIError.error("Git command must be executed in git tracked directory")
         }
         
-        let hash = arguments.requiredArgument("hash")
-        guard let object = repository.objectStore[hash] else {
+        let id = arguments.requiredArgument("id")
+        let object: Object
+        if let storedObject = repository.objectStore[id] {
+            object = storedObject
+        } else if let reference = ReferenceParser.from(name: id, repository: repository) {
+            object = reference.object
+        } else {
             throw CLIError.error("Object not found")
         }
         

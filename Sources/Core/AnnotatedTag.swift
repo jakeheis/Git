@@ -9,7 +9,7 @@
 import Foundation
 import FileKit
 
-public class AnnotatedTag: Object {
+final public class AnnotatedTag: Object {
     
     public let hash: String
     public let repository: Repository
@@ -28,7 +28,7 @@ public class AnnotatedTag: Object {
         return object
     }
     
-    public required init(hash: String, data: Data, repository: Repository) {
+    public init(hash: String, data: Data, repository: Repository) {
         guard let contents = String(data: data, encoding: .ascii) else {
             fatalError("Couldn't read object \(hash)")
         }

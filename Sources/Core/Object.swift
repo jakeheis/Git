@@ -39,6 +39,25 @@ extension Object {
         try repository.objectStore.write(object: self)
     }
     
+    public static func header(for contentData: Data, type: ObjectType) -> Data {
+         let header = "\(type.rawValue) \(contentData.count)\0"
+        guard let headerData = header.data(using: .ascii) else {
+            fatalError("Something went very wrong")
+        }
+        return headerData
+    }
+    
+    public func header(for contentData: Data) -> Data {
+        return Self.header(for: contentData, type: type)
+    }
+    
+    func generateWriteData() -> Data {
+        let content = generateContentData()
+        var data = header(for: content)
+        data.append(content)
+        return data
+    }
+    
 }
 
 // MARK: - Defaults

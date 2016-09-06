@@ -1,3 +1,11 @@
+//
+//  Blob.swift
+//  Git
+//
+//  Created by Jake Heiser on 8/23/16.
+//
+//
+
 import Foundation
 import FileKit
 
@@ -6,7 +14,7 @@ final public class Blob: Object {
     public let hash: String
     public let type: ObjectType = .blob
     public let repository: Repository
-
+    
     public let data: Data
     
     public static func formBlob(from file: Path, in repository: Repository) -> Blob? {

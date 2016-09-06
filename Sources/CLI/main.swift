@@ -4,8 +4,20 @@ import FileKit
 import Core
 import Foundation
 
-Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
-//let r = Repository(path: Path.Current)!
+let isDebug: Bool
+if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/debug/CLI") {
+    isDebug = false
+} else {
+    isDebug = true
+}
+
+if isDebug {
+    Path.Current = "/Users/jakeheiser/Documents/Swift/Flock"
+    let r = Repository(path: Path.Current)!
+    
+//    print(r.index?.entries)
+//    try! TreeWriter(index: r.index!).write(actuallyWrite: false)
+}
 
 CLI.setup(name: "Git")
 
@@ -28,10 +40,10 @@ CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
 
 let result: CLIResult
-if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/debug/CLI") {
-    result = CLI.go()
+if isDebug {
+    result = CLI.debugGo(with: "git cat-file -p HEAD")
 } else {
-    result = CLI.debugGo(with: "git hash-object -w .gitignore")
+    result = CLI.go()
 }
 exit(result)
 

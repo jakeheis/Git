@@ -20,6 +20,12 @@ func executeGitCommand(in repository: Repository, with additionalArguments: [Str
     process.waitUntilExit()
 }
 
+func clearWriteRepository() {
+    let objectDirectory = writeRepository.subpath(with: ObjectStore.directory)
+    try! objectDirectory.deleteFile()
+    try! objectDirectory.createDirectory()
+}
+
 extension Repository {
     
     func checkout(_ co: String, block: () -> ()) {

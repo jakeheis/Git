@@ -8,7 +8,7 @@
 
 import Foundation
 
-public class Tree: Object {
+final public class Tree: Object {
     
     public let hash: String
     public let repository: Repository
@@ -16,7 +16,18 @@ public class Tree: Object {
     
     public let treeEntries: [TreeEntry]
     
-    public required init(hash: String, data: Data, repository: Repository) {
+    public init(entries: [TreeEntry], repository: Repository) {
+        self.treeEntries = entries
+        self.repository = repository
+        
+        let contentData = Tree.data(from: entries)
+        var data = Tree.header(for: contentData, type: .tree)
+        data.append(contentData)
+        
+        self.hash = DataReader(data: data.sha1).readHex(bytes: 20)
+    }
+    
+    public init(hash: String, data: Data, repository: Repository) {
         let dataReader = DataReader(data: data)
         
         var treeEntries: [TreeEntry] = []
@@ -44,7 +55,27 @@ public class Tree: Object {
     }
     
     public func generateContentData() -> Data {
-        return Data()
+        return Tree.data(from: treeEntries)
+    }
+    
+    // MARK: - Helpers
+    
+    private static func data(from entries: [TreeEntry]) -> Data {
+        let dataWriter = DataWriter()
+        
+        for entry in entries {
+            guard let modeData = entry.mode.rawValue.data(using: .ascii),
+                let nameData = entry.name.data(using: .ascii) else {
+                    continue
+            }
+            dataWriter.write(data: modeData)
+            dataWriter.write(byte: 32) // Space
+            dataWriter.write(data: nameData)
+            dataWriter.write(byte: 0) // Null byte
+            dataWriter.write(hex: entry.hash)
+        }
+        
+        return dataWriter.data
     }
     
 }

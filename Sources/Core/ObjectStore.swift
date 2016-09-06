@@ -139,28 +139,25 @@ public class ObjectStore {
     
     // MARK: - Basic write
     
-    func write(object: Object, to path: Path? = nil) throws {
-        let file: Path
-        if let path = path {
-            file = path
-        } else {
-            let breakIndex = object.hash.index(object.hash.startIndex, offsetBy: 2)
-            let firstTwo = object.hash.substring(to: breakIndex)
-            let hashEnd = object.hash.substring(from: breakIndex)
-            file = repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)/\(hashEnd)")
-        }
+    func write(object: Object) throws {
+        let breakIndex = object.hash.index(object.hash.startIndex, offsetBy: 2)
+        let firstTwo = object.hash.substring(to: breakIndex)
+        let hashEnd = object.hash.substring(from: breakIndex)
         
-        let content = object.generateContentData()
-        guard var data = "\(object.type) \(content.count)\0".data(using: .ascii) else {
-            throw Error.dataError
-        }
-        data.append(content)
+        let parentDirectory = repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)")
+        
+        let file = parentDirectory + hashEnd
+        
+        let data = object.generateWriteData()
         
         guard let compressed = data.compressed() else {
             throw Error.compressionError
         }
         
         do {
+            if !parentDirectory.isAny {
+                try parentDirectory.createDirectory()
+            }
             try compressed.write(to: file)
         } catch {
             throw Error.writeError

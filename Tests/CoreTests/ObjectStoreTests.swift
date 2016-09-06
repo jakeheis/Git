@@ -51,29 +51,19 @@ class ObjectStoreTests: XCTestCase {
     }
     
     func testWrite() {
-        let originalPath = writeRepository.subpath(with: "objects/51/f466f2e446ade0b0b2e5778ce3e0fa95e380e8")
-        guard let originalBlob = try? Blob.read(from: originalPath, in: writeRepository) else {
+        guard let originalBlob = basicRepository.objectStore["4260dd4b89d8b3f9a231538664bd3d346fdd2ead"] as? Blob else {
             XCTFail()
             return
         }
         
-        let writePath = writeRepository.path + "written_blob" // Don't actually write into repository
-        
         do {
-            try writeRepository.objectStore.write(object: originalBlob, to: writePath)
+            try writeRepository.objectStore.write(object: originalBlob)
         } catch {
             XCTFail()
             return
         }
         
-        guard let originalData = try? NSData.readFromPath(originalPath),
-            let writtenData = try? NSData.readFromPath(writePath) else {
-            XCTFail()
-            return
-        }
-        XCTAssert(originalData == writtenData)
-        
-        guard let sameBlob = (try? writeRepository.objectStore.readObject(from: writePath, hash: originalBlob.hash)) as? Blob else {
+        guard let sameBlob = writeRepository.objectStore["4260dd4b89d8b3f9a231538664bd3d346fdd2ead"] as? Blob else {
             XCTFail()
             return
         }
@@ -81,7 +71,7 @@ class ObjectStoreTests: XCTestCase {
         XCTAssert(sameBlob.hash == originalBlob.hash)
         XCTAssert(sameBlob.data == originalBlob.data)
         
-        try! writePath.deleteFile()
+        clearWriteRepository()
     }
 
 }

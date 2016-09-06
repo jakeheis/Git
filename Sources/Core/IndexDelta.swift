@@ -29,7 +29,7 @@ public struct IndexDelta {
     let index: Index
     
     init(index: Index, tree: Tree) {
-        var indexNames = Set(index.map { $0.name })
+        var indexNames = Set(index.entries.map { $0.name })
         
         var deltaFiles: [DeltaFile] = []
         
@@ -54,7 +54,7 @@ public struct IndexDelta {
     }
     
     init(index: Index, repository: Repository) {
-        var indexNames = Set(index.map { $0.name })
+        var indexNames = Set(index.entries.map { $0.name })
         
         var deltaFiles: [DeltaFile] = []
         let gitIgnore = repository.gitIgnore

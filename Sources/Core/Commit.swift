@@ -1,6 +1,14 @@
+//
+//  Commit.swift
+//  Git
+//
+//  Created by Jake Heiser on 8/23/16.
+//
+//
+
 import Foundation
 
-public class Commit: Object {
+final public class Commit: Object {
     
     public let hash: String
     public let repository: Repository
@@ -26,7 +34,7 @@ public class Commit: Object {
         return repository.objectStore[parentHash] as? Commit
     }
     
-    public required init(hash: String, data: Data, repository: Repository) {
+    public init(hash: String, data: Data, repository: Repository) {
         guard let contents = String(data: data, encoding: .ascii) else {
             fatalError("Couldn't read object \(hash)")
         }

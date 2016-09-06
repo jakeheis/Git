@@ -18,10 +18,10 @@ class IndexTests: XCTestCase {
                 XCTFail()
                 return
             }
-            XCTAssert(index[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 29, hash: "3a79a681b63d71c6c7c22bdefcb3e4e8d3988a5b", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "Subdirectory/subfile.txt"))
-            XCTAssert(index[1].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 18, hash: "aa3350c980eda0524c9ec6db48a613425f756b68", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "file.txt"))
-            XCTAssert(index[2].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 27, hash: "e20f5916c1cb235a7f26cd91e09a40e277d38306", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "other_file.txt"))
-            XCTAssert(index[3].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 32, hash: "6b3b273987213e28230958801876aff0876376e7", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "second.txt"))
+            XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 29, hash: "3a79a681b63d71c6c7c22bdefcb3e4e8d3988a5b", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "Subdirectory/subfile.txt"))
+            XCTAssert(index.entries[1].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 18, hash: "aa3350c980eda0524c9ec6db48a613425f756b68", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "file.txt"))
+            XCTAssert(index.entries[2].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 27, hash: "e20f5916c1cb235a7f26cd91e09a40e277d38306", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "other_file.txt"))
+            XCTAssert(index.entries[3].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 32, hash: "6b3b273987213e28230958801876aff0876376e7", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "second.txt"))
         }
     }
     

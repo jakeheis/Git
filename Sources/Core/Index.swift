@@ -18,7 +18,7 @@ public class Index {
         case parseError
     }
     
-    fileprivate let entries: [IndexEntry]
+    public let entries: [IndexEntry]
     private let keyedEntries: [String: IndexEntry]
     
     let repository: Repository
@@ -121,26 +121,6 @@ public class Index {
     
     public func unstagedChanges() -> IndexDelta? {
         return IndexDelta(index: self, repository: repository)
-    }
-    
-}
-
-extension Index: Collection {
-    
-    public var startIndex: Int {
-        return entries.startIndex
-    }
-    
-    public var endIndex: Int {
-        return entries.endIndex
-    }
-    
-    public subscript(index: Int) -> IndexEntry {
-        return entries[index]
-    }
-    
-    public func index(after i: Int) -> Int {
-        return entries.index(after: i)
     }
     
 }
