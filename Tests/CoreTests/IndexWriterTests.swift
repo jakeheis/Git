@@ -49,13 +49,31 @@ class IndexWriterTests: XCTestCase {
         XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
     }
 
-//    func testModifiedWrite() {
-//        guard let basicIndex = basicRepository.index,
-//            let data = try? IndexWriter(index: basicIndex).generateData() else {
-//                XCTFail()
-//                return
-//        }
-//        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
-//    }
+    func testModifiedWrite() {
+        guard let index = basicRepository.index else {
+            XCTFail()
+            return
+        }
+        
+        let modifiedFile = "file.txt"
+        try! "overwritten".writeToPath(basicRepository.path + modifiedFile)
+        defer { clearBasicRepository() }
+        
+        do {
+            try index.update(file: modifiedFile, write: false)
+        } catch {
+            XCTFail()
+            return
+        }
+        
+        guard let data = try? IndexWriter(index: index).generateData() else {
+            XCTFail()
+            return
+        }
+        
+        executeGitCommand(in: basicRepository, with: ["add", modifiedFile])
+        
+        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+    }
     
 }

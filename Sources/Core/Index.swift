@@ -322,6 +322,14 @@ public class IndexTreeExtension {
     
 }
 
+extension IndexTreeExtension: CustomStringConvertible {
+    
+    public var description: String {
+        return "\(path.isEmpty ? "(root)" : path) \(entryCount) \(subtreeCount) \(hash)"
+    }
+    
+}
+
 // MARK: -
 
 extension Repository {
