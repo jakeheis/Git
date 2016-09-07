@@ -176,7 +176,7 @@ public class Index {
         entries[index] = updated
         keyedEntries[file] = updated
         
-        refreshTreeExtensions(afterFile: file)
+        invalidateTreeExtensions(containing: file)
         
         if shouldWrite {
             try write()
@@ -202,7 +202,7 @@ public class Index {
         entries.insert(new, at: insertionIndex ?? entries.count)
         keyedEntries[file] = new
         
-        refreshTreeExtensions(afterFile: file)
+        invalidateTreeExtensions(containing: file)
       
         if shouldWrite {
             try write()
@@ -217,7 +217,7 @@ public class Index {
         entries.remove(at: index)
         keyedEntries[file] = nil
         
-        refreshTreeExtensions(afterFile: file)
+        invalidateTreeExtensions(containing: file)
         
         if shouldWrite {
             try write()
@@ -249,7 +249,7 @@ public class Index {
         return entry
     }
     
-    func refreshTreeExtensions(afterFile file: String) {
+    func invalidateTreeExtensions(containing file: String) {
         var pathComponents = file.components(separatedBy: "/")
         pathComponents.removeLast()
         
