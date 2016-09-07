@@ -11,20 +11,26 @@ import FileKit
 
 public class Index {
     
+    static let path = "index"
+    
     public let version: Int
     
     enum Error: Swift.Error {
         case readError
         case parseError
+        case writeError
+        case corruptFileError
     }
     
-    public let entries: [IndexEntry]
-    private let keyedEntries: [String: IndexEntry]
+    private(set) public var entries: [IndexEntry] = []
+    private var keyedEntries: [String: IndexEntry] = [:]
+   
+    public let rootTreeExtension: IndexTreeExtension?
     
     let repository: Repository
     
     init(repository: Repository) throws {
-        let indexPath = repository.subpath(with: "index")
+        let indexPath = repository.subpath(with: Index.path)
         
         guard let dataReader = DataReader(path: indexPath) else {
             throw Error.readError
@@ -34,7 +40,7 @@ public class Index {
         
         let dirc: [UInt8] = [68, 73, 82, 67] // "DIRC"
         guard Array(dataReader.readData(bytes: 4)) == dirc else {
-            throw Error.parseError
+            throw Error.corruptFileError
         }
         
         let version = dataReader.readInt(bytes: 4)
@@ -47,18 +53,12 @@ public class Index {
         
         // Read entries
         
-        var entries: [IndexEntry] = []
-        var keyedEntries: [String: IndexEntry] = [:]
         for _ in 0 ..< count {
             let cSeconds = dataReader.readInt(bytes: 4)
             let cNanoseconds = dataReader.readInt(bytes: 4)
-            let cTimeInterval = Double(cSeconds) + Double(cNanoseconds) / 1_000_000_000
-            let cDate = Date(timeIntervalSince1970: cTimeInterval)
             
             let mSeconds = dataReader.readInt(bytes: 4)
             let mNanoseconds = dataReader.readInt(bytes: 4)
-            let mTimeInterval = Double(mSeconds) + Double(mNanoseconds) / 1_000_000_000
-            let mDate = Date(timeIntervalSince1970: mTimeInterval)
             
             let dev = dataReader.readInt(bytes: 4)
             let ino = dataReader.readInt(bytes: 4)
@@ -82,7 +82,7 @@ public class Index {
             let nameLength = dataReader.readInt(bytes: 1)
             
             let potentialName: String?
-            if nameLength == 0xFFFF { // Length too big to store; do it manually
+            if nameLength == 0xFF { // Length too big to store; do it manually
                 let data = dataReader.readUntil(byte: 0, skipByte: false) // Read until null byte
                 potentialName = String(data: data, encoding: .ascii)
             } else {
@@ -98,19 +98,250 @@ public class Index {
             let paddingCount = 8 - (bytesIn % 8)
             dataReader.readData(bytes: paddingCount)
             
-            let entry = IndexEntry(cDate: cDate, mDate: mDate, dev: dev, ino: ino, mode: mode, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
+            let entry = IndexEntry(cSeconds: cSeconds, cNanoseconds: cNanoseconds, mSeconds: mSeconds, mNanoseconds: mNanoseconds, dev: dev, ino: ino, mode: mode, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
             entries.append(entry)
             keyedEntries[name] = entry
         }
         
-        self.entries = entries
-        self.keyedEntries = keyedEntries
+        var rootTreeExtension: IndexTreeExtension?
+        if dataReader.remainingBytes > 20 { // Has extensions
+            let signature = Array(dataReader.readData(bytes: 4))
+            let size = dataReader.readInt(bytes: 4)
+            
+            let endByteCount = dataReader.byteCounter + size
+            
+            if signature == [84, 82, 69, 69] { // TREE
+                func readTreeExtension() throws -> IndexTreeExtension {
+                    guard let path = String(data: dataReader.readUntil(byte: 0), encoding: .ascii),
+                        let entryCountString = String(data: dataReader.readUntil(byte: 32), encoding: .ascii),
+                        let entryCount = Int(entryCountString),
+                        let subtreeCountString = String(data: dataReader.readUntil(byte: 10), encoding: .ascii),
+                        let subtreeCount = Int(subtreeCountString) else {
+                            throw Error.corruptFileError
+                    }
+                    
+                    let hash: String? = entryCount >= 0 ? dataReader.readHex(bytes: 20) : nil
+                    
+                    var subtrees: [IndexTreeExtension] = []
+                    for _ in 0 ..< subtreeCount {
+                        subtrees.append(try readTreeExtension())
+                    }
+                    
+                    return IndexTreeExtension(path: path, entryCount: entryCount, subtreeCount: subtreeCount, hash: hash, subtrees: subtrees)
+                }
+                
+                rootTreeExtension = try readTreeExtension()
+            }
+            
+            if dataReader.byteCounter != endByteCount {
+                fatalError("The index extension was read incorrectly")
+            }
+        }
+        
+        if dataReader.remainingBytes != 20 {
+            fatalError("The index has extensions that cannot yet be parsed")
+        }
+        
+        let checksum = dataReader.readData(bytes: 20)
+        guard dataReader.data.subdata(in: 0 ..< (dataReader.data.count - 20)).sha1 == checksum else {
+            throw Error.corruptFileError
+        }
+        
+        self.rootTreeExtension = rootTreeExtension
         self.repository = repository
     }
     
     public subscript(name: String) -> IndexEntry? {
         return keyedEntries[name]
     }
+    
+    // MARK: - Modifying
+    
+    public func update(file: String) throws {
+        guard let existing = self[file],
+            let index = entries.index(of: existing) else {
+            return
+        }
+        guard let updated = createEntry(for: file) else {
+            return
+        }
+        guard updated.hash != existing.hash else { // File didn't change
+            return
+        }
+        
+        entries[index] = updated
+        keyedEntries[file] = updated
+        
+        refreshTreeExtensions(afterFile: file)
+        
+//        try write()
+    }
+    
+    func refreshTreeExtensions(afterFile file: String) {
+        var pathComponents = file.components(separatedBy: "/")
+        pathComponents.removeLast()
+        
+        if let rootTreeExtension = rootTreeExtension {
+            invalidate(treeExtension: rootTreeExtension, pathComponents: pathComponents)
+        }
+    }
+    
+    func invalidate(treeExtension: IndexTreeExtension, pathComponents: [String]) {
+        treeExtension.invalidate()
+        
+        guard !pathComponents.isEmpty else {
+            return
+        }
+        
+        if let matchingExtension = treeExtension.subtrees.first(where: { $0.path == pathComponents.first }) {
+            let subComponents = Array(pathComponents[1 ..< pathComponents.count])
+            invalidate(treeExtension: matchingExtension, pathComponents: subComponents)
+        }
+    }
+    
+    public func add(file: String) throws {
+        if self[file] != nil {
+            return
+        }
+        
+        var insertionIndex: Int?
+        for (index, entry) in entries.enumerated() {
+            if entry.name > file {
+                insertionIndex = index
+            }
+        }
+        guard let index = insertionIndex else {
+            return
+        }
+        
+        guard let new = createEntry(for: file) else {
+            return
+        }
+        
+        entries.insert(new, at: index)
+        keyedEntries[file] = new
+        
+        refreshTreeExtensions(afterFile: file)
+        
+//        try write()
+    }
+    
+    private func createEntry(for file: String) -> IndexEntry? {
+        let path = repository.path + file
+        
+        guard let blob = try? BlobWriter(file: path, repository: repository).write() else {
+            return nil
+        }
+        
+        let pathPointer = path.rawValue.cString(using: .ascii)
+        let statPointer = UnsafeMutablePointer<stat>.allocate(capacity: 1)
+        lstat(pathPointer, statPointer)
+        
+        let rawCDate = statPointer.pointee.st_ctimespec
+        let rawMDate = statPointer.pointee.st_mtimespec
+        
+        guard let fileMode = FileMode(rawValue: String(statPointer.pointee.st_mode, radix: 8)) else {
+            return nil
+        }
+        
+        let entry = IndexEntry(
+            cSeconds: Int(rawCDate.tv_sec),
+            cNanoseconds: Int(rawCDate.tv_nsec),
+            mSeconds: Int(rawMDate.tv_sec),
+            mNanoseconds: Int(rawMDate.tv_nsec),
+            dev: Int(statPointer.pointee.st_dev),
+            ino: Int(statPointer.pointee.st_ino),
+            mode: fileMode,
+            uid: Int(statPointer.pointee.st_uid),
+            gid: Int(statPointer.pointee.st_gid),
+            fileSize: Int(statPointer.pointee.st_size),
+            hash: blob.hash,
+            assumeValid: false, extended: false, firstStage: false, secondStage: false,
+            name: file
+        )
+        return entry
+    }
+    
+    @discardableResult
+    func write() throws -> Data {
+        let dataWriter = DataWriter()
+        dataWriter.write(bytes: [68, 73, 82, 67]) // DIRC
+        dataWriter.write(int: version, overBytes: 4)
+        dataWriter.write(int: entries.count, overBytes: 4)
+        
+        for entry in entries {
+            dataWriter.write(int: entry.cSeconds, overBytes: 4)
+            dataWriter.write(int: entry.cNanoseconds, overBytes: 4)
+            dataWriter.write(int: entry.mSeconds, overBytes: 4)
+            dataWriter.write(int: entry.mNanoseconds, overBytes: 4)
+            dataWriter.write(int: entry.dev, overBytes: 4)
+            dataWriter.write(int: entry.ino, overBytes: 4)
+            try dataWriter.write(octal: entry.mode.rawValue, overBytes: 4)
+            dataWriter.write(int: entry.uid, overBytes: 4)
+            dataWriter.write(int: entry.gid, overBytes: 4)
+            dataWriter.write(int: entry.fileSize, overBytes: 4)
+            dataWriter.write(hex: entry.hash)
+            
+            let flagByte = Byte(bits: [UInt8(entry.assumeValid), UInt8(entry.extended), UInt8(entry.firstStage), UInt8(entry.secondStage), 0, 0, 0, 0])
+            dataWriter.write(byte: flagByte)
+            
+            guard let nameData = entry.name.data(using: .ascii) else {
+                throw Error.writeError
+            }
+            let nameLength = nameData.count > 0xFF ? 0xFF : nameData.count
+            dataWriter.write(int: nameLength, overBytes: 1)
+            dataWriter.write(data: nameData)
+            
+            let byteCount = 62 + nameData.count
+            let paddingCount = 8 - (byteCount % 8)
+            for _ in 0 ..< paddingCount {
+                dataWriter.write(byte: 0)
+            }
+        }
+        
+        if let rootTreeExtension = rootTreeExtension {
+            dataWriter.write(bytes: [84, 82, 69, 69]) // TREE
+            
+            let extensionWriter = DataWriter()
+            
+            func write(treeExtension: IndexTreeExtension) throws {
+                guard let pathData = treeExtension.path.data(using: .ascii),
+                    let entryCountData = String(treeExtension.entryCount).data(using: .ascii),
+                    let subtreeCountData = String(treeExtension.subtreeCount).data(using: .ascii) else {
+                        return
+                }
+                extensionWriter.write(data: pathData)
+                extensionWriter.write(byte: 0)
+                extensionWriter.write(data: entryCountData)
+                extensionWriter.write(byte: 32)
+                extensionWriter.write(data: subtreeCountData)
+                extensionWriter.write(byte: 10)
+                if let hash = treeExtension.hash {
+                    extensionWriter.write(hex: hash)
+                }
+                for subtree in treeExtension.subtrees {
+                    try write(treeExtension: subtree)
+                }
+            }
+            
+            try write(treeExtension: rootTreeExtension)
+            
+            let extensionData = extensionWriter.data
+            dataWriter.write(int: extensionData.count, overBytes: 4)
+            dataWriter.write(data: extensionData)
+        }
+        
+        dataWriter.write(data: dataWriter.data.sha1) // Checksum
+        
+        return dataWriter.data
+//        try dataWriter.data.write(to: repository.subpath(with: Index.path))
+    }
+    
+//    private func write(treeExtension: IndexTreeExtension) throws {
+//        
+//    }
+    
+    // MARK: - Deltas
     
     public func stagedChanges() -> IndexDelta? {
         guard let tree = repository.head?.commit?.tree else {
@@ -125,12 +356,22 @@ public class Index {
     
 }
 
+private extension UInt8 {
+    
+    init(_ bool: Bool) {
+        self.init(bool ? 1 : 0)
+    }
+    
+}
+
 // MARK: - IndexEntry
 
 public struct IndexEntry {
     
-    public let cDate: Date
-    public let mDate: Date
+    public let cSeconds: Int
+    public let cNanoseconds: Int
+    public let mSeconds: Int
+    public let mNanoseconds: Int
     public let dev: Int
     public let ino: Int
     public let mode: FileMode
@@ -144,13 +385,51 @@ public struct IndexEntry {
     public let secondStage: Bool
     public let name: String
     
+    var cDate: Date {
+        return Date(timeIntervalSince1970: TimeInterval(cSeconds + cNanoseconds / 1_000_000_000))
+    }
+    
+    var mDate: Date {
+        return Date(timeIntervalSince1970: TimeInterval(mSeconds + mNanoseconds / 1_000_000_000))
+    }
     
 }
 
 extension IndexEntry: CustomStringConvertible {
-    
+
     public var description: String {
         return name
+    }
+
+}
+
+extension IndexEntry: Equatable {}
+
+public func == (lhs: IndexEntry, rhs: IndexEntry) -> Bool {
+    return lhs.cDate == rhs.cDate && lhs.mDate == rhs.mDate && lhs.dev == rhs.dev && lhs.ino == rhs.ino && lhs.mode == rhs.mode && lhs.uid == rhs.uid && lhs.gid == rhs.gid && lhs.fileSize == rhs.fileSize && lhs.hash == rhs.hash && lhs.assumeValid == rhs.assumeValid && lhs.extended == rhs.extended && lhs.firstStage == rhs.firstStage && lhs.secondStage == rhs.secondStage
+}
+
+// MARK: - IndexTreeExtension
+
+public class IndexTreeExtension {
+    
+    public let path: String
+    private(set) public var entryCount: Int
+    public let subtreeCount: Int
+    private(set) public var hash: String?
+    public let subtrees: [IndexTreeExtension]
+ 
+    init(path: String, entryCount: Int, subtreeCount: Int, hash: String?, subtrees: [IndexTreeExtension]) {
+        self.path = path
+        self.entryCount = entryCount
+        self.subtreeCount = subtreeCount
+        self.hash = hash
+        self.subtrees = subtrees
+    }
+    
+    func invalidate() {
+        entryCount = -1
+        hash = nil
     }
     
 }

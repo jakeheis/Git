@@ -29,19 +29,16 @@ class HashObjectCommand: RepositoryCommand {
         guard let repository = repository else {
             throw CLIError.error("Repository could not be read")
         }
-        guard let blob = Blob.formBlob(from: Path(rawPath), in: repository) else {
+        
+        let blobWriter = BlobWriter(file: Path(rawPath), repository: repository)
+        
+        let blob: Blob
+        do {
+            blob = write ? try blobWriter.write() : try blobWriter.createWithoutWrite()
+        } catch {
             throw CLIError.error("Could not hash object")
         }
-        
         print(blob.hash)
-        
-        if write {
-            do {
-                try blob.write()
-            } catch {
-                throw CLIError.error("Could not write blob")
-            }
-        }
     }
     
 }

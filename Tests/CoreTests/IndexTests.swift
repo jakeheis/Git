@@ -62,6 +62,105 @@ class IndexTests: XCTestCase {
             try! hiFile.deleteFile()
         }
     }
+    
+    func testBasicWrite() {
+        guard let basicIndex = basicRepository.index,
+            let data = try? basicIndex.write() else {
+            XCTFail()
+            return
+        }
+        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+    }
+    
+    func testAddEntry() {
+        guard let index = writeRepository.index else {
+            XCTFail()
+            return
+        }
+        
+        let newFile = "sub/test.txt"
+        let newFilePath = writeRepository.path + newFile
+        try! "test".writeToPath(newFilePath)
+        
+        do {
+            try index.add(file: newFile)
+        } catch {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(index.entries.count == 8)
+        
+        // Check that entry was correctly inserted
+        XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 10, hash: "e43b0f988953ae3a84b00331d0ccf5f7d51cb3cf", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: ".gitignore"))
+        XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
+        XCTAssert(index.entries[6].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/test.txt"))
+        XCTAssert(index.entries[7].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 12, hash: "861dc4f462a6878624c8a14e90e9e496f153133f", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/within.txt"))
+        XCTAssert(index["sub/test.txt"]!.equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/test.txt"))
+        
+        // Check that tree extensions were correctly invalidated
+        guard let rootTreeExtension = index.rootTreeExtension else {
+            XCTFail()
+            return
+        }
+        XCTAssert(rootTreeExtension.path == "")
+        XCTAssert(rootTreeExtension.hash == nil)
+        XCTAssert(rootTreeExtension.entryCount == -1)
+        XCTAssert(rootTreeExtension.subtrees[0].path == "sub")
+        XCTAssert(rootTreeExtension.subtrees[0].hash == nil)
+        XCTAssert(rootTreeExtension.subtrees[0].entryCount == -1)
+        XCTAssert(rootTreeExtension.subtrees[1].path == "links")
+        XCTAssert(rootTreeExtension.subtrees[1].hash == "516e5976d80d068a62f7e03e1af588687775a28d")
+        XCTAssert(rootTreeExtension.subtrees[1].entryCount == 2)
+        
+        try! newFilePath.deleteFile()
+    }
+    
+    func testUpdateEntry() {
+        guard let index = writeRepository.index else {
+            XCTFail()
+            return
+        }
+        
+        let updateFile = "sub/sub.txt"
+        let updateFilePath = writeRepository.path + updateFile
+        try! "test".writeToPath(updateFilePath)
+        
+        XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
+        
+        do {
+            try index.update(file: updateFile)
+        } catch {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(index.entries.count == 7)
+        
+        // Check that entry was correctly inserted
+        XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 10, hash: "e43b0f988953ae3a84b00331d0ccf5f7d51cb3cf", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: ".gitignore"))
+        XCTAssert(index.entries[4].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 7, hash: "e019be006cf33489e2d0177a3837a2384eddebc5", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "second.txt"))
+        XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
+        XCTAssert(index.entries[6].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 12, hash: "861dc4f462a6878624c8a14e90e9e496f153133f", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/within.txt"))
+        XCTAssert(index["sub/sub.txt"]!.equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
+        
+        // Check that tree extensions were correctly invalidated
+        guard let rootTreeExtension = index.rootTreeExtension else {
+            XCTFail()
+            return
+        }
+        XCTAssert(rootTreeExtension.path == "")
+        XCTAssert(rootTreeExtension.hash == nil)
+        XCTAssert(rootTreeExtension.entryCount == -1)
+        XCTAssert(rootTreeExtension.subtrees[0].path == "sub")
+        XCTAssert(rootTreeExtension.subtrees[0].hash == nil)
+        XCTAssert(rootTreeExtension.subtrees[0].entryCount == -1)
+        XCTAssert(rootTreeExtension.subtrees[1].path == "links")
+        XCTAssert(rootTreeExtension.subtrees[1].hash == "516e5976d80d068a62f7e03e1af588687775a28d")
+        XCTAssert(rootTreeExtension.subtrees[1].entryCount == 2)
+        
+        clearWriteRepository()
+    }
 
 }
 

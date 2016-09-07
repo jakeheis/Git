@@ -6,17 +6,20 @@ import Foundation
 
 let isDebug: Bool
 if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/debug/CLI") {
-    isDebug = false
+    if ProcessInfo.processInfo.arguments.count > 1 {
+        isDebug = (ProcessInfo.processInfo.arguments[1] == "-d")
+    } else {
+        isDebug = false
+    }
 } else {
     isDebug = true
+    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 }
 
 if isDebug {
-    Path.Current = "/Users/jakeheiser/Documents/Swift/Flock"
     let r = Repository(path: Path.Current)!
     
-//    print(r.index?.entries)
-//    try! TreeWriter(index: r.index!).write(actuallyWrite: false)
+    print(r.index!.rootTreeExtension)
 }
 
 CLI.setup(name: "Git")
@@ -42,10 +45,10 @@ CLI.register(commands: porcelain)
 
 let result: CLIResult
 if isDebug {
-    result = CLI.debugGo(with: "git cat-file -p HEAD")
+//    result = CLI.debugGo(with: "git cat-file -p HEAD")
 } else {
     result = CLI.go()
 }
-exit(result)
+//exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

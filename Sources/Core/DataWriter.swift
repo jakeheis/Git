@@ -10,6 +10,10 @@ import Foundation
 
 class DataWriter {
     
+    enum Error: Swift.Error {
+        case intConversionError
+    }
+    
     var data = Data()
     
     var length: Int {
@@ -24,6 +28,30 @@ class DataWriter {
         data.append(byte)
     }
     
+    func write(bytes: [UInt8]) {
+        data.append(Data(bytes))
+    }
+    
+    func write(int: Int, overBytes bytes: Int) {
+        var readingInt = int
+        
+        var byteArray: [UInt8] = []
+        for _ in 0 ..< bytes {
+            let byte = UInt8(readingInt & 0xFF)
+            byteArray.insert(byte, at: 0) // Big endian
+            readingInt >>= 8
+        }
+        
+        write(bytes: byteArray)
+    }
+    
+    func write(octal: String, overBytes bytes: Int) throws {
+        guard let octalInt = Int(octal, radix: 8) else {
+            throw Error.intConversionError
+        }
+        write(int: octalInt, overBytes: bytes)
+    }
+    
     func write(hex: String) {
         let characters = Array(hex.characters)
         for i in stride(from: 0, to: characters.count, by: 2) {
@@ -35,6 +63,10 @@ class DataWriter {
             let byte = second + (first << 4)
             write(byte: UInt8(byte))
         }
+    }
+    
+    func write(byte: Byte) {
+        write(byte: UInt8(byte.intValue(ofBits: 0 ..< 8)))
     }
     
     func prepend(data newData: Data) {

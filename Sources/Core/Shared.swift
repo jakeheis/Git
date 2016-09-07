@@ -32,4 +32,8 @@ extension Data {
         try (self as NSData).writeToPath(path)
     }
     
+    static func read(from path: Path) throws -> Data {
+        return try NSData.readFromPath(path) as Data
+    }
+    
 }

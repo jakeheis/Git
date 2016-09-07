@@ -76,7 +76,7 @@ public struct IndexDelta {
             if let indexEntry = index[file] {
                 indexNames.remove(file)
                 
-                guard let blob = Blob.formBlob(from: repository.path + file, in: repository) else {
+                guard let blob = try? BlobWriter(file: repository.path + file, repository: repository).createWithoutWrite() else {
                     fatalError("Blob could not be created for file: \(file)")
                 }
                 

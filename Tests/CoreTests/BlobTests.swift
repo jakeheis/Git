@@ -33,7 +33,7 @@ class BlobTests: XCTestCase {
     }
     
     func testCreation() {
-        guard let blob = Blob.formBlob(from: basicRepository.path + "third.txt", in: basicRepository) else {
+        guard let blob = try? BlobWriter(file: basicRepository.path + "third.txt", repository: basicRepository).createWithoutWrite() else {
             XCTFail()
             return
         }

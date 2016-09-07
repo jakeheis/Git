@@ -24,6 +24,8 @@ func clearWriteRepository() {
     let objectDirectory = writeRepository.subpath(with: ObjectStore.directory)
     try! objectDirectory.deleteFile()
     try! objectDirectory.createDirectory()
+    
+    executeGitCommand(in: writeRepository, with: ["checkout", "."])
 }
 
 extension Repository {
