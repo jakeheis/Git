@@ -36,6 +36,11 @@ class IndexTests: XCTestCase {
             
             let delta = IndexDelta(index: index, tree: tree)
             
+            guard delta.deltaFiles.count == 3 else {
+                XCTFail()
+                return
+            }
+            
             XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
             XCTAssert(delta.deltaFiles[1] == ("second.txt", .deleted))
             XCTAssert(delta.deltaFiles[2] == ("third.txt", .added))
@@ -47,6 +52,9 @@ class IndexTests: XCTestCase {
             let hiFile = basicRepository.path + "hi.txt"
             try! "hi".writeToPath(hiFile)
             try! (basicRepository.path + "third.txt").deleteFile()
+            defer { try! hiFile.deleteFile() }
+            
+            Thread.sleep(forTimeInterval: 1) // Make sure stat values for initial creation and modification are different
             try! "overwritten".writeToPath(basicRepository.path + "file.txt")
             
             guard let index = basicRepository.index else {
@@ -55,11 +63,14 @@ class IndexTests: XCTestCase {
             }
             let delta = IndexDelta(index: index, repository: basicRepository)
             
+            guard delta.deltaFiles.count == 3 else {
+                XCTFail()
+                return
+            }
+            
             XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
             XCTAssert(delta.deltaFiles[1] == ("hi.txt", .untracked))
             XCTAssert(delta.deltaFiles[2] == ("third.txt", .deleted))
-                        
-            try! hiFile.deleteFile()
         }
     }
     
@@ -72,6 +83,7 @@ class IndexTests: XCTestCase {
         let newFile = "sub/test.txt"
         let newFilePath = writeRepository.path + newFile
         try! "test".writeToPath(newFilePath)
+        defer { clearWriteRepository() }
         
         do {
             try index.add(file: newFile, write: false)
@@ -103,10 +115,6 @@ class IndexTests: XCTestCase {
         XCTAssert(rootTreeExtension.subtrees[1].path == "links")
         XCTAssert(rootTreeExtension.subtrees[1].hash == "516e5976d80d068a62f7e03e1af588687775a28d")
         XCTAssert(rootTreeExtension.subtrees[1].entryCount == 2)
-        
-        try! newFilePath.deleteFile()
-        
-        clearWriteRepository()
     }
     
     func testUpdateEntry() {
@@ -118,6 +126,7 @@ class IndexTests: XCTestCase {
         let updateFile = "sub/sub.txt"
         let updateFilePath = writeRepository.path + updateFile
         try! "test".writeToPath(updateFilePath)
+        defer { clearWriteRepository() }
         
         XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
         
@@ -151,8 +160,6 @@ class IndexTests: XCTestCase {
         XCTAssert(rootTreeExtension.subtrees[1].path == "links")
         XCTAssert(rootTreeExtension.subtrees[1].hash == "516e5976d80d068a62f7e03e1af588687775a28d")
         XCTAssert(rootTreeExtension.subtrees[1].entryCount == 2)
-        
-        clearWriteRepository()
     }
 
 }
@@ -162,12 +169,11 @@ private extension IndexEntry {
     // Don't check ino or dates because they keep changing every time
     func equals(dev: Int, mode: FileMode, uid: Int, gid: Int, fileSize: Int, hash: String, assumeValid: Bool, extended: Bool, firstStage: Bool, secondStage: Bool, name: String) -> Bool {
         return
-                self.dev == dev &&
-                self.ino == ino &&
-                self.mode == mode &&
-                self.uid == uid &&
-                self.gid == gid &&
-                self.fileSize == fileSize &&
+                self.stat.dev == dev &&
+                self.stat.mode == mode &&
+                self.stat.uid == uid &&
+                self.stat.gid == gid &&
+                self.stat.fileSize == fileSize &&
                 self.hash == hash &&
                 self.assumeValid == assumeValid &&
                 self.extended == extended &&

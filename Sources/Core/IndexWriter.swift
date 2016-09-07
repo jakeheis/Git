@@ -58,16 +58,16 @@ class IndexWriter {
     }
     
     func write(entry: IndexEntry, using dataWriter: DataWriter) throws {
-        dataWriter.write(int: entry.cSeconds, overBytes: 4)
-        dataWriter.write(int: entry.cNanoseconds, overBytes: 4)
-        dataWriter.write(int: entry.mSeconds, overBytes: 4)
-        dataWriter.write(int: entry.mNanoseconds, overBytes: 4)
-        dataWriter.write(int: entry.dev, overBytes: 4)
-        dataWriter.write(int: entry.ino, overBytes: 4)
-        try dataWriter.write(octal: entry.mode.rawValue, overBytes: 4)
-        dataWriter.write(int: entry.uid, overBytes: 4)
-        dataWriter.write(int: entry.gid, overBytes: 4)
-        dataWriter.write(int: entry.fileSize, overBytes: 4)
+        dataWriter.write(int: entry.stat.cSeconds, overBytes: 4)
+        dataWriter.write(int: entry.stat.cNanoseconds, overBytes: 4)
+        dataWriter.write(int: entry.stat.mSeconds, overBytes: 4)
+        dataWriter.write(int: entry.stat.mNanoseconds, overBytes: 4)
+        dataWriter.write(int: entry.stat.dev, overBytes: 4)
+        dataWriter.write(int: entry.stat.ino, overBytes: 4)
+        try dataWriter.write(octal: entry.stat.mode.rawValue, overBytes: 4)
+        dataWriter.write(int: entry.stat.uid, overBytes: 4)
+        dataWriter.write(int: entry.stat.gid, overBytes: 4)
+        dataWriter.write(int: entry.stat.fileSize, overBytes: 4)
         dataWriter.write(hex: entry.hash)
         
         let flagByte = Byte(bits: [UInt8(entry.assumeValid), UInt8(entry.extended), UInt8(entry.firstStage), UInt8(entry.secondStage), 0, 0, 0, 0])

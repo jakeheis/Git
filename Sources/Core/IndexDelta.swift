@@ -37,7 +37,7 @@ public struct IndexDelta {
         while let treeEntry = recursiveTreeIterator.next() {
             if let indexEntry = index[treeEntry.name] {
                 indexNames.remove(treeEntry.name)
-                if treeEntry.hash != indexEntry.hash || treeEntry.mode != indexEntry.mode {
+                if treeEntry.hash != indexEntry.hash || treeEntry.mode != indexEntry.stat.mode {
                     deltaFiles.append((treeEntry.name, .modified))
                 }
             } else {
@@ -67,7 +67,9 @@ public struct IndexDelta {
                 continue
             }
             
-            if (repository.path + file).isDirectory {
+            let filePath = repository.path + file
+            
+            if filePath.isDirectory {
                 if gitIgnore.ignoreDirectory(file) {
                     fileIterator.skipDescendants()
                 }
@@ -76,7 +78,12 @@ public struct IndexDelta {
             if let indexEntry = index[file] {
                 indexNames.remove(file)
                 
-                guard let blob = try? BlobWriter(file: repository.path + file, repository: repository).createWithoutWrite() else {
+                let stat = Stat(path: filePath)
+                guard stat.mDate > indexEntry.stat.mDate || stat.cDate > indexEntry.stat.cDate else { // Not touched since last added to index
+                    continue
+                }
+                
+                guard let blob = try? BlobWriter(file: filePath, repository: repository).createWithoutWrite() else {
                     fatalError("Blob could not be created for file: \(file)")
                 }
                 

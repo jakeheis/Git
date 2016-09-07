@@ -22,6 +22,8 @@ class TreeWriterTests: XCTestCase {
             return
         }
         
+        defer { clearWriteRepository() }
+        
         XCTAssert(tree.hash == "b0bd9fc1df38efc9e270e1a515c614e341eac8fc")
         
         XCTAssert(tree.treeEntries[0].equals(mode: .blob, hash: "e43b0f988953ae3a84b00331d0ccf5f7d51cb3cf", name: ".gitignore"))
@@ -47,8 +49,6 @@ class TreeWriterTests: XCTestCase {
         XCTAssert(secondSubtree.hash == "ff8968529794cb928822ca2c23b4eba1d67fe3f3")
         XCTAssert(secondSubtree.treeEntries[0].equals(mode: .blob, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", name: "sub.txt"))
         XCTAssert(secondSubtree.treeEntries[1].equals(mode: .blob, hash: "861dc4f462a6878624c8a14e90e9e496f153133f", name: "within.txt"))
-        
-        clearWriteRepository()
     }
     
     

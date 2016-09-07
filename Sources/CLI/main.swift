@@ -13,7 +13,8 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
     }
 } else {
     isDebug = true
-    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+//    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
 }
 
 if isDebug {
@@ -45,7 +46,7 @@ CLI.register(commands: porcelain)
 
 let result: CLIResult
 if isDebug {
-//    result = CLI.debugGo(with: "git cat-file -p HEAD")
+    result = CLI.debugGo(with: "git status -sb")
 } else {
     result = CLI.go()
 }

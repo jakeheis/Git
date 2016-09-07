@@ -30,6 +30,7 @@ class IndexWriterTests: XCTestCase {
         let newFile = "test.txt"
         let newFilePath = basicRepository.path + newFile
         try! "test".writeToPath(newFilePath)
+        defer { clearBasicRepository() }
         
         do {
             try index.add(file: newFile, write: false)
@@ -46,8 +47,6 @@ class IndexWriterTests: XCTestCase {
         executeGitCommand(in: basicRepository, with: ["add", newFile])
         
         XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
-        
-        clearBasicRepository()
     }
 
 //    func testModifiedWrite() {

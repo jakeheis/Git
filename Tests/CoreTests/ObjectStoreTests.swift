@@ -56,6 +56,8 @@ class ObjectStoreTests: XCTestCase {
             return
         }
         
+        defer { clearWriteRepository() }
+        
         do {
             try writeRepository.objectStore.write(object: originalBlob)
         } catch {
@@ -70,8 +72,6 @@ class ObjectStoreTests: XCTestCase {
         
         XCTAssert(sameBlob.hash == originalBlob.hash)
         XCTAssert(sameBlob.data == originalBlob.data)
-        
-        clearWriteRepository()
     }
 
 }

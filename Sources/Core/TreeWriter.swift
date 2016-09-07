@@ -48,7 +48,7 @@ public class TreeWriter {
                 if checkMissing && repository.objectStore[entry.hash] == nil {
                     throw Error.missingObject
                 }
-                let blobEntry = TreeEntry(mode: entry.mode, hash: entry.hash, name: fileName, repository: repository)
+                let blobEntry = TreeEntry(mode: entry.stat.mode, hash: entry.hash, name: fileName, repository: repository)
                 treeEntries.append(blobEntry)
                 indexEntryStack.advance()
             }

@@ -96,7 +96,8 @@ public class Index {
             let paddingCount = 8 - (bytesIn % 8)
             dataReader.readData(bytes: paddingCount)
             
-            let entry = IndexEntry(cSeconds: cSeconds, cNanoseconds: cNanoseconds, mSeconds: mSeconds, mNanoseconds: mNanoseconds, dev: dev, ino: ino, mode: mode, uid: uid, gid: gid, fileSize: fileSize, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
+            let stat = Stat(cSeconds: cSeconds, cNanoseconds: cNanoseconds, mSeconds: mSeconds, mNanoseconds: mNanoseconds, dev: dev, ino: ino, mode: mode, uid: uid, gid: gid, fileSize: fileSize)
+            let entry = IndexEntry(stat: stat, hash: hash, assumeValid: assumeValid, extended: extended, firstStage: firstStage, secondStage: secondStage, name: name)
             entries.append(entry)
             keyedEntries[name] = entry
         }
@@ -220,28 +221,10 @@ public class Index {
             return nil
         }
         
-        let pathPointer = path.rawValue.cString(using: .ascii)
-        let statPointer = UnsafeMutablePointer<stat>.allocate(capacity: 1)
-        lstat(pathPointer, statPointer)
-        
-        let rawCDate = statPointer.pointee.st_ctimespec
-        let rawMDate = statPointer.pointee.st_mtimespec
-        
-        guard let fileMode = FileMode(rawValue: String(statPointer.pointee.st_mode, radix: 8)) else {
-            return nil
-        }
+        let stat = Stat(path: path)
         
         let entry = IndexEntry(
-            cSeconds: Int(rawCDate.tv_sec),
-            cNanoseconds: Int(rawCDate.tv_nsec),
-            mSeconds: Int(rawMDate.tv_sec),
-            mNanoseconds: Int(rawMDate.tv_nsec),
-            dev: Int(statPointer.pointee.st_dev),
-            ino: Int(statPointer.pointee.st_ino),
-            mode: fileMode,
-            uid: Int(statPointer.pointee.st_uid),
-            gid: Int(statPointer.pointee.st_gid),
-            fileSize: Int(statPointer.pointee.st_size),
+            stat: stat,
             hash: blob.hash,
             assumeValid: false, extended: false, firstStage: false, secondStage: false,
             name: file
@@ -290,30 +273,13 @@ public class Index {
 
 public struct IndexEntry {
     
-    public let cSeconds: Int
-    public let cNanoseconds: Int
-    public let mSeconds: Int
-    public let mNanoseconds: Int
-    public let dev: Int
-    public let ino: Int
-    public let mode: FileMode
-    public let uid: Int
-    public let gid: Int
-    public let fileSize: Int
+    public let stat: Stat
     public let hash: String
     public let assumeValid: Bool
     public let extended: Bool
     public let firstStage: Bool
     public let secondStage: Bool
     public let name: String
-    
-    var cDate: Date {
-        return Date(timeIntervalSince1970: TimeInterval(cSeconds + cNanoseconds / 1_000_000_000))
-    }
-    
-    var mDate: Date {
-        return Date(timeIntervalSince1970: TimeInterval(mSeconds + mNanoseconds / 1_000_000_000))
-    }
     
 }
 
@@ -328,7 +294,7 @@ extension IndexEntry: CustomStringConvertible {
 extension IndexEntry: Equatable {}
 
 public func == (lhs: IndexEntry, rhs: IndexEntry) -> Bool {
-    return lhs.cDate == rhs.cDate && lhs.mDate == rhs.mDate && lhs.dev == rhs.dev && lhs.ino == rhs.ino && lhs.mode == rhs.mode && lhs.uid == rhs.uid && lhs.gid == rhs.gid && lhs.fileSize == rhs.fileSize && lhs.hash == rhs.hash && lhs.assumeValid == rhs.assumeValid && lhs.extended == rhs.extended && lhs.firstStage == rhs.firstStage && lhs.secondStage == rhs.secondStage
+    return lhs.stat == rhs.stat && lhs.hash == rhs.hash && lhs.assumeValid == rhs.assumeValid && lhs.extended == rhs.extended && lhs.firstStage == rhs.firstStage && lhs.secondStage == rhs.secondStage
 }
 
 // MARK: - IndexTreeExtension
