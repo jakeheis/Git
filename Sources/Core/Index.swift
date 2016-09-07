@@ -156,13 +156,18 @@ public class Index {
     
     // MARK: - Modifying
     
+    enum ModificationError: Swift.Error {
+        case existingFileError
+        case nonexistentFileError
+        case entryCreationFailure
+    }
+    
     public func update(file: String, write shouldWrite: Bool = true) throws {
-        guard let existing = self[file],
-            let index = entries.index(of: existing) else {
-            return
+        guard let existing = self[file], let index = entries.index(of: existing) else {
+            throw ModificationError.nonexistentFileError
         }
         guard let updated = createEntry(for: file) else {
-            return
+            throw ModificationError.entryCreationFailure
         }
         guard updated.hash != existing.hash else { // File didn't change
             return
@@ -180,7 +185,7 @@ public class Index {
     
     public func add(file: String, write shouldWrite: Bool = true) throws {
         if self[file] != nil {
-            return
+            throw ModificationError.existingFileError
         }
         
         var insertionIndex: Int?
@@ -189,15 +194,12 @@ public class Index {
                 insertionIndex = index
             }
         }
-        guard let index = insertionIndex else {
-            return
-        }
         
         guard let new = createEntry(for: file) else {
-            return
+            throw ModificationError.entryCreationFailure
         }
         
-        entries.insert(new, at: index)
+        entries.insert(new, at: insertionIndex ?? entries.count)
         keyedEntries[file] = new
         
         refreshTreeExtensions(afterFile: file)
@@ -209,7 +211,7 @@ public class Index {
     
     public func remove(file: String, write shouldWrite: Bool = true) throws {
         guard let entry = self[file], let index = entries.index(of: entry) else {
-            return
+            throw ModificationError.nonexistentFileError
         }
         
         entries.remove(at: index)
