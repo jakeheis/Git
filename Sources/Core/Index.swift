@@ -207,6 +207,21 @@ public class Index {
         }
     }
     
+    public func remove(file: String, write shouldWrite: Bool = true) throws {
+        guard let entry = self[file], let index = entries.index(of: entry) else {
+            return
+        }
+        
+        entries.remove(at: index)
+        keyedEntries[file] = nil
+        
+        refreshTreeExtensions(afterFile: file)
+        
+        if shouldWrite {
+            try write()
+        }
+    }
+    
     func write() throws {
         let indexWriter = IndexWriter(index: self)
         try indexWriter.write()

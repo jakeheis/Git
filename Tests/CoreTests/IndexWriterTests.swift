@@ -76,4 +76,33 @@ class IndexWriterTests: XCTestCase {
         XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
     }
     
+    func testRemovedWrite() {
+        guard let index = basicRepository.index else {
+            XCTFail()
+            return
+        }
+        
+        let deletedFile = "file.txt"
+        try! (basicRepository.path + deletedFile).deleteFile()
+        defer { clearBasicRepository() }
+        
+        do {
+            try index.remove(file: deletedFile, write: false)
+        } catch {
+            XCTFail()
+            return
+        }
+        
+        guard let data = try? IndexWriter(index: index).generateData() else {
+            XCTFail()
+            return
+        }
+        
+        executeGitCommand(in: basicRepository, with: ["add", deletedFile])
+        
+        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+    }
+    
+    
+    
 }
