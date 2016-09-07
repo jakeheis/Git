@@ -22,13 +22,13 @@ class IndexWriterTests: XCTestCase {
     }
     
     func testAddedWrite() {
-        guard let index = writeRepository.index else {
+        guard let index = basicRepository.index else {
             XCTFail()
             return
         }
         
-        let newFile = "sub/test.txt"
-        let newFilePath = writeRepository.path + newFile
+        let newFile = "test.txt"
+        let newFilePath = basicRepository.path + newFile
         try! "test".writeToPath(newFilePath)
         
         do {
@@ -43,11 +43,11 @@ class IndexWriterTests: XCTestCase {
             return
         }
         
-        executeGitCommand(in: writeRepository, with: ["add", newFile])
+        executeGitCommand(in: basicRepository, with: ["add", newFile])
         
-        XCTAssert(try! Data.read(from: writeRepository.subpath(with: "index")) == data)
+        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
         
-        clearWriteRepository()
+        clearBasicRepository()
     }
 
 //    func testModifiedWrite() {
