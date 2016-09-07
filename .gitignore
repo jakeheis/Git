@@ -3,4 +3,5 @@
 /Packages
 /*.xcodeproj
 
-Tests/Repositories
+# Match all directories in Tests/Repositories/Real
+Tests/Repositories/Real/*/

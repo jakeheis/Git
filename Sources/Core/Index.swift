@@ -19,7 +19,6 @@ public class Index {
         case readError
         case parseError
         case writeError
-        case corruptFileError
     }
     
     private(set) public var entries: [IndexEntry] = []
@@ -40,19 +39,18 @@ public class Index {
         
         let dirc: [UInt8] = [68, 73, 82, 67] // "DIRC"
         guard Array(dataReader.readData(bytes: 4)) == dirc else {
-            throw Error.corruptFileError
+            throw Error.parseError
         }
         
         let version = dataReader.readInt(bytes: 4)
         guard version == 2 else {
-            throw Error.parseError
+            fatalError("Index versions other than 2 are not yet supported")
         }
         self.version = version
         
         let count = dataReader.readInt(bytes: 4)
         
         // Read entries
-        
         for _ in 0 ..< count {
             let cSeconds = dataReader.readInt(bytes: 4)
             let cNanoseconds = dataReader.readInt(bytes: 4)
@@ -117,7 +115,7 @@ public class Index {
                         let entryCount = Int(entryCountString),
                         let subtreeCountString = String(data: dataReader.readUntil(byte: 10), encoding: .ascii),
                         let subtreeCount = Int(subtreeCountString) else {
-                            throw Error.corruptFileError
+                            throw Error.parseError
                     }
                     
                     let hash: String? = entryCount >= 0 ? dataReader.readHex(bytes: 20) : nil
@@ -144,7 +142,7 @@ public class Index {
         
         let checksum = dataReader.readData(bytes: 20)
         guard dataReader.data.subdata(in: 0 ..< (dataReader.data.count - 20)).sha1 == checksum else {
-            throw Error.corruptFileError
+            throw Error.parseError
         }
         
         self.rootTreeExtension = rootTreeExtension
@@ -157,7 +155,7 @@ public class Index {
     
     // MARK: - Modifying
     
-    public func update(file: String) throws {
+    public func update(file: String, write shouldWrite: Bool = true) throws {
         guard let existing = self[file],
             let index = entries.index(of: existing) else {
             return
@@ -174,32 +172,12 @@ public class Index {
         
         refreshTreeExtensions(afterFile: file)
         
-//        try write()
-    }
-    
-    func refreshTreeExtensions(afterFile file: String) {
-        var pathComponents = file.components(separatedBy: "/")
-        pathComponents.removeLast()
-        
-        if let rootTreeExtension = rootTreeExtension {
-            invalidate(treeExtension: rootTreeExtension, pathComponents: pathComponents)
+        if shouldWrite {
+            try write()
         }
     }
     
-    func invalidate(treeExtension: IndexTreeExtension, pathComponents: [String]) {
-        treeExtension.invalidate()
-        
-        guard !pathComponents.isEmpty else {
-            return
-        }
-        
-        if let matchingExtension = treeExtension.subtrees.first(where: { $0.path == pathComponents.first }) {
-            let subComponents = Array(pathComponents[1 ..< pathComponents.count])
-            invalidate(treeExtension: matchingExtension, pathComponents: subComponents)
-        }
-    }
-    
-    public func add(file: String) throws {
+    public func add(file: String, write shouldWrite: Bool = true) throws {
         if self[file] != nil {
             return
         }
@@ -222,9 +200,18 @@ public class Index {
         keyedEntries[file] = new
         
         refreshTreeExtensions(afterFile: file)
-        
-//        try write()
+      
+        if shouldWrite {
+            try write()
+        }
     }
+    
+    func write() throws {
+        let indexWriter = IndexWriter(index: self)
+        try indexWriter.write()
+    }
+    
+    // MARK: - Modification helpers
     
     private func createEntry(for file: String) -> IndexEntry? {
         let path = repository.path + file
@@ -262,84 +249,27 @@ public class Index {
         return entry
     }
     
-    @discardableResult
-    func write() throws -> Data {
-        let dataWriter = DataWriter()
-        dataWriter.write(bytes: [68, 73, 82, 67]) // DIRC
-        dataWriter.write(int: version, overBytes: 4)
-        dataWriter.write(int: entries.count, overBytes: 4)
-        
-        for entry in entries {
-            dataWriter.write(int: entry.cSeconds, overBytes: 4)
-            dataWriter.write(int: entry.cNanoseconds, overBytes: 4)
-            dataWriter.write(int: entry.mSeconds, overBytes: 4)
-            dataWriter.write(int: entry.mNanoseconds, overBytes: 4)
-            dataWriter.write(int: entry.dev, overBytes: 4)
-            dataWriter.write(int: entry.ino, overBytes: 4)
-            try dataWriter.write(octal: entry.mode.rawValue, overBytes: 4)
-            dataWriter.write(int: entry.uid, overBytes: 4)
-            dataWriter.write(int: entry.gid, overBytes: 4)
-            dataWriter.write(int: entry.fileSize, overBytes: 4)
-            dataWriter.write(hex: entry.hash)
-            
-            let flagByte = Byte(bits: [UInt8(entry.assumeValid), UInt8(entry.extended), UInt8(entry.firstStage), UInt8(entry.secondStage), 0, 0, 0, 0])
-            dataWriter.write(byte: flagByte)
-            
-            guard let nameData = entry.name.data(using: .ascii) else {
-                throw Error.writeError
-            }
-            let nameLength = nameData.count > 0xFF ? 0xFF : nameData.count
-            dataWriter.write(int: nameLength, overBytes: 1)
-            dataWriter.write(data: nameData)
-            
-            let byteCount = 62 + nameData.count
-            let paddingCount = 8 - (byteCount % 8)
-            for _ in 0 ..< paddingCount {
-                dataWriter.write(byte: 0)
-            }
-        }
+    func refreshTreeExtensions(afterFile file: String) {
+        var pathComponents = file.components(separatedBy: "/")
+        pathComponents.removeLast()
         
         if let rootTreeExtension = rootTreeExtension {
-            dataWriter.write(bytes: [84, 82, 69, 69]) // TREE
-            
-            let extensionWriter = DataWriter()
-            
-            func write(treeExtension: IndexTreeExtension) throws {
-                guard let pathData = treeExtension.path.data(using: .ascii),
-                    let entryCountData = String(treeExtension.entryCount).data(using: .ascii),
-                    let subtreeCountData = String(treeExtension.subtreeCount).data(using: .ascii) else {
-                        return
-                }
-                extensionWriter.write(data: pathData)
-                extensionWriter.write(byte: 0)
-                extensionWriter.write(data: entryCountData)
-                extensionWriter.write(byte: 32)
-                extensionWriter.write(data: subtreeCountData)
-                extensionWriter.write(byte: 10)
-                if let hash = treeExtension.hash {
-                    extensionWriter.write(hex: hash)
-                }
-                for subtree in treeExtension.subtrees {
-                    try write(treeExtension: subtree)
-                }
-            }
-            
-            try write(treeExtension: rootTreeExtension)
-            
-            let extensionData = extensionWriter.data
-            dataWriter.write(int: extensionData.count, overBytes: 4)
-            dataWriter.write(data: extensionData)
+            invalidate(treeExtension: rootTreeExtension, pathComponents: pathComponents)
         }
-        
-        dataWriter.write(data: dataWriter.data.sha1) // Checksum
-        
-        return dataWriter.data
-//        try dataWriter.data.write(to: repository.subpath(with: Index.path))
     }
     
-//    private func write(treeExtension: IndexTreeExtension) throws {
-//        
-//    }
+    func invalidate(treeExtension: IndexTreeExtension, pathComponents: [String]) {
+        treeExtension.invalidate()
+        
+        guard !pathComponents.isEmpty else {
+            return
+        }
+        
+        if let matchingExtension = treeExtension.subtrees.first(where: { $0.path == pathComponents.first }) {
+            let subComponents = Array(pathComponents[1 ..< pathComponents.count])
+            invalidate(treeExtension: matchingExtension, pathComponents: subComponents)
+        }
+    }
     
     // MARK: - Deltas
     
@@ -352,14 +282,6 @@ public class Index {
     
     public func unstagedChanges() -> IndexDelta? {
         return IndexDelta(index: self, repository: repository)
-    }
-    
-}
-
-private extension UInt8 {
-    
-    init(_ bool: Bool) {
-        self.init(bool ? 1 : 0)
     }
     
 }

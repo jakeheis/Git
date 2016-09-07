@@ -63,15 +63,6 @@ class IndexTests: XCTestCase {
         }
     }
     
-    func testBasicWrite() {
-        guard let basicIndex = basicRepository.index,
-            let data = try? basicIndex.write() else {
-            XCTFail()
-            return
-        }
-        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
-    }
-    
     func testAddEntry() {
         guard let index = writeRepository.index else {
             XCTFail()
@@ -83,7 +74,7 @@ class IndexTests: XCTestCase {
         try! "test".writeToPath(newFilePath)
         
         do {
-            try index.add(file: newFile)
+            try index.add(file: newFile, write: false)
         } catch {
             XCTFail()
             return
@@ -114,6 +105,8 @@ class IndexTests: XCTestCase {
         XCTAssert(rootTreeExtension.subtrees[1].entryCount == 2)
         
         try! newFilePath.deleteFile()
+        
+        clearWriteRepository()
     }
     
     func testUpdateEntry() {
@@ -129,7 +122,7 @@ class IndexTests: XCTestCase {
         XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
         
         do {
-            try index.update(file: updateFile)
+            try index.update(file: updateFile, write: false)
         } catch {
             XCTFail()
             return

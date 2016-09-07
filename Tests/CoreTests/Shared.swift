@@ -8,11 +8,32 @@
 
 import Foundation
 @testable import Core
+import FileKit
 
-//let testRepository = Repository(path: Path.Current + "Tests/Repositories/Basic")!
-let basicRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Basic")!
-let packedRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed")!
-let writeRepository = Repository(path: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Write")!
+private func moveRepository(at path: Path) -> Path {
+    let newPath = path.parent + "Real" + path.fileName
+    if newPath.exists { // Already done
+        return newPath
+    }
+    try! path.copyFileToPath(newPath)
+    try! (newPath + "Git").moveFileToPath(newPath + ".git")
+    return newPath
+}
+
+let basicRepository: Repository = {
+    let newPath = moveRepository(at: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Basic")
+    return Repository(path: newPath)!
+}()
+
+let packedRepository: Repository = {
+    let newPath = moveRepository(at: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed")
+    return Repository(path: newPath)!
+}()
+
+let writeRepository: Repository = {
+    let newPath = moveRepository(at: "/Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Write")
+    return Repository(path: newPath)!
+}()
 
 func executeGitCommand(in repository: Repository, with additionalArguments: [String]) {
     let arguments = ["-C", repository.path.rawValue] + additionalArguments
@@ -25,7 +46,8 @@ func clearWriteRepository() {
     try! objectDirectory.deleteFile()
     try! objectDirectory.createDirectory()
     
-    executeGitCommand(in: writeRepository, with: ["checkout", "."])
+    executeGitCommand(in: writeRepository, with: ["checkout", "-q", "."]) // Clears changes
+    executeGitCommand(in: writeRepository, with: ["checkout", "-q", "master"]) // Resets index
 }
 
 extension Repository {
