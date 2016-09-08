@@ -41,5 +41,3 @@ class VerifyPackCommand: RepositoryCommand {
     }
     
 }
-
-

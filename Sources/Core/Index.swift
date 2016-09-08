@@ -154,6 +154,10 @@ public class Index {
         return keyedEntries[name]
     }
     
+    public func isTracking(_ file: String) -> Bool {
+        return self[file] != nil
+    }
+    
     // MARK: - Modifying
     
     enum ModificationError: Swift.Error {
@@ -190,8 +194,9 @@ public class Index {
         
         var insertionIndex: Int?
         for (index, entry) in entries.enumerated() {
-            if entry.name > file {
+            if file < entry.name {
                 insertionIndex = index
+                break
             }
         }
         

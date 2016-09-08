@@ -14,13 +14,13 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
 } else {
     isDebug = true
 //    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
-    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
+//    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
+    Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
 }
 
 if isDebug {
     let r = Repository(path: Path.Current)!
-    
-    print(r.index!.rootTreeExtension)
+    print(r)
 }
 
 CLI.setup(name: "Git")
@@ -30,6 +30,7 @@ let plumbing: [RepositoryCommand] = [
     HashObjectCommand(),
     LsFilesCommand(),
     LsTreeCommand(),
+    UpdateIndexCommand(),
     VerifyPackCommand(),
     WriteTreeCommand()
 ]
@@ -46,10 +47,10 @@ CLI.register(commands: porcelain)
 
 let result: CLIResult
 if isDebug {
-    result = CLI.debugGo(with: "git status -sb")
+    result = 0// CLI.debugGo(with: "git status -sb")
 } else {
     result = CLI.go()
 }
-//exit(result)
+exit(result)
 
 // xcodebuild -project Git.xcodeproj -scheme Git clean build | grep [1-9].[0-9]ms | sort -nr > culprits.txt

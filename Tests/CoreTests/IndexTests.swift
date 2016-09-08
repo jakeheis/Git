@@ -81,24 +81,30 @@ class IndexTests: GitTestCase {
             return
         }
         
-        let newFile = "sub/test.txt"
-        let newFilePath = repository.path + newFile
+        let newFile1 = "sub/test.txt"
+        let newFilePath = repository.path + newFile1
         try! "test".writeToPath(newFilePath)
         
+        let newFile2 = ".a"
+        let newFilePath2 = repository.path + newFile2
+        try! "test".writeToPath(newFilePath2)
+        
         do {
-            try index.add(file: newFile, write: false)
+            try index.add(file: newFile1, write: false)
+            try index.add(file: newFile2, write: false)
         } catch {
             XCTFail()
             return
         }
         
-        XCTAssert(index.entries.count == 8)
+        XCTAssert(index.entries.count == 9)
         
         // Check that entry was correctly inserted
-        XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 10, hash: "e43b0f988953ae3a84b00331d0ccf5f7d51cb3cf", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: ".gitignore"))
-        XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
-        XCTAssert(index.entries[6].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/test.txt"))
-        XCTAssert(index.entries[7].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 12, hash: "861dc4f462a6878624c8a14e90e9e496f153133f", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/within.txt"))
+        XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: ".a"))
+        XCTAssert(index.entries[1].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 10, hash: "e43b0f988953ae3a84b00331d0ccf5f7d51cb3cf", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: ".gitignore"))
+        XCTAssert(index.entries[6].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
+        XCTAssert(index.entries[7].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/test.txt"))
+        XCTAssert(index.entries[8].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 12, hash: "861dc4f462a6878624c8a14e90e9e496f153133f", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/within.txt"))
         XCTAssert(index["sub/test.txt"]!.equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 4, hash: "30d74d258442c7c65512eafab474568dd706c430", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/test.txt"))
         
         // Check that tree extensions were correctly invalidated
