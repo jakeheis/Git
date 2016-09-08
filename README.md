@@ -22,15 +22,14 @@
 - [x] tag
 - [x] Probably much more
 
-#### 3. Read/write git core
+#### 3. Read/write git core (WIP)
 - [ ] Repository
-- [ ] Index
+- [x] Index
 - [ ] Objects
 - [ ] Packfile
-- [ ] Remotes
 - [ ] Probably much more
 
-#### 4. Read/write CLI
+#### 4. Read/write CLI (WIP)
 - [ ] branch
 - [ ] tag
 - [ ] add
@@ -40,6 +39,7 @@
 - [ ] commit
 - [ ] merge 
 - [ ] init
+- [ ] update-index
 - [ ] Probably much more
 
 #### 5. Remote core / CLI
