@@ -49,6 +49,8 @@ public struct Stat {
         uid = Int(statPointer.pointee.st_uid)
         gid = Int(statPointer.pointee.st_gid)
         fileSize = Int(statPointer.pointee.st_size)
+        
+        statPointer.deallocate(capacity: 1)
     }
     
     init(cSeconds: Int, cNanoseconds: Int, mSeconds: Int, mNanoseconds: Int, dev: Int, ino: Int, mode: FileMode, uid: Int, gid: Int, fileSize: Int){
