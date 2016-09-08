@@ -25,10 +25,10 @@ class CatFileCommand: RepositoryCommand {
     var mode: Mode = .none
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["-p"], usage: "Print contents") { (flag) in
+        options.add(flags: ["-p"], usage: "Print contents") {
             self.mode = .print
         }
-        options.add(flags: ["-t"], usage: "File type") { (flag) in
+        options.add(flags: ["-t"], usage: "File type") {
             self.mode = .type
         }
     }

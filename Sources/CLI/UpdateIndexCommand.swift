@@ -20,10 +20,10 @@ class UpdateIndexCommand: RepositoryCommand {
     var remove = false
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["--add"]) { (flag) in
+        options.add(flags: ["--add"]) {
             self.add = true
         }
-        options.add(flags: ["--remove"]) { (flag) in
+        options.add(flags: ["--remove"]) {
             self.remove = true
         }
     }

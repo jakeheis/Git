@@ -18,7 +18,7 @@ class LsTreeCommand: RepositoryCommand {
     var recursive = false
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["-r"]) { (flag) in
+        options.add(flags: ["-r"]) {
             self.recursive = true
         }
     }

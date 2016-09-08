@@ -19,7 +19,7 @@ class HashObjectCommand: RepositoryCommand {
     var write = false
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["-w"]) { (flag) in
+        options.add(flags: ["-w"]) {
             self.write = true
         }
     }

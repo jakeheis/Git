@@ -19,10 +19,10 @@ class StatusCommand: RepositoryCommand {
     var showBranchInShort = false
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["-s", "--short"]) { (flag) in
+        options.add(flags: ["-s", "--short"]) {
             self.short = true
         }
-        options.add(flags: ["-b", "--branch"]) { (flag) in
+        options.add(flags: ["-b", "--branch"]) {
             self.showBranchInShort = true
         }
     }

@@ -20,7 +20,7 @@ class VerifyPackCommand: RepositoryCommand {
     var verbose = false
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["-v"]) { (flag) in
+        options.add(flags: ["-v"]) {
             self.verbose = true
         }
     }

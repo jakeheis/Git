@@ -18,7 +18,7 @@ class WriteTreeCommand: RepositoryCommand {
     var checkMissing = true
     
     func setupOptions(options: OptionRegistry) {
-        options.add(flags: ["--missing-ok"]) { (flag) in
+        options.add(flags: ["--missing-ok"]) {
             self.checkMissing = false
         }
     }
