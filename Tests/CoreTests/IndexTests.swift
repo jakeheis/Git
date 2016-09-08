@@ -10,80 +10,80 @@ import XCTest
 @testable import Core
 import FileKit
 
-class IndexTests: XCTestCase {
+class IndexTests: GitTestCase {
     
     func testParse() {
-        basicRepository.checkout("29287d7a61db5b55e66f707a01b7fb4b11efcb40") {
-            guard let index = basicRepository.index else {
-                XCTFail()
-                return
-            }
-            XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 29, hash: "3a79a681b63d71c6c7c22bdefcb3e4e8d3988a5b", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "Subdirectory/subfile.txt"))
-            XCTAssert(index.entries[1].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 18, hash: "aa3350c980eda0524c9ec6db48a613425f756b68", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "file.txt"))
-            XCTAssert(index.entries[2].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 27, hash: "e20f5916c1cb235a7f26cd91e09a40e277d38306", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "other_file.txt"))
-            XCTAssert(index.entries[3].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 32, hash: "6b3b273987213e28230958801876aff0876376e7", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "second.txt"))
+        let repository = TestRepositories.repository(.basic, at: "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
+        
+        guard let index = repository.index else {
+            XCTFail()
+            return
         }
+        XCTAssert(index.entries[0].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 29, hash: "3a79a681b63d71c6c7c22bdefcb3e4e8d3988a5b", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "Subdirectory/subfile.txt"))
+        XCTAssert(index.entries[1].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 18, hash: "aa3350c980eda0524c9ec6db48a613425f756b68", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "file.txt"))
+        XCTAssert(index.entries[2].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 27, hash: "e20f5916c1cb235a7f26cd91e09a40e277d38306", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "other_file.txt"))
+        XCTAssert(index.entries[3].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 32, hash: "6b3b273987213e28230958801876aff0876376e7", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "second.txt"))
     }
     
     func testIndexTreeDelta() {
-        basicRepository.checkout("db69d97956555ed0ebf9e4a7ff4fedd8c08ba717") {
-            let treePath = basicRepository.subpath(with: "objects/1f/9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
-            guard let index = basicRepository.index,
-                let tree = try? Tree.read(from: treePath, in: basicRepository) else {
+        let repository = TestRepositories.repository(.basic, at: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717")
+        
+        let treePath = repository.subpath(with: "objects/1f/9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5")
+        guard let index = repository.index,
+            let tree = try? Tree.read(from: treePath, in: repository) else {
                 XCTFail()
                 return
-            }
-            
-            let delta = IndexDelta(index: index, tree: tree)
-            
-            guard delta.deltaFiles.count == 3 else {
-                XCTFail()
-                return
-            }
-            
-            XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
-            XCTAssert(delta.deltaFiles[1] == ("second.txt", .deleted))
-            XCTAssert(delta.deltaFiles[2] == ("third.txt", .added))
         }
+        
+        let delta = IndexDelta(index: index, tree: tree)
+        
+        guard delta.deltaFiles.count == 3 else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
+        XCTAssert(delta.deltaFiles[1] == ("second.txt", .deleted))
+        XCTAssert(delta.deltaFiles[2] == ("third.txt", .added))
     }
     
     func testIndexWorkingDirectoryDelta() {
-        basicRepository.checkout("db69d97956555ed0ebf9e4a7ff4fedd8c08ba717") {
-            let hiFile = basicRepository.path + "hi.txt"
-            try! "hi".writeToPath(hiFile)
-            try! (basicRepository.path + "third.txt").deleteFile()
-            defer { try! hiFile.deleteFile() }
-            
-            Thread.sleep(forTimeInterval: 1) // Make sure stat values for initial creation and modification are different
-            try! "overwritten".writeToPath(basicRepository.path + "file.txt")
-            
-            guard let index = basicRepository.index else {
-                XCTFail()
-                return
-            }
-            let delta = IndexDelta(index: index, repository: basicRepository)
-            
-            guard delta.deltaFiles.count == 3 else {
-                XCTFail()
-                return
-            }
-            
-            XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
-            XCTAssert(delta.deltaFiles[1] == ("hi.txt", .untracked))
-            XCTAssert(delta.deltaFiles[2] == ("third.txt", .deleted))
+        let repository = TestRepositories.repository(.basic, at: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717")
+        
+        let hiFile = repository.path + "hi.txt"
+        try! "hi".writeToPath(hiFile)
+        try! (repository.path + "third.txt").deleteFile()
+        defer { try! hiFile.deleteFile() }
+        
+        Thread.sleep(forTimeInterval: 1) // Make sure stat values for initial creation and modification are different
+        try! "overwritten".writeToPath(repository.path + "file.txt")
+        
+        guard let index = repository.index else {
+            XCTFail()
+            return
         }
+        let delta = IndexDelta(index: index, repository: repository)
+        
+        guard delta.deltaFiles.count == 3 else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
+        XCTAssert(delta.deltaFiles[1] == ("hi.txt", .untracked))
+        XCTAssert(delta.deltaFiles[2] == ("third.txt", .deleted))
     }
     
     func testAddEntry() {
-        guard let index = writeRepository.index else {
+        let repository = TestRepositories.repository(.emptyObjects)
+        guard let index = repository.index else {
             XCTFail()
             return
         }
         
         let newFile = "sub/test.txt"
-        let newFilePath = writeRepository.path + newFile
+        let newFilePath = repository.path + newFile
         try! "test".writeToPath(newFilePath)
-        defer { clearWriteRepository() }
         
         do {
             try index.add(file: newFile, write: false)
@@ -118,15 +118,15 @@ class IndexTests: XCTestCase {
     }
     
     func testUpdateEntry() {
-        guard let index = writeRepository.index else {
+        let repository = TestRepositories.repository(.emptyObjects)
+        guard let index = repository.index else {
             XCTFail()
             return
         }
         
         let updateFile = "sub/sub.txt"
-        let updateFilePath = writeRepository.path + updateFile
+        let updateFilePath = repository.path + updateFile
         try! "test".writeToPath(updateFilePath)
-        defer { clearWriteRepository() }
         
         XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
         
@@ -163,13 +163,13 @@ class IndexTests: XCTestCase {
     }
 
     func testRemoveEntry() {
-        guard let index = writeRepository.index else {
+        let repository = TestRepositories.repository(.emptyObjects)
+        guard let index = repository.index else {
             XCTFail()
             return
         }
         
         let removeFile = "sub/sub.txt"
-        defer { clearWriteRepository() }
         
         XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
         

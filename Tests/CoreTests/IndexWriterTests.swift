@@ -10,27 +10,28 @@ import XCTest
 @testable import Core
 import FileKit
 
-class IndexWriterTests: XCTestCase {
+class IndexWriterTests: GitTestCase {
 
     func testBasicWrite() {
-        guard let basicIndex = basicRepository.index,
+        let repository = TestRepositories.repository(.basic)
+        guard let basicIndex = repository.index,
             let data = try? IndexWriter(index: basicIndex).generateData() else {
                 XCTFail()
                 return
         }
-        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+        XCTAssert(try! Data.read(from: repository.subpath(with: "index")) == data)
     }
     
     func testAddedWrite() {
-        guard let index = basicRepository.index else {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
             XCTFail()
             return
         }
         
         let newFile = "test.txt"
-        let newFilePath = basicRepository.path + newFile
+        let newFilePath = repository.path + newFile
         try! "test".writeToPath(newFilePath)
-        defer { clearBasicRepository() }
         
         do {
             try index.add(file: newFile, write: false)
@@ -44,20 +45,20 @@ class IndexWriterTests: XCTestCase {
             return
         }
         
-        executeGitCommand(in: basicRepository, with: ["add", newFile])
+        executeGitCommand(in: repository, with: ["add", newFile])
         
-        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+        XCTAssert(try! Data.read(from: repository.subpath(with: "index")) == data)
     }
 
     func testModifiedWrite() {
-        guard let index = basicRepository.index else {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
             XCTFail()
             return
         }
         
         let modifiedFile = "file.txt"
-        try! "overwritten".writeToPath(basicRepository.path + modifiedFile)
-        defer { clearBasicRepository() }
+        try! "overwritten".writeToPath(repository.path + modifiedFile)
         
         do {
             try index.update(file: modifiedFile, write: false)
@@ -71,20 +72,20 @@ class IndexWriterTests: XCTestCase {
             return
         }
         
-        executeGitCommand(in: basicRepository, with: ["add", modifiedFile])
+        executeGitCommand(in: repository, with: ["add", modifiedFile])
         
-        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+        XCTAssert(try! Data.read(from: repository.subpath(with: "index")) == data)
     }
     
     func testRemovedWrite() {
-        guard let index = basicRepository.index else {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
             XCTFail()
             return
         }
         
         let deletedFile = "file.txt"
-        try! (basicRepository.path + deletedFile).deleteFile()
-        defer { clearBasicRepository() }
+        try! (repository.path + deletedFile).deleteFile()
         
         do {
             try index.remove(file: deletedFile, write: false)
@@ -98,9 +99,9 @@ class IndexWriterTests: XCTestCase {
             return
         }
         
-        executeGitCommand(in: basicRepository, with: ["add", deletedFile])
+        executeGitCommand(in: repository, with: ["add", deletedFile])
         
-        XCTAssert(try! Data.read(from: basicRepository.subpath(with: "index")) == data)
+        XCTAssert(try! Data.read(from: repository.subpath(with: "index")) == data)
     }
     
     

@@ -10,39 +10,49 @@ import XCTest
 @testable import Core
 import FileKit
 
-class ObjectStoreTests: XCTestCase {
+class ObjectStoreTests: GitTestCase {
 
     func testFileObjectRetrieval() {
-        let blob = basicRepository.objectStore.objectFromFile(hash: "4260dd4b89d8b3f9a231538664bd3d346fdd2ead") as! Blob
+        let repository = TestRepositories.repository(.basic)
+        
+        let blob = repository.objectStore.objectFromFile(hash: "4260dd4b89d8b3f9a231538664bd3d346fdd2ead") as! Blob
         XCTAssert(blob.hash == "4260dd4b89d8b3f9a231538664bd3d346fdd2ead")
         XCTAssert(String(data: blob.data, encoding: .ascii) == "File\nmodification\nanother mod\n")
     }
     
     func testPackfileObjectRetrieval() {
-        let blob = packedRepository.objectStore.objectFromPackfile(hash: "4260dd4b89d8b3f9a231538664bd3d346fdd2ead") as! Blob
+        let repository = TestRepositories.repository(.packed)
+        
+        let blob = repository.objectStore.objectFromPackfile(hash: "4260dd4b89d8b3f9a231538664bd3d346fdd2ead") as! Blob
         XCTAssert(blob.hash == "4260dd4b89d8b3f9a231538664bd3d346fdd2ead")
         XCTAssert(String(data: blob.data, encoding: .ascii) == "File\nmodification\nanother mod\n")
     }
     
     func testReadAllFromFiles() {
-        let all = basicRepository.objectStore.allObjects()
+        let repository = TestRepositories.repository(.basic)
+        
+        let all = repository.objectStore.allObjects()
         XCTAssert(all.count == 24)
     }
     
     func testReadAllFromPackfile() {
-        let all = packedRepository.objectStore.allObjects()
+        let repository = TestRepositories.repository(.packed)
+        
+        let all = repository.objectStore.allObjects()
         XCTAssert(all.count == 23)
     }
     
     func testReadShortHash() {
-        guard let blob = basicRepository.objectStore.objectFromFile(hash: "4260dd4") as? Blob else {
+        let repository = TestRepositories.repository(.basic)
+        
+        guard let blob = repository.objectStore.objectFromFile(hash: "4260dd4") as? Blob else {
             XCTFail()
             return
         }
         XCTAssert(blob.hash == "4260dd4b89d8b3f9a231538664bd3d346fdd2ead")
         XCTAssert(String(data: blob.data, encoding: .ascii) == "File\nmodification\nanother mod\n")
         
-        guard let packedBlob = basicRepository.objectStore.objectFromFile(hash: "4260dd4") as? Blob else {
+        guard let packedBlob = repository.objectStore.objectFromFile(hash: "4260dd4") as? Blob else {
             XCTFail()
             return
         }
@@ -51,12 +61,13 @@ class ObjectStoreTests: XCTestCase {
     }
     
     func testWrite() {
-        guard let originalBlob = basicRepository.objectStore["4260dd4b89d8b3f9a231538664bd3d346fdd2ead"] as? Blob else {
+        let readRepository = TestRepositories.repository(.basic)
+        let writeRepository = TestRepositories.repository(.emptyObjects)
+        
+        guard let originalBlob = readRepository.objectStore["4260dd4b89d8b3f9a231538664bd3d346fdd2ead"] as? Blob else {
             XCTFail()
             return
         }
-        
-        defer { clearWriteRepository() }
         
         do {
             try writeRepository.objectStore.write(object: originalBlob)

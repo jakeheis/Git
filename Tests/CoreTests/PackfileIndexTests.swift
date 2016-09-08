@@ -9,11 +9,11 @@
 import XCTest
 @testable import Core
 
-class PackfileIndexTests: XCTestCase {
-    
-    let index = PackfileIndex(name: "pack-a74bd7bba3ae75e0093b5b120b103cbab5340e59.idx", repository: packedRepository)!
+class PackfileIndexTests: GitTestCase {
 
     func testReadAll() {
+        let (_, index) = repoAndIndex()
+        
         let entries = index.readAll()
         let expected = [
             "39f6140dee77ffed9539d61aead2e1239ac7ad13": 12,
@@ -50,6 +50,8 @@ class PackfileIndexTests: XCTestCase {
     }
     
     func testIndividualOffset() {
+        let (_, index) = repoAndIndex()
+        
         XCTAssert(index.offset(for: "39f6140dee77ffed9539d61aead2e1239ac7ad13")?.offset == 12)
         XCTAssert(index.offset(for: "f3be9f51189c34537e68df056f0cafae59d63b96")?.offset == 899)
         XCTAssert(index.offset(for: "d2285a22610b068c9fd9f25fd548e76d27fee860")?.offset == 1412)
@@ -59,7 +61,16 @@ class PackfileIndexTests: XCTestCase {
     }
     
     func testCount() {
-        XCTAssert(packedRepository.packfileIndices.count == 1)
+        let (repository, _) = repoAndIndex()
+        XCTAssert(repository.packfileIndices.count == 1)
+    }
+    
+    // MARK: -
+    
+    private func repoAndIndex() -> (Repository, PackfileIndex) {
+        let repository = TestRepositories.repository(.packed)
+        let index = PackfileIndex(name: "pack-a74bd7bba3ae75e0093b5b120b103cbab5340e59.idx", repository: repository)!
+        return (repository, index)
     }
 
 }

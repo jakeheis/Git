@@ -10,11 +10,13 @@ import XCTest
 @testable import Core
 import FileKit
 
-class AnnotatedTagTests: XCTestCase {
+class AnnotatedTagTests: GitTestCase {
 
     func testParse() {
-        let firstPath = basicRepository.subpath(with: "objects/b1/cab66f094cc38fe71fdc425de075851e69bee2")
-        guard let tag = try? AnnotatedTag.read(from: firstPath, in: basicRepository) else {
+        let repository = TestRepositories.repository(.basic)
+        
+        let firstPath = repository.subpath(with: "objects/b1/cab66f094cc38fe71fdc425de075851e69bee2")
+        guard let tag = try? AnnotatedTag.read(from: firstPath, in: repository) else {
             XCTFail()
             return
         }

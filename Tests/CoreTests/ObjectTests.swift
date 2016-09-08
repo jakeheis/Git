@@ -9,19 +9,21 @@
 import XCTest
 @testable import Core
 
-class ObjectTests: XCTestCase {
+class ObjectTests: GitTestCase {
 
     func testFileParse() {
-        let commitPath = basicRepository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
-        guard let commit = try? Commit.read(from: commitPath, in: basicRepository) else {
+        let repository = TestRepositories.repository(.basic)
+        
+        let commitPath = repository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
+        guard let commit = try? Commit.read(from: commitPath, in: repository) else {
             XCTFail()
             return
         }
         XCTAssert(commit.hash == "39f6140dee77ffed9539d61aead2e1239ac7ad13")
         XCTAssert(commit.type == .commit)
         
-        let treePath = basicRepository.subpath(with: "objects/12/09fb65536f4ef7f72c8f87a7724074ffb5e57e")
-        guard let tree = try? Tree.read(from: treePath, in: basicRepository) else {
+        let treePath = repository.subpath(with: "objects/12/09fb65536f4ef7f72c8f87a7724074ffb5e57e")
+        guard let tree = try? Tree.read(from: treePath, in: repository) else {
             XCTFail()
             return
         }

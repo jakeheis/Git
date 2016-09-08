@@ -9,25 +9,31 @@
 import XCTest
 @testable import Core
 
-class BranchTests: XCTestCase {
+class BranchTests: GitTestCase {
 
     func testRepositoryTags() {
-        XCTAssert(basicRepository.branches.count == 2)
+        let repository = TestRepositories.repository(.basic)
         
-        XCTAssert(basicRepository.branches[0].name == "master")
-        XCTAssert(basicRepository.branches[1].name == "other_branch")
+        XCTAssert(repository.branches.count == 2)
+        
+        XCTAssert(repository.branches[0].name == "master")
+        XCTAssert(repository.branches[1].name == "other_branch")
     }
     
     func testParse() {
-        let secondBranch = basicRepository.branches[1]
+        let repository = TestRepositories.repository(.basic)
+        
+        let secondBranch = repository.branches[1]
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
     }
     
     func testPackedBranches() {
-        XCTAssert(packedRepository.branches.count == 2)
+        let repository = TestRepositories.repository(.packed)
         
-        let secondBranch = packedRepository.branches[1]
+        XCTAssert(repository.branches.count == 2)
+        
+        let secondBranch = repository.branches[1]
         XCTAssert(secondBranch.name == "other_branch")
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")

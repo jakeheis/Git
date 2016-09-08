@@ -9,7 +9,7 @@
 import XCTest
 @testable import Core
 
-class GitIgnoreTests: XCTestCase {
+class GitIgnoreTests: GitTestCase {
 
     func testComment() {
         XCTAssert(GitIgnoreEntry("# Hello") == nil)

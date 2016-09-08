@@ -9,7 +9,7 @@
 import XCTest
 @testable import Core
 
-class SignatureTests: XCTestCase {
+class SignatureTests: GitTestCase {
 
     func testParse() {
         let signature = Signature(signature: "Jake Heiser <jakeheiser1@gmail.com> 1472702718 -0500")

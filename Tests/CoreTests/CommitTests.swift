@@ -10,11 +10,13 @@ import XCTest
 @testable import Core
 import FileKit
 
-class CommitTests: XCTestCase {
+class CommitTests: GitTestCase {
 
     func testParse() {
-        let firstPath = basicRepository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
-        guard let firstCommit = try? Commit.read(from: firstPath, in: basicRepository) else {
+        let repository = TestRepositories.repository(.basic)
+        
+        let firstPath = repository.subpath(with: "objects/39/f6140dee77ffed9539d61aead2e1239ac7ad13")
+        guard let firstCommit = try? Commit.read(from: firstPath, in: repository) else {
             XCTFail()
             return
         }
@@ -24,8 +26,8 @@ class CommitTests: XCTestCase {
         XCTAssert(firstCommit.parentHash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
         XCTAssert(firstCommit.message == "Commit on other branch")
         
-        let secondPath = basicRepository.subpath(with: "objects/94/e72a122b9099798132e971eaccf727c1ff037d")
-        guard let secondCommit = try? Commit.read(from: secondPath, in: basicRepository) else {
+        let secondPath = repository.subpath(with: "objects/94/e72a122b9099798132e971eaccf727c1ff037d")
+        guard let secondCommit = try? Commit.read(from: secondPath, in: repository) else {
             XCTFail()
             return
         }

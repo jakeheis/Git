@@ -10,11 +10,13 @@ import XCTest
 @testable import Core
 import FileKit
 
-class BlobTests: XCTestCase {
+class BlobTests: GitTestCase {
 
     func testParse() {
-        let firstPath = basicRepository.subpath(with: "objects/aa/3350c980eda0524c9ec6db48a613425f756b68")
-        guard let firstBlob = try? Blob.read(from: firstPath, in: basicRepository) else {
+        let repository = TestRepositories.repository(.basic)
+        
+        let firstPath = repository.subpath(with: "objects/aa/3350c980eda0524c9ec6db48a613425f756b68")
+        guard let firstBlob = try? Blob.read(from: firstPath, in: repository) else {
             XCTFail()
             return
         }
@@ -22,8 +24,8 @@ class BlobTests: XCTestCase {
         XCTAssert(firstBlob.hash == "aa3350c980eda0524c9ec6db48a613425f756b68")
         XCTAssert(String(data: firstBlob.data, encoding: .utf8) == "File\nmodification\n")
         
-        let secondPath = basicRepository.subpath(with: "objects/e2/0f5916c1cb235a7f26cd91e09a40e277d38306")
-        guard let secondBlob = try? Blob.read(from: secondPath, in: basicRepository) else {
+        let secondPath = repository.subpath(with: "objects/e2/0f5916c1cb235a7f26cd91e09a40e277d38306")
+        guard let secondBlob = try? Blob.read(from: secondPath, in: repository) else {
             XCTFail()
             return
         }
@@ -33,7 +35,9 @@ class BlobTests: XCTestCase {
     }
     
     func testCreation() {
-        guard let blob = try? BlobWriter(file: basicRepository.path + "third.txt", repository: basicRepository).createWithoutWrite() else {
+        let repository = TestRepositories.repository(.basic)
+        
+        guard let blob = try? BlobWriter(file: repository.path + "third.txt", repository: repository).createWithoutWrite() else {
             XCTFail()
             return
         }

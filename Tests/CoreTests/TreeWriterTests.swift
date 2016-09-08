@@ -9,10 +9,12 @@
 import XCTest
 @testable import Core
 
-class TreeWriterTests: XCTestCase {
+class TreeWriterTests: GitTestCase {
 
     func testWrite() {
-        let writer = TreeWriter(index: writeRepository.index!)
+        let repository = TestRepositories.repository(.emptyObjects)
+        
+        let writer = TreeWriter(index: repository.index!)
         
         let tree: Tree
         do {
@@ -21,8 +23,6 @@ class TreeWriterTests: XCTestCase {
             XCTFail()
             return
         }
-        
-        defer { clearWriteRepository() }
         
         XCTAssert(tree.hash == "b0bd9fc1df38efc9e270e1a515c614e341eac8fc")
         
