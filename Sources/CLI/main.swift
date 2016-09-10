@@ -27,6 +27,7 @@ CLI.setup(name: "Git", version: "0.0.1", description: "Like git but in Swift")
 
 let plumbing: [RepositoryCommand] = [
     CatFileCommand(),
+    CommitTreeCommand(),
     HashObjectCommand(),
     LsFilesCommand(),
     LsTreeCommand(),
