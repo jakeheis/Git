@@ -23,7 +23,7 @@ if isDebug {
     print(r)
 }
 
-CLI.setup(name: "Git", version: "0.0.1", description: "Like git but in Swift")
+CLI.setup(name: "sgit", version: "0.0.1", description: "Like git but in Swift")
 
 let plumbing: [RepositoryCommand] = [
     CatFileCommand(),
@@ -48,7 +48,7 @@ CLI.register(commands: porcelain)
 
 let result: CLIResult
 if isDebug {
-    result = 0// CLI.debugGo(with: "git status -sb")
+    result = CLI.debugGo(with: "sgit commit -m \"SDJFHKJLSDFHLKSD\"")
 } else {
     result = CLI.go()
 }
