@@ -10,6 +10,8 @@ import Foundation
 
 final public class TreeWriter: ObjectWriter {
     
+    typealias Object = Tree
+    
     enum Error: Swift.Error {
         case missingObject
     }
@@ -17,7 +19,7 @@ final public class TreeWriter: ObjectWriter {
     let treeEntries: [TreeEntry]
     let repository: Repository
     
-    public static func write(index: Index, checkMissing: Bool) throws -> String {
+    public static func write(index: Index, checkMissing: Bool = true) throws -> String {
         let indexEntryStack = IndexEntryStack(index: index)
         return try recursiveWrite(indexEntryStack: indexEntryStack, parentComponents: [], repository: index.repository, checkMissing: checkMissing)
     }
@@ -54,11 +56,6 @@ final public class TreeWriter: ObjectWriter {
     init(treeEntries: [TreeEntry], repository: Repository) {
         self.treeEntries = treeEntries
         self.repository = repository
-    }
-    
-    init(object: Tree) {
-        self.treeEntries = object.treeEntries
-        self.repository = object.repository
     }
     
     func generateContentData() throws -> Data {

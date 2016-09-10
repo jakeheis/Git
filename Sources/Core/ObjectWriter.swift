@@ -15,8 +15,6 @@ protocol ObjectWriter {
     
     var repository: Repository { get }
     
-    init(object: Object)
-    
     func generateContentData() throws -> Data
     
 }

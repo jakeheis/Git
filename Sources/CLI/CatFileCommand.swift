@@ -42,7 +42,7 @@ class CatFileCommand: RepositoryCommand {
         let object: Object
         if let storedObject = repository.objectStore[id] {
             object = storedObject
-        } else if let reference = ReferenceParser.parse(id, repository: repository) {
+        } else if let reference = ReferenceParser.parse(raw: id, repository: repository) {
             object = reference.object
         } else {
             throw CLIError.error("Object not found")

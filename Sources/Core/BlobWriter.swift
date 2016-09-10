@@ -11,6 +11,8 @@ import FileKit
 
 final public class BlobWriter: ObjectWriter {
     
+    typealias Object = Blob
+    
     enum Error: Swift.Error {
         case readError
     }
@@ -33,11 +35,6 @@ final public class BlobWriter: ObjectWriter {
         }
         
         self.repository = repository
-    }
-    
-    init(object: Blob) {
-        self.data = object.data
-        self.repository = object.repository
     }
     
     func generateContentData() throws -> Data {

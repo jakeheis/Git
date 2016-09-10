@@ -15,7 +15,7 @@ extension Repository {
         var tags: [Tag] = []
         
         let tagsDirectory = subpath(with: Tag.directory)
-        tags += tagsDirectory.flatMap { Tag(path: $0, repository: self) }
+        tags += tagsDirectory.flatMap { ReferenceParser.from(file: $0, repository: self) as? Tag }
         
         if let packedReferences = packedReferences {
             tags += packedReferences.tags

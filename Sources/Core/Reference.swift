@@ -15,6 +15,9 @@ public protocol Reference: CustomStringConvertible {
     var hash: String { get }
     var repository: Repository { get }
     
+    func update(hash: String) throws
+    func write() throws
+    
 }
 
 extension Reference {
@@ -40,6 +43,12 @@ extension Reference {
     
 }
 
+// MARK: - SymbolicReference
+
+public protocol SymbolicReference: Reference {
+    var dereferenced: Reference? { get }
+}
+
 // MARK: - FolderedRefence
 
 public class FolderedRefence: Reference {
@@ -47,16 +56,6 @@ public class FolderedRefence: Reference {
     public let ref: String
     private(set) public var hash: String
     public let repository: Repository
-    
-    public convenience init?(path: Path, repository: Repository) {
-        guard let hash = try? String.readFromPath(path) else {
-            return nil
-        }
-        
-        let ref = (path[(path.endIndex - 3) ..< (path.endIndex - 1)] + path.fileName).rawValue
-        let trimmedHash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
-        self.init(ref: ref, hash: trimmedHash, repository: repository)
-    }
     
     public init(ref: String, hash: String, repository: Repository) {
         self.ref = ref
@@ -81,18 +80,18 @@ public class FolderedRefence: Reference {
 
 public class ReferenceParser {
     
-    public static func parse(_ text: String, repository: Repository) -> Reference? {
-        if text.hasPrefix("refs") {
-            return from(ref: text, repository: repository)
+    public static func parse(raw: String, repository: Repository) -> Reference? {
+        if raw.hasPrefix("refs") {
+            return from(ref: raw, repository: repository)
         }
         
-        if let head = repository.head, text == head.name {
+        if let head = repository.head, raw == head.name {
             return head
         }
-        if let tag = from(ref: "\(Tag.directory)/\(text)", repository: repository) {
+        if let tag = from(ref: "\(Tag.directory)/\(raw)", repository: repository) {
             return tag
         }
-        if let branch = from(ref: "\(Branch.directory)/\(text)", repository: repository) {
+        if let branch = from(ref: "\(Branch.directory)/\(raw)", repository: repository) {
             return branch
         }
         
@@ -100,21 +99,33 @@ public class ReferenceParser {
     }
     
     public static func from(ref: String, repository: Repository) -> Reference? {
-        let isTag = ref.hasPrefix(Tag.directory)
-        
-        let potentialPath = repository.subpath(with: ref)
-        if potentialPath.exists {
-            if isTag {
-                return Tag(path: potentialPath, repository: repository)
-            }
-            return Branch(path: potentialPath, repository: repository)
+        if let reference = from(file: repository.subpath(with: ref), repository: repository) {
+            return reference
         }
         
+        return unpack(ref: ref, repository: repository)
+    }
+    
+    public static func from(file: Path, repository: Repository) -> Reference? {
+        guard file.exists, let hash = try? String.readFromPath(file) else {
+            return nil
+        }
+        
+        let ref = (file[(file.endIndex - 3) ..< (file.endIndex - 1)] + file.fileName).rawValue
+        let trimmedHash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
+        
+        if ref.hasPrefix(Tag.directory) {
+            return Tag(ref: ref, hash: trimmedHash, repository: repository)
+        }
+        return Branch(ref: ref, hash: trimmedHash, repository: repository)
+    }
+    
+    public static func unpack(ref: String, repository: Repository) -> Reference? {
         guard let packedReferences = repository.packedReferences else {
             return nil
         }
         
-        let searchRefs: [Reference] = isTag ? packedReferences.tags : packedReferences.branches
+        let searchRefs: [Reference] = ref.hasPrefix(Tag.directory) ? packedReferences.tags : packedReferences.branches
         
         var matchingReference: Reference?
         for reference in searchRefs {

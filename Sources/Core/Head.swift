@@ -9,7 +9,7 @@
 import Foundation
 import FileKit
 
-final public class Head: Reference {
+final public class Head: SymbolicReference {
    
     public enum Kind {
         case hash(String)
@@ -24,8 +24,14 @@ final public class Head: Reference {
         }
     }
     public let repository: Repository
+    public var dereferenced: Reference? {
+        switch kind {
+        case let .reference(reference): return reference
+        default: return self
+        }
+    }
     
-    public let kind: Kind
+    private(set) public var kind: Kind
     
     public var commit: Commit? {
         return object as? Commit
@@ -51,6 +57,21 @@ final public class Head: Reference {
             self.kind = .hash(text.trimmingCharacters(in: .whitespacesAndNewlines))
         }
         self.repository = repository
+    }
+    
+    public func update(hash: String) throws {
+        kind = .hash(hash)
+        try write()
+    }
+    
+    public func write() throws {
+        let path = repository.subpath(with: ref)
+        let text: String
+        switch kind {
+        case let .hash(hash): text = hash
+        case let .reference(reference): text = "ref: \(reference.ref)"
+        }
+        try (text + "\n").write(to: path)
     }
     
 }

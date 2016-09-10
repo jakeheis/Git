@@ -20,7 +20,7 @@ extension Repository {
         var branches: [Branch] = []
         
         let branchesDirectory = subpath(with: Branch.directory)
-        branches += branchesDirectory.flatMap { Branch(path: $0, repository: self) }
+        branches += branchesDirectory.flatMap { ReferenceParser.from(file: $0, repository: self) as? Branch }
         
         if let packedReferences = packedReferences {
             branches += packedReferences.branches

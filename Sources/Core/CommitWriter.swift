@@ -11,6 +11,8 @@ import FileKit
 
 final public class CommitWriter: ObjectWriter {
     
+    typealias Object = Commit
+    
     public let treeHash: String
     public let parentHash: String?
     public let authorSignature: Signature
@@ -18,8 +20,30 @@ final public class CommitWriter: ObjectWriter {
     public let message: String
     public let repository: Repository
     
-    public convenience init(object: Commit) {
-        self.init(treeHash: object.tree.hash, parentHash: object.parentHash, message: object.message, repository: object.repository)
+    public enum Error: Swift.Error {
+        case unreadableIndex
+        case unreadableHead
+    }
+    
+    public static func commitCurrent(in repository: Repository, message: String) throws -> String {
+        guard let index = repository.index else {
+            throw Error.unreadableIndex
+        }
+        let treeHash = try TreeWriter.write(index: index)
+        
+        guard let parentHash = repository.head?.hash else {
+            throw Error.unreadableHead
+        }
+        
+        let commitHash = try CommitWriter(treeHash: treeHash, parentHash: parentHash, message: message, repository: repository).write()
+        
+        guard let ref = repository.head?.dereferenced else {
+            throw Error.unreadableHead
+        }
+        
+        try ref.update(hash: commitHash)
+        
+        return commitHash
     }
     
     public init(treeHash: String, parentHash: String?, message: String, repository: Repository, time: Date? = nil) {

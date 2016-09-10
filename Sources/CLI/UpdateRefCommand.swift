@@ -20,32 +20,31 @@ class UpdateRefCommand: RepositoryCommand {
     
     func execute(arguments: CommandArguments) throws {
         let ref = arguments.requiredArgument("ref")
+        let newValue = arguments.requiredArgument("newValue")
+
         guard let repository = repository else {
-                throw CLIError.error("Couldn't read repository")
+            throw CLIError.error("Couldn't read repository")
         }
         
-        let newValue = arguments.requiredArgument("newValue")
-        
-        if let existing = ReferenceParser.parse(ref, repository: repository) {
+        if let existing = ReferenceParser.parse(raw: ref, repository: repository) {
+            let reference: Reference
+            if let symbolic = existing as? SymbolicReference {
+                guard let dereferenced = symbolic.dereferenced else {
+                    throw CLIError.error("Couldn't derference symbolic ref \(existing.name)")
+                }
+                reference = dereferenced
+            } else {
+                reference = existing
+            }
+            
             if let oldValue = arguments.optionalArgument("oldValue") {
-                guard existing.hash == oldValue else {
+                guard reference.hash == oldValue else {
                     throw CLIError.error("ref \(ref) is at \(existing.hash) but expected \(oldValue)")
                 }
             }
             
-            let folderedReference: FolderedRefence
-            if let fr = existing as? FolderedRefence {
-                folderedReference = fr
-            } else if let head = existing as? Head,
-                case let .reference(headReference) = head.kind,
-                let fr = headReference as? FolderedRefence {
-                    folderedReference = fr
-            } else {
-                throw CLIError.error("Can't update this kind of ref")
-            }
-            
             do {
-                try folderedReference.update(hash: newValue)
+                try reference.update(hash: newValue)
             } catch {
                 throw CLIError.error("Couldn't update foldered ref")
             }

@@ -39,6 +39,7 @@ let plumbing: [RepositoryCommand] = [
 
 let porcelain: [RepositoryCommand] = [
     BranchCommand(),
+    CommitCommand(),
     LogCommand(),
     StatusCommand(),
     TagCommand()

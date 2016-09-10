@@ -32,6 +32,10 @@ public class ObjectStore {
     // MARK: - Reading
     
     public subscript(hash: String) -> Object? {
+        guard hash.isHex else {
+            return nil
+        }
+        
         if let fromFile = objectFromFile(hash: hash) {
             return fromFile
         }

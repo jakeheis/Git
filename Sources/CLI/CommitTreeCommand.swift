@@ -8,7 +8,6 @@
 
 import Core
 import SwiftCLI
-import FileKit
 
 class CommitTreeCommand: RepositoryCommand {
     
