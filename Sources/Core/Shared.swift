@@ -37,3 +37,11 @@ extension Data {
     }
     
 }
+
+extension String {
+    
+    func write(to path: Path) throws {
+        try writeToPath(path)
+    }
+    
+}

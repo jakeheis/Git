@@ -31,7 +31,7 @@ class LsTreeCommand: RepositoryCommand {
         let id = arguments.requiredArgument("id")
         
         let object: Object
-        if let reference = ReferenceParser.from(name: id, repository: repository) {
+        if let reference = ReferenceParser.parse(id, repository: repository) {
             object = reference.object
         } else if let repositoryObject = repository.objectStore[id] {
             object = repositoryObject

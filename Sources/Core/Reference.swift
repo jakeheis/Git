@@ -45,7 +45,7 @@ extension Reference {
 public class FolderedRefence: Reference {
     
     public let ref: String
-    public let hash: String
+    private(set) public var hash: String
     public let repository: Repository
     
     public convenience init?(path: Path, repository: Repository) {
@@ -64,6 +64,16 @@ public class FolderedRefence: Reference {
         self.repository = repository
     }
     
+    public func update(hash: String) throws {
+        self.hash = hash
+        try write()
+    }
+    
+    public func write() throws {
+        let path = repository.subpath(with: ref)
+        try (hash + "\n").write(to: path)
+    }
+    
 }
 
 // MARK: - ReferenceParser
@@ -71,14 +81,18 @@ public class FolderedRefence: Reference {
 
 public class ReferenceParser {
     
-    public static func from(name: String, repository: Repository) -> Reference? {
-        if let head = repository.head, name == head.name {
+    public static func parse(_ text: String, repository: Repository) -> Reference? {
+        if text.hasPrefix("refs") {
+            return from(ref: text, repository: repository)
+        }
+        
+        if let head = repository.head, text == head.name {
             return head
         }
-        if let tag = from(ref: "\(Tag.directory)/\(name)", repository: repository) {
+        if let tag = from(ref: "\(Tag.directory)/\(text)", repository: repository) {
             return tag
         }
-        if let branch = from(ref: "\(Branch.directory)/\(name)", repository: repository) {
+        if let branch = from(ref: "\(Branch.directory)/\(text)", repository: repository) {
             return branch
         }
         

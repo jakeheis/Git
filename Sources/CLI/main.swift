@@ -32,6 +32,7 @@ let plumbing: [RepositoryCommand] = [
     LsFilesCommand(),
     LsTreeCommand(),
     UpdateIndexCommand(),
+    UpdateRefCommand(),
     VerifyPackCommand(),
     WriteTreeCommand()
 ]
@@ -48,7 +49,7 @@ CLI.register(commands: porcelain)
 
 let result: CLIResult
 if isDebug {
-    result = CLI.debugGo(with: "sgit commit -m \"SDJFHKJLSDFHLKSD\"")
+    result = 0 //CLI.debugGo(with: "sgit update-ref HEAD 1e3965ebd93700a8c6acf99e7372bd59de5b0e39")
 } else {
     result = CLI.go()
 }

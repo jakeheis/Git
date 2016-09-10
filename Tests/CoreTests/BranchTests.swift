@@ -38,5 +38,46 @@ class BranchTests: GitTestCase {
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
     }
+    
+    func testWrite() {
+        let repository = TestRepositories.repository(.basic)
+        
+        let new = Branch(ref: "refs/heads/new_branch", hash: "29287d7a61db5b55e66f707a01b7fb4b11efcb40", repository: repository)
+        do {
+            try new.write()
+        } catch {
+            XCTFail()
+        }
+        
+        guard let read = ReferenceParser.from(ref: "refs/heads/new_branch", repository: repository) as? Branch else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(read.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
+        XCTAssert(read.ref == "refs/heads/new_branch")
+    }
+    
+    func testUpdate() {
+        let repository = TestRepositories.repository(.basic)
+        guard let initial = ReferenceParser.from(ref: "refs/heads/master", repository: repository) as? Branch else {
+            XCTFail()
+            return
+        }
+        
+        do {
+            try initial.update(hash: "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
+        } catch {
+            XCTFail()
+        }
+        
+        guard let new = ReferenceParser.from(ref: "refs/heads/master", repository: repository) as? Branch else {
+            XCTFail()
+            return
+        }
+        
+        XCTAssert(new.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
+        XCTAssert(new.ref == "refs/heads/master")
+    }
 
 }
