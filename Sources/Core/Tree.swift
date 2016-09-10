@@ -16,15 +16,11 @@ final public class Tree: Object {
     
     public let treeEntries: [TreeEntry]
     
-    public init(entries: [TreeEntry], repository: Repository) {
+    public init(entries: [TreeEntry], hash: String, repository: Repository) {
         self.treeEntries = entries
+        
+        self.hash = hash
         self.repository = repository
-        
-        let contentData = Tree.data(from: entries)
-        var data = Tree.header(for: contentData, type: .tree)
-        data.append(contentData)
-        
-        self.hash = DataReader(data: data.sha1).readHex(bytes: 20)
     }
     
     public init(hash: String, data: Data, repository: Repository) {
@@ -52,30 +48,6 @@ final public class Tree: Object {
     public func cat() -> String {
         let lines = treeEntries.map { String(describing: $0) }
         return lines.joined(separator: "\n")
-    }
-    
-    public func generateContentData() -> Data {
-        return Tree.data(from: treeEntries)
-    }
-    
-    // MARK: - Helpers
-    
-    private static func data(from entries: [TreeEntry]) -> Data {
-        let dataWriter = DataWriter()
-        
-        for entry in entries {
-            guard let modeData = entry.mode.rawValue.data(using: .ascii),
-                let nameData = entry.name.data(using: .ascii) else {
-                    continue
-            }
-            dataWriter.write(data: modeData)
-            dataWriter.write(byte: 32) // Space
-            dataWriter.write(data: nameData)
-            dataWriter.write(byte: 0) // Null byte
-            dataWriter.write(hex: entry.hash)
-        }
-        
-        return dataWriter.data
     }
     
 }

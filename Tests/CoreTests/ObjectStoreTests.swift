@@ -59,30 +59,5 @@ class ObjectStoreTests: GitTestCase {
         XCTAssert(packedBlob.hash == "4260dd4b89d8b3f9a231538664bd3d346fdd2ead")
         XCTAssert(String(data: packedBlob.data, encoding: .ascii) == "File\nmodification\nanother mod\n")
     }
-    
-    func testWrite() {
-        let readRepository = TestRepositories.repository(.basic)
-        let writeRepository = TestRepositories.repository(.emptyObjects)
-        
-        guard let originalBlob = readRepository.objectStore["4260dd4b89d8b3f9a231538664bd3d346fdd2ead"] as? Blob else {
-            XCTFail()
-            return
-        }
-        
-        do {
-            try writeRepository.objectStore.write(object: originalBlob)
-        } catch {
-            XCTFail()
-            return
-        }
-        
-        guard let sameBlob = writeRepository.objectStore["4260dd4b89d8b3f9a231538664bd3d346fdd2ead"] as? Blob else {
-            XCTFail()
-            return
-        }
-        
-        XCTAssert(sameBlob.hash == originalBlob.hash)
-        XCTAssert(sameBlob.data == originalBlob.data)
-    }
 
 }

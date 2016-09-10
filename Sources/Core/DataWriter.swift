@@ -12,6 +12,7 @@ class DataWriter {
     
     enum Error: Swift.Error {
         case intConversionError
+        case stringDataCoversionError
     }
     
     var data = Data()
@@ -67,6 +68,13 @@ class DataWriter {
     
     func write(byte: Byte) {
         write(byte: UInt8(byte.intValue(ofBits: 0 ..< 8)))
+    }
+    
+    func write(ascii: String) throws {
+        guard let data = ascii.data(using: .ascii) else {
+            throw Error.stringDataCoversionError
+        }
+        write(data: data)
     }
     
     func prepend(data newData: Data) {

@@ -34,6 +34,17 @@ final public class Commit: Object {
         return repository.objectStore[parentHash] as? Commit
     }
     
+    public init(treeHash: String, parentHash: String?, authorSignature: Signature, committerSignature: Signature, message: String, hash: String, repository: Repository) {
+        self.treeHash = treeHash
+        self.parentHash = parentHash
+        self.authorSignature = authorSignature
+        self.committerSignature = committerSignature
+        self.message = message
+        
+        self.hash = hash
+        self.repository = repository
+    }
+    
     public init(hash: String, data: Data, repository: Repository) {
         guard let contents = String(data: data, encoding: .ascii) else {
             fatalError("Couldn't read object \(hash)")
@@ -73,10 +84,6 @@ final public class Commit: Object {
             message
         ]
         return lines.joined(separator: "\n")
-    }
-    
-    public func generateContentData() -> Data {
-        return Data()
     }
     
 }

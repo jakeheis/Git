@@ -137,33 +137,6 @@ public class ObjectStore {
         return type.objectClass.init(hash: hash, data: contentData, repository: repository)
     }
     
-    // MARK: - Basic write
-    
-    func write(object: Object) throws {
-        let breakIndex = object.hash.index(object.hash.startIndex, offsetBy: 2)
-        let firstTwo = object.hash.substring(to: breakIndex)
-        let hashEnd = object.hash.substring(from: breakIndex)
-        
-        let parentDirectory = repository.subpath(with: "\(ObjectStore.directory)/\(firstTwo)")
-        
-        let file = parentDirectory + hashEnd
-        
-        let data = object.generateWriteData()
-        
-        guard let compressed = data.compressed() else {
-            throw Error.compressionError
-        }
-        
-        do {
-            if !parentDirectory.isAny {
-                try parentDirectory.createDirectory()
-            }
-            try compressed.write(to: file)
-        } catch {
-            throw Error.writeError
-        }
-    }
-    
 }
 
 // MARK: -

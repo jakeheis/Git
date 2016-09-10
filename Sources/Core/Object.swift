@@ -18,7 +18,6 @@ public protocol Object: CustomStringConvertible {
     init(hash: String, data: Data, repository: Repository)
     
     func cat() -> String
-    func generateContentData() -> Data
     
 }
 
@@ -33,29 +32,6 @@ extension Object {
             throw ObjectStore.Error.parseError
         }
         return typedObject
-    }
-    
-    public func write() throws {
-        try repository.objectStore.write(object: self)
-    }
-    
-    public static func header(for contentData: Data, type: ObjectType) -> Data {
-         let header = "\(type.rawValue) \(contentData.count)\0"
-        guard let headerData = header.data(using: .ascii) else {
-            fatalError("Something went very wrong")
-        }
-        return headerData
-    }
-    
-    public func header(for contentData: Data) -> Data {
-        return Self.header(for: contentData, type: type)
-    }
-    
-    func generateWriteData() -> Data {
-        let content = generateContentData()
-        var data = header(for: content)
-        data.append(content)
-        return data
     }
     
 }
@@ -73,6 +49,7 @@ extension Object {
 // MARK: - ObjectType
 
 public enum ObjectType: String {
+    
     case blob
     case commit
     case tree
@@ -86,4 +63,17 @@ public enum ObjectType: String {
         case .tag: return AnnotatedTag.self
         }
     }
+    
+    init<T: Object>(objectClass: T.Type) {
+        if objectClass == Blob.self {
+            self = .blob
+        } else if objectClass == Commit.self {
+            self = .commit
+        } else if objectClass == Tree.self {
+            self = .tree
+        } else {
+            self = .tag
+        }
+    }
+    
 }

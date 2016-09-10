@@ -8,12 +8,27 @@
 
 import Foundation
 
-public class Signature {
+public struct Signature {
     
     public let name: String
     public let email: String
     public let time: Date
     public let timeZone: TimeZone
+    
+    public static func currentUser(at time: Date? = nil) -> Signature? {
+        guard let name = Config.value(for: "name", in: "user"),
+            let email = Config.value(for: "email", in: "user") else {
+                return nil
+        }
+        return Signature(name: name, email: email, time: time ?? Date(), timeZone: TimeZone.current)
+    }
+    
+    init(name: String, email: String, time: Date, timeZone: TimeZone) {
+        self.name = name
+        self.email = email
+        self.time = time
+        self.timeZone = timeZone
+    }
     
     init(signature: String) {
         var words = signature.components(separatedBy: " ")
@@ -36,7 +51,29 @@ public class Signature {
 extension Signature: CustomStringConvertible {
     
     public var description: String {
-        return "\(name) <\(email)> \(time) \(timeZone)"
+        return "\(name) <\(email)> \(Int(round(time.timeIntervalSince1970))) \(timeZone.gitIdentifier)"
+    }
+    
+}
+
+extension Signature: Equatable {}
+
+public func == (lhs: Signature, rhs: Signature) -> Bool {
+    return lhs.name == rhs.name && lhs.email == rhs.email && lhs.time == rhs.time && lhs.timeZone.secondsFromGMT() == rhs.timeZone.secondsFromGMT()
+}
+
+// MARK: -
+
+extension TimeZone {
+    
+    var gitIdentifier: String {
+        var timeZoneOffset = secondsFromGMT() > 0 ? "" : "-"
+        let hours = String(abs(secondsFromGMT() / 3600))
+        if hours.characters.count == 1 {
+            timeZoneOffset += "0"
+        }
+        timeZoneOffset += hours + "00"
+        return timeZoneOffset
     }
     
 }

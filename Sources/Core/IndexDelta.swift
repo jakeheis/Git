@@ -83,11 +83,11 @@ public struct IndexDelta {
                     continue
                 }
                 
-                guard let blob = try? BlobWriter(file: filePath, repository: repository).createWithoutWrite() else {
+                guard let blobHash = try? BlobWriter(from: filePath, repository: repository).generateHash() else {
                     fatalError("Blob could not be created for file: \(file)")
                 }
                 
-                if indexEntry.hash != blob.hash {
+                if indexEntry.hash != blobHash {
                     deltaFiles.append((file, .modified))
                 }
             } else {

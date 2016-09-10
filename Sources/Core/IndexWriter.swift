@@ -22,12 +22,8 @@ class IndexWriter {
     }
     
     func write() throws {
-        let path = index.repository.subpath(with: Index.path)
-        try write(to: path)
-    }
-    
-    func write(to path: Path) throws {
         let data = try generateData()
+        let path = index.repository.subpath(with: Index.path)
         try data.write(to: path)
     }
     

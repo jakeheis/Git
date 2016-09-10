@@ -28,15 +28,12 @@ class WriteTreeCommand: RepositoryCommand {
             throw CLIError.error("Repository index could not be read")
         }
         
-        let treeWriter = TreeWriter(index: index)
-        let tree: Tree
         do {
-            tree = try treeWriter.write(checkMissing: checkMissing)
+            let hash = try TreeWriter.write(index: index, checkMissing: checkMissing)
+            print(hash)
         } catch {
             throw CLIError.error("Could not write tree -- \(error)")
         }
-        
-        print(tree.hash)
     }
     
 }

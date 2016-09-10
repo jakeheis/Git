@@ -14,15 +14,14 @@ class TreeWriterTests: GitTestCase {
     func testWrite() {
         let repository = TestRepositories.repository(.emptyObjects)
         
-        let writer = TreeWriter(index: repository.index!)
-        
-        let tree: Tree
+        let hash: String
         do {
-            tree = try writer.write(checkMissing: false)
+            hash = try TreeWriter.write(index: repository.index!, checkMissing: false)
         } catch {
             XCTFail()
             return
         }
+        let tree = repository.objectStore[hash] as! Tree
         
         XCTAssert(tree.hash == "b0bd9fc1df38efc9e270e1a515c614e341eac8fc")
         

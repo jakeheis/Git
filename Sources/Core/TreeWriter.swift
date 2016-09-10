@@ -8,28 +8,22 @@
 
 import Foundation
 
-public class TreeWriter {
+final public class TreeWriter: ObjectWriter {
     
     enum Error: Swift.Error {
         case missingObject
     }
     
-    private let indexEntryStack: IndexEntryStack
-    private let repository: Repository
+    let treeEntries: [TreeEntry]
+    let repository: Repository
     
-    public init(index: Index) {
-        self.indexEntryStack = IndexEntryStack(index: index)
-        self.repository = index.repository
+    public static func write(index: Index, checkMissing: Bool) throws -> String {
+        let indexEntryStack = IndexEntryStack(index: index)
+        return try recursiveWrite(indexEntryStack: indexEntryStack, parentComponents: [], repository: index.repository, checkMissing: checkMissing)
     }
     
-    @discardableResult
-    public func write(checkMissing: Bool = true) throws -> Tree {
-        return try recursiveWrite(parentComponents: [], checkMissing: checkMissing)
-    }
-    
-    private func recursiveWrite(parentComponents: [String] = [], checkMissing: Bool) throws -> Tree {
+    private static func recursiveWrite(indexEntryStack: IndexEntryStack, parentComponents: [String], repository: Repository, checkMissing: Bool) throws -> String {
         var treeEntries: [TreeEntry] = []
-        
         while !indexEntryStack.isEmpty {
             let entry = indexEntryStack.peek()
             if !entry.name.hasPrefix(parentComponents.joined(separator: "/")) { // Done with subdirectory
@@ -41,8 +35,8 @@ public class TreeWriter {
             
             if components.count > 1, let directoryName = components.first {
                 let subParentComponents = parentComponents + [directoryName]
-                let subtree = try recursiveWrite(parentComponents: subParentComponents, checkMissing: checkMissing)
-                let directoryEntry = TreeEntry(mode: .directory, hash: subtree.hash, name: directoryName, repository: repository)
+                let subtreeHash = try recursiveWrite(indexEntryStack: indexEntryStack, parentComponents: subParentComponents, repository: repository, checkMissing: checkMissing)
+                let directoryEntry = TreeEntry(mode: .directory, hash: subtreeHash, name: directoryName, repository: repository)
                 treeEntries.append(directoryEntry)
             } else if let fileName = components.first {
                 if checkMissing && repository.objectStore[entry.hash] == nil {
@@ -54,9 +48,35 @@ public class TreeWriter {
             }
         }
         
-        let tree = Tree(entries: treeEntries, repository: repository)
-        try tree.write()
-        return tree
+        return try TreeWriter(treeEntries: treeEntries, repository: repository).write()
+    }
+    
+    init(treeEntries: [TreeEntry], repository: Repository) {
+        self.treeEntries = treeEntries
+        self.repository = repository
+    }
+    
+    init(object: Tree) {
+        self.treeEntries = object.treeEntries
+        self.repository = object.repository
+    }
+    
+    func generateContentData() throws -> Data {
+        let dataWriter = DataWriter()
+        
+        for entry in treeEntries {
+            guard let modeData = entry.mode.rawValue.data(using: .ascii),
+                let nameData = entry.name.data(using: .ascii) else {
+                    continue
+            }
+            dataWriter.write(data: modeData)
+            dataWriter.write(byte: 32) // Space
+            dataWriter.write(data: nameData)
+            dataWriter.write(byte: 0) // Null byte
+            dataWriter.write(hex: entry.hash)
+        }
+        
+        return dataWriter.data
     }
     
 }

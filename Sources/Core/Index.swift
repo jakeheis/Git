@@ -239,7 +239,7 @@ public class Index {
     private func createEntry(for file: String) -> IndexEntry? {
         let path = repository.path + file
         
-        guard let blob = try? BlobWriter(file: path, repository: repository).write() else {
+        guard let hash = try? BlobWriter(from: path, repository: repository).write() else {
             return nil
         }
         
@@ -247,7 +247,7 @@ public class Index {
         
         let entry = IndexEntry(
             stat: stat,
-            hash: blob.hash,
+            hash: hash,
             assumeValid: false, extended: false, firstStage: false, secondStage: false,
             name: file
         )
