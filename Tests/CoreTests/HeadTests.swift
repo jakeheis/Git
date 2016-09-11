@@ -41,5 +41,53 @@ class HeadTests: GitTestCase {
         XCTAssert(packedReference.ref == "refs/heads/other_branch")
         XCTAssert(packedReference.name == "other_branch")
     }
+    
+    func testUpdate() {
+        let repository = TestRepositories.repository(.basic)
+        
+        guard let headRef = Head(repository: repository) else {
+            XCTFail()
+            return
+        }
+        
+        guard case let .reference(ref) = headRef.kind else {
+            XCTFail()
+            return
+        }
+        XCTAssert(ref.equals(ref: "refs/heads/master", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
+        XCTAssert(headRef.equals(ref: "HEAD", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
+        XCTAssert(headRef.dereferenced.equals(ref: "refs/heads/master", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
+        
+        do {
+            try headRef.update(hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d")
+        } catch {
+            XCTFail()
+        }
+        
+        // Make sure old object correctly updated
+        
+        guard case let .hash(oldHash) = headRef.kind else {
+            XCTFail()
+            return
+        }
+        XCTAssert(oldHash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
+        XCTAssert(headRef.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
+        XCTAssert(headRef.dereferenced.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
+        
+        // Make sure written correctly
+        
+        guard let newHead = Head(repository: repository) else {
+            XCTFail()
+            return
+        }
+        
+        guard case let .hash(newHash) = newHead.kind else {
+            XCTFail()
+            return
+        }
+        XCTAssert(newHash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
+        XCTAssert(newHead.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
+        XCTAssert(newHead.dereferenced.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
+    }
 
 }

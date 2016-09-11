@@ -24,7 +24,7 @@ final public class Head: SymbolicReference {
         }
     }
     public let repository: Repository
-    public var dereferenced: Reference? {
+    public var dereferenced: Reference {
         switch kind {
         case let .reference(reference): return reference
         default: return self

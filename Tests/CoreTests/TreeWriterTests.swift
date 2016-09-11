@@ -16,7 +16,7 @@ class TreeWriterTests: GitTestCase {
         
         let hash: String
         do {
-            hash = try TreeWriter.write(index: repository.index!, checkMissing: false)
+            hash = try TreeWriter.writeCurrent(in: repository, checkMissing: false)
         } catch {
             XCTFail()
             return

@@ -29,10 +29,7 @@ class UpdateRefCommand: RepositoryCommand {
         if let existing = ReferenceParser.parse(raw: ref, repository: repository) {
             let reference: Reference
             if let symbolic = existing as? SymbolicReference {
-                guard let dereferenced = symbolic.dereferenced else {
-                    throw CLIError.error("Couldn't derference symbolic ref \(existing.name)")
-                }
-                reference = dereferenced
+                reference = symbolic.dereferenced
             } else {
                 reference = existing
             }

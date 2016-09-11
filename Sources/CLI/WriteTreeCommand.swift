@@ -24,12 +24,12 @@ class WriteTreeCommand: RepositoryCommand {
     }
     
     func execute(arguments: CommandArguments) throws {
-        guard let index = repository?.index else {
-            throw CLIError.error("Repository index could not be read")
+        guard let repository = repository else {
+            throw CLIError.error("Repository could not be read")
         }
         
         do {
-            let hash = try TreeWriter.write(index: index, checkMissing: checkMissing)
+            let hash = try TreeWriter.writeCurrent(in: repository, checkMissing: checkMissing)
             print(hash)
         } catch {
             throw CLIError.error("Could not write tree -- \(error)")

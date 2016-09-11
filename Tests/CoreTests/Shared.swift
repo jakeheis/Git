@@ -35,3 +35,11 @@ extension TreeEntry {
     }
     
 }
+
+extension Reference {
+    
+    func equals(ref: String, hash: String) -> Bool {
+        return self.ref == ref && self.hash == hash
+    }
+    
+}

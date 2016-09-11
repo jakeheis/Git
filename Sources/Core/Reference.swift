@@ -46,7 +46,7 @@ extension Reference {
 // MARK: - SymbolicReference
 
 public protocol SymbolicReference: Reference {
-    var dereferenced: Reference? { get }
+    var dereferenced: Reference { get }
 }
 
 // MARK: - FolderedRefence
