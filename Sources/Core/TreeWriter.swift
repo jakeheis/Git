@@ -14,14 +14,18 @@ final public class TreeWriter: ObjectWriter {
     
     enum Error: Swift.Error {
         case missingObject
+        case unreadableIndex
     }
     
     let treeEntries: [TreeEntry]
     let repository: Repository
     
-    public static func write(index: Index, checkMissing: Bool = true) throws -> String {
+    public static func writeCurrent(in repository: Repository, checkMissing: Bool = true) throws -> String {
+        guard let index = repository.index else {
+            throw Error.unreadableIndex
+        }
         let indexEntryStack = IndexEntryStack(index: index)
-        return try recursiveWrite(indexEntryStack: indexEntryStack, parentComponents: [], repository: index.repository, checkMissing: checkMissing)
+        return try recursiveWrite(indexEntryStack: indexEntryStack, parentComponents: [], repository: repository, checkMissing: checkMissing)
     }
     
     private static func recursiveWrite(indexEntryStack: IndexEntryStack, parentComponents: [String], repository: Repository, checkMissing: Bool) throws -> String {

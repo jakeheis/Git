@@ -26,10 +26,7 @@ final public class CommitWriter: ObjectWriter {
     }
     
     public static func commitCurrent(in repository: Repository, message: String) throws -> String {
-        guard let index = repository.index else {
-            throw Error.unreadableIndex
-        }
-        let treeHash = try TreeWriter.write(index: index)
+        let treeHash = try TreeWriter.writeCurrent(in: repository)
         
         guard let parentHash = repository.head?.hash else {
             throw Error.unreadableHead
