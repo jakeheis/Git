@@ -210,6 +210,57 @@ class IndexTests: GitTestCase {
         XCTAssert(rootTreeExtension.subtrees[1].entryCount == 2)
     }
     
+    func testModifyWithDirectory() {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
+            XCTFail()
+            return
+        }
+        
+        let directory = repository.path + "Dir"
+        do {
+            try directory.createDirectory()
+            try (directory + "hey.txt").createFile()
+            try (directory + "hi.txt").createFile()
+            try index.modify(with: directory.fileName, write: false)
+        } catch {
+            XCTFail()
+        }
+        
+        guard let delta = index.stagedChanges() else {
+            XCTFail()
+            return
+        }
+        XCTAssert(delta.deltaFiles[0] == ("Dir/hey.txt", .added))
+        XCTAssert(delta.deltaFiles[1] == ("Dir/hi.txt", .added))
+    }
+    
+    func testModifyAll() {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
+            XCTFail()
+            return
+        }
+        
+        do {
+            try "TEXT".write(to: (repository.path + "a.txt"))
+            try "TEXT".write(to: (repository.path + "file.txt"))
+            try (repository.path + "third.txt").deleteFile()
+            
+            try index.modify(with: ".", write: false)
+        } catch {
+            XCTFail()
+        }
+        
+        guard let delta = index.stagedChanges() else {
+            XCTFail()
+            return
+        }
+        XCTAssert(delta.deltaFiles[0] == ("file.txt", .modified))
+        XCTAssert(delta.deltaFiles[1] == ("third.txt", .deleted))
+        XCTAssert(delta.deltaFiles[2] == ("a.txt", .added))
+    }
+    
 }
 
 private extension IndexEntry {

@@ -34,10 +34,10 @@ class StatusCommand: RepositoryCommand {
         guard let index = repository?.index else {
             throw CLIError.error("Repository index could not be read")
         }
-        guard let staged = index.stagedChanges(),
-            let unstaged = index.unstagedChanges() else {
+        guard let staged = index.stagedChanges() else {
             throw CLIError.error("Unable to resolve changes")
         }
+        let unstaged = index.unstagedChanges()
         
         var stagedFiles = staged.deltaFiles.sorted { $0.name < $1.name }
         var unstagedFiles = unstaged.deltaFiles.sorted { $0.name < $1.name }

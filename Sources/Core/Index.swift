@@ -166,6 +166,45 @@ public class Index {
         case entryCreationFailure
     }
     
+    public func modify(with file: String, write shouldWrite: Bool = true) throws {
+        try modify(with: [file], write: shouldWrite)
+    }
+    
+    public func modify(with files: [String], write shouldWrite: Bool = true) throws {
+        let delta = unstagedChanges()
+        
+        func internalModify(with file: String) throws {
+            if delta.deltaFiles.first(where: { $0.name == file }) == nil { // Didn't change, nothing to add
+                return
+            }
+            
+            if !(repository.path + file).exists {
+                try remove(file: file, write: false)
+            } else if isTracking(file) {
+                try update(file: file, write: false)
+            } else {
+                try add(file: file, write: false)
+            }
+        }
+        
+        for file in files {
+            if (repository.path + file).isDirectory {
+                let all = (file == ".")
+                for (deltaFile, _) in delta.deltaFiles {
+                    if deltaFile.hasPrefix(file) || all {
+                        try internalModify(with: deltaFile)
+                    }
+                }
+            } else {
+                try internalModify(with: file)
+            }
+        }
+        
+        if shouldWrite { // Write once at the end if need be
+            try write()
+        }
+    }
+    
     public func update(file: String, write shouldWrite: Bool = true) throws {
         guard let existing = self[file], let index = entries.index(of: existing) else {
             throw ModificationError.nonexistentFileError
@@ -285,7 +324,7 @@ public class Index {
         return IndexDelta(index: self, tree: tree)
     }
     
-    public func unstagedChanges() -> IndexDelta? {
+    public func unstagedChanges() -> IndexDelta {
         return IndexDelta(index: self, repository: repository)
     }
     
