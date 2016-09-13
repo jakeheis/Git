@@ -8,6 +8,8 @@
 
 public enum FileMode: String { // Don't use Int because these aren't base 10 numbers
     case directory = "40000"
+    case permissionedBlob = "100444"
+    case permissioned2Blob = "100600"
     case blob = "100644"
     case executable = "100755"
     case link = "120000"
@@ -23,7 +25,7 @@ public enum FileMode: String { // Don't use Int because these aren't base 10 num
     public var name: String {
         switch self {
         case .directory: return "tree"
-        case .blob, .link, .executable, .permissionedLink: return "blob"
+        default: return "blob"
         }
     }
     

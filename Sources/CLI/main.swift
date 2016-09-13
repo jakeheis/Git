@@ -13,9 +13,10 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
     }
 } else {
     isDebug = true
-//    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 //    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
-    Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
+//    Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
+//    print((try! Diff.diffWorkingDirectoryAndIndex(in: Repository(path: Path.Current)!)).generateWhole())
 }
 
 if isDebug {
@@ -41,6 +42,7 @@ let porcelain: [RepositoryCommand] = [
     AddCommand(),
     BranchCommand(),
     CommitCommand(),
+    DiffCommand(),
     LogCommand(),
     StatusCommand(),
     TagCommand()
@@ -51,7 +53,7 @@ CLI.register(commands: porcelain)
 
 let result: CLIResult
 if isDebug {
-    result = 0 //CLI.debugGo(with: "sgit update-ref HEAD 1e3965ebd93700a8c6acf99e7372bd59de5b0e39")
+    result = CLI.debugGo(with: "sgit diff")
 } else {
     result = CLI.go()
 }
