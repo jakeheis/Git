@@ -9,6 +9,8 @@
 import Foundation
 import Core
 import SwiftCLI
+import Cncurses
+import Rainbow
 
 class LogCommand: RepositoryCommand {
     
@@ -32,6 +34,12 @@ class LogCommand: RepositoryCommand {
             }
             currentCommit = commit.parent
             return self.log(of: commit)
+        }
+        less.lineColor = { (line) in
+            if line.hasPrefix("commit") {
+                return COLOR_YELLOW
+            }
+            return 0
         }
         less.go()
     }

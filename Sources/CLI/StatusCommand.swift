@@ -8,6 +8,7 @@
 
 import Core
 import SwiftCLI
+import Rainbow
 
 class StatusCommand: RepositoryCommand {
     
@@ -40,30 +41,43 @@ class StatusCommand: RepositoryCommand {
         let unstaged = index.unstagedChanges()
         
         var stagedFiles = staged.deltaFiles.sorted { $0.name < $1.name }
-        var unstagedFiles = unstaged.deltaFiles.sorted { $0.name < $1.name }
+        let allUnstagedFiles = unstaged.deltaFiles.sorted { $0.name < $1.name }
+        var unstagedFiles: [IndexDelta.DeltaFile] = []
+        var untrackedFiles: [IndexDelta.DeltaFile] = []
+        for file in allUnstagedFiles {
+            if file.status == .untracked {
+                untrackedFiles.append(file)
+            } else {
+                unstagedFiles.append(file)
+            }
+        }
         
         if short {
             if showBranchInShort {
                 switch head.kind {
                 case .hash(_): print("## HEAD (no branch)")
-                case let .reference(reference): print("## \(reference.name)")
+                case let .reference(reference): print("## \(reference.name.green)")
                 }
             }
             
             while !stagedFiles.isEmpty || !unstagedFiles.isEmpty {
                 switch (stagedFiles.first, unstagedFiles.first) {
                 case let (s?, u?) where s.name == u.name:
-                    print("\(s.status.shortStatus)\(u.status.shortStatus)", s.name)
+                    print("\(s.status.shortStatus.yellow)\(u.status.shortStatus.green)", s.name)
                     stagedFiles.removeFirst()
                     unstagedFiles.removeFirst()
                 case let (s?, u) where u == nil, let (s?, u) where s.name < u!.name:
-                    print("\(s.status.shortStatus) ", s.name)
+                    print("\(s.status.shortStatus.yellow) ", s.name)
                     stagedFiles.removeFirst()
-                case let (s, u?) where s == nil, let (s, u?) where s!.name < u.name:
-                    print(" \(u.status.shortStatus)", u.name)
+                case let (s, u?) where s == nil, let (s, u?) where u.name < s!.name:
+                    print(" \(u.status.shortStatus.green)", u.name)
                     unstagedFiles.removeFirst()
                 default: break
                 }
+            }
+            
+            for untracked in untrackedFiles {
+                print("\("??".cyan)", untracked.name)
             }
         } else {
             switch head.kind {
@@ -78,7 +92,7 @@ class StatusCommand: RepositoryCommand {
                 for file in stagedFiles {
                     var status = file.status.rawValue + ":"
                     status += String(repeating: " ", count: 12 - status.characters.count)
-                    print("\t\(status)\(file.name)")
+                    print("\t\(status)\(file.name)".yellow)
                 }
                 print()
             }
@@ -91,12 +105,24 @@ class StatusCommand: RepositoryCommand {
                 for file in unstagedFiles {
                     var status = file.status.rawValue + ":"
                     status += String(repeating: " ", count: 12 - status.characters.count)
-                    print("\t\(status)\(file.name)")
+                    print("\t\(status)\(file.name)".green)
                 }
                 print()
             }
             
-            if stagedFiles.isEmpty && unstagedFiles.isEmpty {
+            if !untrackedFiles.isEmpty {
+                print("Untracked files:")
+                print(" (use \"git add <file>...\" to include in what will be committed)")
+                print()
+                for file in untrackedFiles {
+                    var status = file.status.rawValue + ":"
+                    status += String(repeating: " ", count: 12 - status.characters.count)
+                    print("\t\(file.name.cyan)")
+                }
+                print()
+            }
+            
+            if stagedFiles.isEmpty && unstagedFiles.isEmpty && untrackedFiles.isEmpty {
                 print("nothing to commit, working directory clean")
             }
         }

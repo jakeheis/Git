@@ -14,6 +14,7 @@ import FileKit
 class Less {
     
     let readLine: () -> String?
+    var lineColor: ((String) -> Int32)?
     
     var startIndex = 0
     var lines: [String] = []
@@ -43,6 +44,10 @@ class Less {
     }
     
     func go() {
+        // Helpful for debugging this since can't use print
+        // try! (Path.Current + "output.txt").createFile()
+        // let out = FileHandle(forWritingAtPath: (Path.Current + "output.txt").rawValue)
+        
         initscr()
         
         let lineCount = Int(getmaxy(stdscr))
@@ -55,16 +60,23 @@ class Less {
         
         noecho()
         cbreak()
+        start_color()
         
-        // Helpful for debuggin this since can't use print
-        // try! (Path.Current + "output.txt").createFile()
-        // let out = FileHandle(forWritingAtPath: (Path.Current + "output.txt").rawValue)
+        for i in 0 ..< COLORS {
+            init_pair(Int16(i), Int16(i), Int16(COLOR_BLACK))
+        }
         
         while true {
             move(0, 0)
             for i in 0 ..< textLineCount {
                 let output = lines[startIndex + i] + "\n"
-                addstr(output)
+                if let color = lineColor?(output) {
+                    attron(COLOR_PAIR(color))
+                    addstr(output)
+                    attroff(COLOR_PAIR(color))
+                } else {
+                    addstr(output)
+                }
             }
             addstr(":")
             refresh()
