@@ -50,6 +50,22 @@ final public class Tree: Object {
         return lines.joined(separator: "\n")
     }
     
+    public func entry(for filePath: String) -> TreeEntry? {
+        var components = filePath.components(separatedBy: "/")
+        guard !components.isEmpty else {
+            return nil
+        }
+        let firstComponent = components.removeFirst()
+        guard let entry = treeEntries.first(where: { $0.name == firstComponent }) else {
+            return nil
+        }
+        if entry.mode == .directory, !components.isEmpty, let subtree = entry.object as? Tree {
+            return subtree.entry(for: components.joined(separator: "/"))
+        } else {
+            return entry
+        }
+    }
+    
 }
 
 // MARK: - TreeEntry

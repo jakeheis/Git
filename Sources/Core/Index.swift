@@ -164,6 +164,7 @@ public class Index {
         case existingFileError
         case nonexistentFileError
         case entryCreationFailure
+        case noTree
     }
     
     public func modify(with file: String, write shouldWrite: Bool = true) throws {
@@ -205,11 +206,60 @@ public class Index {
         }
     }
     
-    public func update(file: String, write shouldWrite: Bool = true) throws {
+    public func reset(file: String, to hash: String? = nil, write shouldWrite: Bool = true) throws {
+        try reset(files: [file], to: hash, write: shouldWrite)
+    }
+    
+    public func reset(files: [String], to hash: String? = nil, write shouldWrite: Bool = true) throws {
+        guard let treeHash = hash ?? repository.head?.commit?.treeHash,
+            let tree = repository.objectStore[treeHash] as? Tree else {
+                throw ModificationError.noTree
+        }
+        
+        let delta = IndexDelta(index: self, tree: tree)
+        
+        func internalReset(with file: String) throws {
+            if delta.deltaFiles.first(where: { $0.name == file }) == nil { // Didn't change, nothing to reset
+                return
+            }
+            
+            if let oldEntry = tree.entry(for: file) {
+                let resetEntry = IndexEntry(stat: Stat(mode: oldEntry.mode), hash: oldEntry.hash, assumeValid: false, extended: false, firstStage: false, secondStage: false, name: file)
+                if (repository.path + file).exists {
+                    try update(file: file, using: resetEntry, write: false)
+                } else { // File removed since tree, so add it back to the index
+                    try add(file: file, using: resetEntry, write: false)
+                }
+            } else { // File added since tree, so remove it from index
+                try remove(file: file, write: false)
+            }
+        }
+        
+        for file in files {
+            if (repository.path + file).isDirectory {
+                let all = (file == ".")
+                for (deltaFile, _) in delta.deltaFiles {
+                    if deltaFile.hasPrefix(file) || all {
+                        try internalReset(with: deltaFile)
+                    }
+                }
+            } else {
+                try internalReset(with: file)
+            }
+        }
+        
+        if shouldWrite { // Write once at the end if need be
+            try write()
+        }
+    }
+    
+    // MARK: - Lower level modifying
+    
+    public func update(file: String, using entry: IndexEntry? = nil, write shouldWrite: Bool = true) throws {
         guard let existing = self[file], let index = entries.index(of: existing) else {
             throw ModificationError.nonexistentFileError
         }
-        guard let updated = createEntry(for: file) else {
+        guard let updated = entry ?? createEntry(for: file) else {
             throw ModificationError.entryCreationFailure
         }
         guard updated.hash != existing.hash else { // File didn't change
@@ -226,7 +276,7 @@ public class Index {
         }
     }
     
-    public func add(file: String, write shouldWrite: Bool = true) throws {
+    public func add(file: String, using entry: IndexEntry? = nil, write shouldWrite: Bool = true) throws {
         if self[file] != nil {
             throw ModificationError.existingFileError
         }
@@ -239,7 +289,7 @@ public class Index {
             }
         }
         
-        guard let new = createEntry(for: file) else {
+        guard let new = entry ?? createEntry(for: file) else {
             throw ModificationError.entryCreationFailure
         }
         

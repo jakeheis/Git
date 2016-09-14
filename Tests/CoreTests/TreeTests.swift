@@ -37,5 +37,29 @@ class TreeTests: GitTestCase {
         XCTAssert(secondTree.treeEntries[2].equals(mode: .blob, hash: "e20f5916c1cb235a7f26cd91e09a40e277d38306", name: "other_file.txt"))
         XCTAssert(secondTree.treeEntries[3].equals(mode: .blob, hash: "6b3b273987213e28230958801876aff0876376e7", name: "second.txt"))
     }
+    
+    func testEntryFind() {
+        let repository = TestRepositories.repository(.emptyObjects)
+        
+        guard let treeHash = try? TreeWriter.writeCurrent(in: repository, checkMissing: false),
+            let tree = repository.objectStore[treeHash] as? Tree else {
+                XCTFail()
+                return
+        }
+        
+        guard let topLevel = tree.entry(for: "file.txt") else {
+            XCTFail()
+            return
+        }
+        XCTAssert(topLevel.name == "file.txt")
+        XCTAssert(topLevel.hash == "51f466f2e446ade0b0b2e5778ce3e0fa95e380e8")
+        
+        guard let buried = tree.entry(for: "sub/within.txt") else {
+            XCTFail()
+            return
+        }
+        XCTAssert(buried.name == "within.txt")
+        XCTAssert(buried.hash == "861dc4f462a6878624c8a14e90e9e496f153133f")
+    }
 
 }

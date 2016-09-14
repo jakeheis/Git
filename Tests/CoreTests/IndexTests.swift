@@ -261,6 +261,95 @@ class IndexTests: GitTestCase {
         XCTAssert(delta.deltaFiles[2] == ("a.txt", .added))
     }
     
+    func testPartialReset() {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
+            XCTFail()
+            return
+        }
+        
+        do {
+            try "TEXT".write(to: (repository.path + "a.txt"))
+            try "TEXT".write(to: (repository.path + "file.txt"))
+            try (repository.path + "third.txt").deleteFile()
+            
+            try index.modify(with: ".", write: false)
+        } catch {
+            XCTFail()
+        }
+        
+        guard let stagedDelta = index.stagedChanges() else {
+            XCTFail()
+            return
+        }
+        XCTAssert(stagedDelta.deltaFiles[0] == ("file.txt", .modified))
+        XCTAssert(stagedDelta.deltaFiles[1] == ("third.txt", .deleted))
+        XCTAssert(stagedDelta.deltaFiles[2] == ("a.txt", .added))
+        XCTAssert(index.unstagedChanges().deltaFiles.count == 0)
+        
+        do {
+            try index.reset(files: ["file.txt", "third.txt"])
+        } catch {
+            XCTFail()
+        }
+        
+        XCTAssert(index.isTracking("a.txt"))
+        
+        let unstagedDelta = index.unstagedChanges()
+        XCTAssert(unstagedDelta.deltaFiles[0] == ("file.txt", .modified))
+        XCTAssert(unstagedDelta.deltaFiles[1] == ("third.txt", .deleted))
+        
+        guard let afterStagedDelta = index.stagedChanges() else {
+            XCTFail()
+            return
+        }
+        XCTAssert(afterStagedDelta.deltaFiles[0] == ("a.txt", .added))
+    }
+    
+    func testFullReset () {
+        let repository = TestRepositories.repository(.basic)
+        guard let index = repository.index else {
+            XCTFail()
+            return
+        }
+        
+        do {
+            try "TEXT".write(to: (repository.path + "a.txt"))
+            try "TEXT".write(to: (repository.path + "file.txt"))
+            try (repository.path + "third.txt").deleteFile()
+            
+            try index.modify(with: ".", write: false)
+        } catch {
+            XCTFail()
+        }
+        
+        guard let stagedDelta = index.stagedChanges() else {
+            XCTFail()
+            return
+        }
+        XCTAssert(stagedDelta.deltaFiles[0] == ("file.txt", .modified))
+        XCTAssert(stagedDelta.deltaFiles[1] == ("third.txt", .deleted))
+        XCTAssert(stagedDelta.deltaFiles[2] == ("a.txt", .added))
+        XCTAssert(index.unstagedChanges().deltaFiles.count == 0)
+        
+        do {
+            try index.reset(file: ".")
+        } catch {
+            XCTFail()
+        }
+        
+        XCTAssert(!index.isTracking("a.txt"))
+        XCTAssert(index["file.txt"]?.stat.mSeconds == 0) // Ensure fields are reset
+        XCTAssert(index["third.txt"]?.stat.mSeconds == 0) // Ensure fields are reset
+        
+        let unstagedDelta = index.unstagedChanges()
+        XCTAssert(unstagedDelta.deltaFiles[0] == ("a.txt", .untracked))
+        XCTAssert(unstagedDelta.deltaFiles[1] == ("file.txt", .modified))
+        XCTAssert(unstagedDelta.deltaFiles[2] == ("third.txt", .deleted))
+        
+        XCTAssert(index.stagedChanges()?.deltaFiles.count == 0)
+    }
+    
 }
 
 private extension IndexEntry {

@@ -22,12 +22,25 @@ public struct Stat {
     public let gid: Int
     public let fileSize: Int
     
-    var cDate: Date {
+    public var cDate: Date {
         return Date(timeIntervalSince1970: TimeInterval(cSeconds + cNanoseconds / 1_000_000_000))
     }
     
-    var mDate: Date {
+    public var mDate: Date {
         return Date(timeIntervalSince1970: TimeInterval(mSeconds + mNanoseconds / 1_000_000_000))
+    }
+    
+    init(mode: FileMode) {
+        self.cSeconds = 0
+        self.cNanoseconds = 0
+        self.mSeconds = 0
+        self.mNanoseconds = 0
+        self.dev = 0
+        self.ino = 0
+        self.mode = mode
+        self.uid = 0
+        self.gid = 0
+        self.fileSize = 0
     }
     
     init(path: Path) {
