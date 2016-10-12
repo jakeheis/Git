@@ -48,7 +48,7 @@ public struct IndexDelta {
         for remainingName in indexNames {
             deltaFiles.append((remainingName, .added))
         }
-        
+                
         self.deltaFiles = deltaFiles
         self.index = index
     }

@@ -343,7 +343,7 @@ public class Index {
         return entry
     }
     
-    func invalidateTreeExtensions(containing file: String) {
+    private func invalidateTreeExtensions(containing file: String) {
         var pathComponents = file.components(separatedBy: "/")
         pathComponents.removeLast()
         
@@ -352,7 +352,7 @@ public class Index {
         }
     }
     
-    func invalidate(treeExtension: IndexTreeExtension, pathComponents: [String]) {
+    private func invalidate(treeExtension: IndexTreeExtension, pathComponents: [String]) {
         treeExtension.invalidate()
         
         guard !pathComponents.isEmpty else {
@@ -362,6 +362,45 @@ public class Index {
         if let matchingExtension = treeExtension.subtrees.first(where: { $0.path == pathComponents.first }) {
             let subComponents = Array(pathComponents[1 ..< pathComponents.count])
             invalidate(treeExtension: matchingExtension, pathComponents: subComponents)
+        }
+    }
+    
+    // MARK: - Checking out
+
+    public enum CheckoutError: Swift.Error {
+        case fileNotInIndex(String)
+        case fileExists(String)
+    }
+    
+    public func read(tree: Tree) throws {
+        let iterator = RecursiveTreeIterator(tree: tree)
+        var newEntries: [IndexEntry] = []
+        var newKeyedEntries: [String: IndexEntry] = [:]
+        
+        while let entry = iterator.next() {
+            let indexEntry = IndexEntry(stat: Stat(mode: .blob), hash: entry.hash, assumeValid: false, extended: false, firstStage: false, secondStage: false, name: entry.name)
+            newEntries.append(indexEntry)
+            newKeyedEntries[entry.name] = indexEntry
+        }
+        
+        entries = newEntries
+        keyedEntries = newKeyedEntries
+        
+        try write()
+    }
+    
+    public func checkout(files: [String], force: Bool = false) throws {
+        for file in files {
+            guard let entry = self[file],
+                let blob = repository.objectStore[entry.hash] as? Blob else {
+                throw CheckoutError.fileNotInIndex(file)
+            }
+            
+            let path = repository.path + file
+            if path.exists && !force {
+                throw CheckoutError.fileExists(file)
+            }
+            try blob.data.write(to: path)
         }
     }
     
@@ -397,7 +436,8 @@ public struct IndexEntry {
 extension IndexEntry: CustomStringConvertible {
 
     public var description: String {
-        return name
+        let smallHash = hash.substring(to: hash.index(hash.startIndex, offsetBy: 5))
+        return "\(name) (\(smallHash))"
     }
 
 }

@@ -30,21 +30,7 @@ class LsTreeCommand: RepositoryCommand {
         
         let id = arguments.requiredArgument("id")
         
-        let object: Object
-        if let reference = ReferenceParser.parse(raw: id, repository: repository) {
-            object = reference.object
-        } else if let repositoryObject = repository.objectStore[id] {
-            object = repositoryObject
-        } else {
-            throw CLIError.error("\(id) must point to a tree or a commit")
-        }
-        
-        let tree: Tree
-        if let treeObject = object as? Tree {
-            tree = treeObject
-        } else if let commitObject = object as? Commit {
-            tree = commitObject.tree
-        } else {
+        guard let tree = IDResolver.resolve(treeish: id, in: repository) else {
             throw CLIError.error("\(id) must be a tree or a commit")
         }
         

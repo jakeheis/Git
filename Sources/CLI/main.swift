@@ -21,17 +21,19 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
 
 if isDebug {
     let r = Repository(path: Path.Current)!
-    print(r)
+    print(r.index?.rootTreeExtension)
 }
 
 CLI.setup(name: "sgit", version: "0.0.1", description: "Like git but in Swift")
 
 let plumbing: [RepositoryCommand] = [
     CatFileCommand(),
+    CheckoutIndexCommand(),
     CommitTreeCommand(),
     HashObjectCommand(),
     LsFilesCommand(),
     LsTreeCommand(),
+    ReadTreeCommand(),
     UpdateIndexCommand(),
     UpdateRefCommand(),
     VerifyPackCommand(),

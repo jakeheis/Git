@@ -39,12 +39,7 @@ class CatFileCommand: RepositoryCommand {
         }
         
         let id = arguments.requiredArgument("id")
-        let object: Object
-        if let storedObject = repository.objectStore[id] {
-            object = storedObject
-        } else if let reference = ReferenceParser.parse(raw: id, repository: repository) {
-            object = reference.object
-        } else {
+        guard let object = IDResolver.resolve(object: id, in: repository) else {
             throw CLIError.error("Object not found")
         }
         
