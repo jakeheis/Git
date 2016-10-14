@@ -13,15 +13,15 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
     }
 } else {
     isDebug = true
-    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
+//    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 //    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
-//    Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
+    Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
 //    print((try! Diff.diffWorkingDirectoryAndIndex(in: Repository(path: Path.Current)!)).generateWhole())
 }
 
 if isDebug {
     let r = Repository(path: Path.Current)!
-    print(r.index?.rootTreeExtension)
+    print(r.headReflog.entries)
 }
 
 CLI.setup(name: "sgit", version: "0.0.1", description: "Like git but in Swift")
@@ -43,6 +43,7 @@ let plumbing: [RepositoryCommand] = [
 let porcelain: [RepositoryCommand] = [
     AddCommand(),
     BranchCommand(),
+    CheckoutCommand(),
     CommitCommand(),
     DiffCommand(),
     LogCommand(),

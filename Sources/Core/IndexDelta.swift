@@ -22,6 +22,10 @@ public struct IndexDelta {
         }
     }
     
+    public var isEmpty: Bool {
+        return deltaFiles.isEmpty
+    }
+    
     public typealias DeltaFile = (name: String, status: FileStatus)
     
     public let deltaFiles: [DeltaFile]

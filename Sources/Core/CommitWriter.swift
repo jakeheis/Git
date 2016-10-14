@@ -34,11 +34,11 @@ final public class CommitWriter: ObjectWriter {
         
         let commitHash = try CommitWriter(treeHash: treeHash, parentHash: parentHash, message: message, repository: repository).write()
         
-        guard let ref = repository.head?.dereferenced else {
+        guard let ref = repository.head?.dereferenced as? LoggedReference else {
             throw Error.unreadableHead
         }
         
-        try ref.update(hash: commitHash)
+        try ref.update(hash: commitHash, message: "commit: \(message)")
         
         return commitHash
     }

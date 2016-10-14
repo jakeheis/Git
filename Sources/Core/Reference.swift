@@ -49,6 +49,29 @@ public protocol SymbolicReference: Reference {
     var dereferenced: Reference { get }
 }
 
+// MARK: - LoggedReference
+
+public protocol LoggedReference: Reference {
+    var reflog: Reflog { get }
+}
+
+public extension LoggedReference {
+    
+    func update(hash: String, message: String) throws {
+        guard let signature = Signature.currentUser() else {
+            throw LoggedReferenceError.invalidSignature
+        }
+        let entry = ReflogEntry(oldHash: self.hash, newHash: hash, signature: signature, message: message)
+        try update(hash: hash)
+        try reflog.append(entry: entry)
+    }
+    
+}
+
+enum LoggedReferenceError: Error {
+    case invalidSignature
+}
+
 // MARK: - FolderedRefence
 
 public class FolderedRefence: Reference {

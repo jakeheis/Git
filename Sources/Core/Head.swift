@@ -64,6 +64,23 @@ final public class Head: SymbolicReference {
         try write()
     }
     
+    public func update(kind: Kind, message: String) throws {
+        guard let signature = Signature.currentUser() else {
+            throw LoggedReferenceError.invalidSignature
+        }
+        
+        let newHash: String
+        switch kind {
+        case .hash(let hash): newHash = hash
+        case .reference(let ref): newHash = ref.hash
+        }
+        let entry = ReflogEntry(oldHash: hash, newHash: newHash, signature: signature, message: message)
+        
+        self.kind = kind
+        try write()
+        try reflog.append(entry: entry)
+    }
+    
     public func write() throws {
         let path = repository.subpath(with: ref)
         let text: String
@@ -72,6 +89,14 @@ final public class Head: SymbolicReference {
         case let .reference(reference): text = "ref: \(reference.ref)"
         }
         try (text + "\n").write(to: path)
+    }
+    
+}
+
+extension Head: LoggedReference {
+    
+    public var reflog: Reflog {
+        return Reflog(type: .head, repository: repository)
     }
     
 }

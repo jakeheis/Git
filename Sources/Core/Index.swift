@@ -391,17 +391,27 @@ public class Index {
     
     public func checkout(files: [String], force: Bool = false) throws {
         for file in files {
-            guard let entry = self[file],
-                let blob = repository.objectStore[entry.hash] as? Blob else {
-                throw CheckoutError.fileNotInIndex(file)
-            }
-            
-            let path = repository.path + file
-            if path.exists && !force {
-                throw CheckoutError.fileExists(file)
-            }
-            try blob.data.write(to: path)
+            try checkout(file: file, force: force)
         }
+    }
+    
+    public func checkoutAll(force: Bool = false) throws {
+        for entry in entries {
+            try checkout(file: entry.name, force: force)
+        }
+    }
+    
+    private func checkout(file: String, force: Bool) throws {
+        guard let entry = self[file],
+            let blob = repository.objectStore[entry.hash] as? Blob else {
+                throw CheckoutError.fileNotInIndex(file)
+        }
+        
+        let path = repository.path + file
+        if path.exists && !force {
+            throw CheckoutError.fileExists(file)
+        }
+        try blob.data.write(to: path)
     }
     
     // MARK: - Deltas

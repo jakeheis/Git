@@ -12,6 +12,14 @@ final public class Branch: FolderedRefence {
 
 }
 
+extension Branch: LoggedReference {
+    
+    public var reflog: Reflog {
+        return Reflog(type: .ref(ref), repository: repository)
+    }
+    
+}
+
 // MARK: -
 
 extension Repository {
