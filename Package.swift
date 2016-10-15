@@ -15,6 +15,7 @@ let package = Package(
         .Package(url: "https://github.com/IBM-Swift/CommonCrypto.git", majorVersion: 0, minor: 1)
     ],
     exclude: [
-        "Tests/Repositories"
+        "Tests/Repositories",
+        "Tests/CLITests"
     ]
 )
