@@ -55,8 +55,8 @@ class StatusCommand: RepositoryCommand {
         if short {
             if showBranchInShort {
                 switch head.kind {
-                case .hash(_): print("## HEAD (no branch)")
-                case let .reference(reference): print("## \(reference.name.green)")
+                case .simple(_): print("## HEAD (no branch)")
+                case let .symbolic(symbolic): print("## \(symbolic.dereferenced.ref.name.green)")
                 }
             }
             
@@ -81,8 +81,8 @@ class StatusCommand: RepositoryCommand {
             }
         } else {
             switch head.kind {
-            case let .hash(hash): print("HEAD detached at \(hash)")
-            case let .reference(reference): print("On branch \(reference.name)")
+            case let .simple(simple): print("HEAD detached at \(simple.hash)")
+            case let .symbolic(symbolic): print("On branch \(symbolic.dereferenced.ref.name)")
             }
             
             if !stagedFiles.isEmpty {

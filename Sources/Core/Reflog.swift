@@ -13,29 +13,15 @@ public class Reflog {
     
     static let folder = "logs"
     
-    public enum LogType {
-        case head
-        case ref(String)
-        
-        var path: String {
-            switch self {
-            case .head: return "\(Reflog.folder)/HEAD"
-            case .ref(let ref): return "\(Reflog.folder)/\(ref)"
-            }
-        }
-    }
-    
-    public let type: LogType
     public let path: Path
     
     public private(set) var entries: [ReflogEntry]
     
-    init(type: LogType, repository: Repository) {
-        self.type = type
-        self.path = repository.subpath(with: self.type.path)
+    init(ref: Ref, repository: Repository) {
+        self.path = repository.subpath(with: Reflog.folder + "/" + ref.path)
         
         var entries: [ReflogEntry] = []
-        if let contents = try? String(contentsOfPath: path) {
+        if let contents = try? String(contentsOfPath: self.path) {
             for line in contents.components(separatedBy: "\n") where !line.isEmpty {
                 entries.append(ReflogEntry(line: line))
             }
@@ -62,7 +48,7 @@ public struct ReflogEntry {
     public let signature: Signature
     public let message: String?
     
-    init(oldHash: String, newHash: String, signature: Signature, message: String) {
+    init(oldHash: String, newHash: String, signature: Signature, message: String?) {
         self.oldHash = oldHash
         self.newHash = newHash
         self.signature = signature
@@ -90,14 +76,6 @@ extension ReflogEntry: CustomStringConvertible {
             text += "\t\(message)"
         }
         return text
-    }
-    
-}
-
-extension Repository {
-    
-    public var headReflog: Reflog {
-        return Reflog(type: .head, repository: self)
     }
     
 }

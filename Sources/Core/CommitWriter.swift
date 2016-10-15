@@ -28,25 +28,29 @@ final public class CommitWriter: ObjectWriter {
     public static func commitCurrent(in repository: Repository, message: String) throws -> String {
         let treeHash = try TreeWriter.writeCurrent(in: repository)
         
-        guard let parentHash = repository.head?.hash else {
+        guard let head = repository.head else {
             throw Error.unreadableHead
         }
         
-        let commitHash = try CommitWriter(treeHash: treeHash, parentHash: parentHash, message: message, repository: repository).write()
+        let commitHash = try CommitWriter(treeHash: treeHash, parentHash: head.kind.hash, message: message, repository: repository).write()
         
-        guard let ref = repository.head?.dereferenced as? LoggedReference else {
-            throw Error.unreadableHead
+        let branchTip: Reference
+        switch head.kind {
+        case .simple(let simple): branchTip = simple
+        case .symbolic(let symbolic): branchTip = symbolic.dereferenced
         }
         
-        try ref.update(hash: commitHash, message: "commit: \(message)")
+        try branchTip.recordUpdate(message: "commit: \(message)") {
+            try branchTip.update(hash: commitHash)
+        }
         
         return commitHash
     }
     
-    public init(treeHash: String, parentHash: String?, message: String, repository: Repository, time: Date? = nil) {
+    public init(treeHash: String, parentHash: String?, message: String, repository: Repository, time: Date? = nil, timeZone: TimeZone? = nil) {
         self.treeHash = treeHash
         self.parentHash = parentHash
-        guard let currentUser = Signature.currentUser(at: time) else {
+        guard let currentUser = Signature.currentUser(at: time, in: timeZone) else {
             fatalError("Couldn't form current user")
         }
         self.authorSignature = currentUser

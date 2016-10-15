@@ -14,16 +14,16 @@ class BranchTests: GitTestCase {
     func testRepositoryTags() {
         let repository = TestRepositories.repository(.basic)
         
-        XCTAssert(repository.branches.count == 2)
+        XCTAssert(repository.referenceStore.allBranches().count == 2)
         
-        XCTAssert(repository.branches[0].name == "master")
-        XCTAssert(repository.branches[1].name == "other_branch")
+        XCTAssert(repository.referenceStore.allBranches()[0].name == "master")
+        XCTAssert(repository.referenceStore.allBranches()[1].name == "other_branch")
     }
     
     func testParse() {
         let repository = TestRepositories.repository(.basic)
         
-        let secondBranch = repository.branches[1]
+        let secondBranch = repository.referenceStore.allBranches()[1]
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
     }
@@ -31,9 +31,9 @@ class BranchTests: GitTestCase {
     func testPackedBranches() {
         let repository = TestRepositories.repository(.packed)
         
-        XCTAssert(repository.branches.count == 2)
+        XCTAssert(repository.referenceStore.allBranches().count == 2)
         
-        let secondBranch = repository.branches[1]
+        let secondBranch = repository.referenceStore.allBranches()[1]
         XCTAssert(secondBranch.name == "other_branch")
         XCTAssert(secondBranch.ref == "refs/heads/other_branch")
         XCTAssert(secondBranch.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
@@ -42,14 +42,14 @@ class BranchTests: GitTestCase {
     func testWrite() {
         let repository = TestRepositories.repository(.basic)
         
-        let new = Branch(ref: "refs/heads/new_branch", hash: "29287d7a61db5b55e66f707a01b7fb4b11efcb40", repository: repository)
+        let new = SimpleReference(ref: Ref("refs/heads/new_branch"), hash: "29287d7a61db5b55e66f707a01b7fb4b11efcb40", repository: repository)
         do {
             try new.write()
         } catch {
             XCTFail()
         }
         
-        guard let read = ReferenceParser.from(ref: "refs/heads/new_branch", repository: repository) as? Branch else {
+        guard let read = repository.referenceStore[Ref("refs/heads/new_branch")] else {
             XCTFail()
             return
         }
@@ -60,7 +60,8 @@ class BranchTests: GitTestCase {
     
     func testUpdate() {
         let repository = TestRepositories.repository(.basic)
-        guard let initial = ReferenceParser.from(ref: "refs/heads/master", repository: repository) as? Branch else {
+        
+        guard let initial = repository.referenceStore["refs/heads/master"] else {
             XCTFail()
             return
         }
@@ -71,7 +72,7 @@ class BranchTests: GitTestCase {
             XCTFail()
         }
         
-        guard let new = ReferenceParser.from(ref: "refs/heads/master", repository: repository) as? Branch else {
+        guard let new = repository.referenceStore["refs/heads/master"] else {
             XCTFail()
             return
         }

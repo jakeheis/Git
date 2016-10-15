@@ -21,7 +21,13 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
 
 if isDebug {
     let r = Repository(path: Path.Current)!
-    print(r.headReflog.entries)
+    let head = r.head!
+    switch head.kind {
+    case let .simple(simple):
+        print("* (HEAD detached at \(simple.hash))")
+    case let .symbolic(symbolic):
+        print(symbolic.ref.name)
+    }
 }
 
 CLI.setup(name: "sgit", version: "0.0.1", description: "Like git but in Swift")

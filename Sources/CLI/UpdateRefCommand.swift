@@ -26,7 +26,7 @@ class UpdateRefCommand: RepositoryCommand {
             throw CLIError.error("Couldn't read repository")
         }
         
-        if let existing = ReferenceParser.parse(raw: ref, repository: repository) {
+        if let existing = repository.referenceStore[ref] {
             let reference: Reference
             if let symbolic = existing as? SymbolicReference {
                 reference = symbolic.dereferenced
@@ -50,7 +50,7 @@ class UpdateRefCommand: RepositoryCommand {
             if let oldValue = arguments.optionalArgument("oldValue") {
                 throw CLIError.error("ref \(ref) doesn't exist but expected to be at \(oldValue)!)")
             }
-            let reference = FolderedRefence(ref: ref, hash: newValue, repository: repository)
+            let reference = SimpleReference(ref: Ref(ref), hash: newValue, repository: repository)
             do {
                 try reference.write()
             } catch {

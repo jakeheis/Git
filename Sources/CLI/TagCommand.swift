@@ -24,7 +24,7 @@ class TagCommand: RepositoryCommand {
             throw CLIError.error("Repository index could not be read")
         }
         
-        for tag in repository.tags {
+        for tag in repository.referenceStore.allTags() {
             print(tag.name)
         }
     }

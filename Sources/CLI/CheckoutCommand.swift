@@ -50,18 +50,13 @@ class CheckoutCommand: RepositoryCommand {
         }
         
         do {
-            let old: String
-            switch head.kind {
-            case .hash(let hash): old = hash
-            case .reference(let reference): old = reference.name
-            }
-            let kind: Head.Kind
-            if let ref = ReferenceParser.parse(raw: commitish, repository: repository) {
-                kind = .reference(ref)
+            let old = head.kind.hash
+            let message = "checkout: moving from \(old) to \(commitish)"
+            if let ref = repository.referenceStore[commitish] {
+                try head.update(to: ref, message: message)
             } else {
-                 kind = .hash(commit.hash)
+                try head.update(to: commit.hash, message: message)
             }
-            try head.update(kind: kind, message: "checkout: moving from \(old) to \(commitish)")
         } catch {
             throw CLIError.error("Couldn't update HEAD")
         }

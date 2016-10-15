@@ -20,7 +20,7 @@ class CommitWriterTests: XCTestCase {
         
         let hash: String
         do {
-            hash = try CommitWriter(treeHash: treeHash, parentHash: parentHash, message: message, repository: repository, time: Date(timeIntervalSince1970: 1472615674)).write()
+            hash = try CommitWriter(treeHash: treeHash, parentHash: parentHash, message: message, repository: repository, time: Date(timeIntervalSince1970: 1472615674), timeZone: TimeZone(abbreviation: "CST")).write()
         } catch {
             XCTFail()
             return
@@ -36,11 +36,11 @@ class CommitWriterTests: XCTestCase {
         
         XCTAssert(writtenCommit.authorSignature.name == "Jake Heiser")
         XCTAssert(writtenCommit.authorSignature.email == "jakeheiser1@gmail.com")
-        XCTAssert(writtenCommit.authorSignature.timeZone.secondsFromGMT() == TimeZone.current.secondsFromGMT())
+        XCTAssert(writtenCommit.authorSignature.timeZone.secondsFromGMT() == TimeZone(abbreviation: "CST")!.secondsFromGMT())
         
         XCTAssert(writtenCommit.committerSignature.name == "Jake Heiser")
         XCTAssert(writtenCommit.committerSignature.email == "jakeheiser1@gmail.com")
-        XCTAssert(writtenCommit.committerSignature.timeZone.secondsFromGMT() == TimeZone.current.secondsFromGMT())
+        XCTAssert(writtenCommit.committerSignature.timeZone.secondsFromGMT() == TimeZone(abbreviation: "CST")!.secondsFromGMT())
     }
 
 }

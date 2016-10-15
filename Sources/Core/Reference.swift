@@ -11,7 +11,7 @@ import FileKit
 
 public protocol Reference: CustomStringConvertible {
     
-    var ref: String { get }
+    var ref: Ref { get }
     var hash: String { get }
     var repository: Repository { get }
     
@@ -20,10 +20,14 @@ public protocol Reference: CustomStringConvertible {
     
 }
 
+enum LoggedReferenceError: Error {
+    case invalidSignature
+}
+
 extension Reference {
     
     public var name: String {
-        return ref.components(separatedBy: "/").last ?? ref
+        return ref.name
     }
     
     public var object: Object {
@@ -31,6 +35,20 @@ extension Reference {
             fatalError("Broken reference: \(hash)")
         }
         return object
+    }
+    
+    public func recordUpdate(message: String?, update: () throws -> ()) throws {
+        let before = hash
+        try update()
+        let after = hash
+        
+        let reflog = Reflog(ref: ref, repository: repository)
+        guard let signature = Signature.currentUser() else {
+            throw LoggedReferenceError.invalidSignature
+        }
+        let entry = ReflogEntry(oldHash: before, newHash: after, signature: signature, message: message)
+        try reflog.append(entry: entry)
+
     }
     
 }
@@ -43,44 +61,15 @@ extension Reference {
     
 }
 
-// MARK: - SymbolicReference
+// MARK: - SimpleReference
 
-public protocol SymbolicReference: Reference {
-    var dereferenced: Reference { get }
-}
-
-// MARK: - LoggedReference
-
-public protocol LoggedReference: Reference {
-    var reflog: Reflog { get }
-}
-
-public extension LoggedReference {
+public class SimpleReference: Reference {
     
-    func update(hash: String, message: String) throws {
-        guard let signature = Signature.currentUser() else {
-            throw LoggedReferenceError.invalidSignature
-        }
-        let entry = ReflogEntry(oldHash: self.hash, newHash: hash, signature: signature, message: message)
-        try update(hash: hash)
-        try reflog.append(entry: entry)
-    }
-    
-}
-
-enum LoggedReferenceError: Error {
-    case invalidSignature
-}
-
-// MARK: - FolderedRefence
-
-public class FolderedRefence: Reference {
-    
-    public let ref: String
+    public let ref: Ref
     private(set) public var hash: String
     public let repository: Repository
     
-    public init(ref: String, hash: String, repository: Repository) {
+    public init(ref: Ref, hash: String, repository: Repository) {
         self.ref = ref
         self.hash = hash
         self.repository = repository
@@ -88,75 +77,110 @@ public class FolderedRefence: Reference {
     
     public func update(hash: String) throws {
         self.hash = hash
-        try write()
+        
+        try self.write()
     }
     
     public func write() throws {
-        let path = repository.subpath(with: ref)
+        let path = repository.subpath(with: ref.path)
         try (hash + "\n").write(to: path)
     }
     
 }
 
-// MARK: - ReferenceParser
+// MARK: - SymbolicReference
 
-
-public class ReferenceParser {
+public class SymbolicReference {
     
-    public static func parse(raw: String, repository: Repository) -> Reference? {
-        if raw.hasPrefix("refs") {
-            return from(ref: raw, repository: repository)
-        }
-        
-        if let head = repository.head, raw == head.name {
-            return head
-        }
-        if let tag = from(ref: "\(Tag.directory)/\(raw)", repository: repository) {
-            return tag
-        }
-        if let branch = from(ref: "\(Branch.directory)/\(raw)", repository: repository) {
-            return branch
-        }
-        
-        return nil
-    }
+    static let prefix = "ref: "
     
-    public static func from(ref: String, repository: Repository) -> Reference? {
-        if let reference = from(file: repository.subpath(with: ref), repository: repository) {
-            return reference
-        }
-        
-        return unpack(ref: ref, repository: repository)
-    }
+    public let ref: Ref
+    public let dereferenced: Reference
+    public let repository: Repository
     
-    public static func from(file: Path, repository: Repository) -> Reference? {
-        guard file.exists, let hash = try? String.readFromPath(file) else {
+    public init?(ref: Ref, text: String, repository: Repository) {
+        guard let refSpace = text.characters.index(of: " ") else {
             return nil
         }
-        
-        let ref = (file[(file.endIndex - 3) ..< (file.endIndex - 1)] + file.fileName).rawValue
-        let trimmedHash = hash.trimmingCharacters(in: .whitespacesAndNewlines)
-        
-        if ref.hasPrefix(Tag.directory) {
-            return Tag(ref: ref, hash: trimmedHash, repository: repository)
-        }
-        return Branch(ref: ref, hash: trimmedHash, repository: repository)
-    }
-    
-    public static func unpack(ref: String, repository: Repository) -> Reference? {
-        guard let packedReferences = repository.packedReferences else {
+        let startIndex = text.index(after: refSpace)
+        let refText = text.substring(with: startIndex ..< text.endIndex).trimmingCharacters(in: .whitespacesAndNewlines)
+        guard let reference = repository.referenceStore[Ref(refText)] else {
             return nil
         }
-        
-        let searchRefs: [Reference] = ref.hasPrefix(Tag.directory) ? packedReferences.tags : packedReferences.branches
-        
-        var matchingReference: Reference?
-        for reference in searchRefs {
-            if reference.ref == ref {
-                matchingReference = reference
-            }
-        }
-        return matchingReference
+        self.ref = ref
+        self.dereferenced = reference
+        self.repository = repository
     }
     
+    public init(ref: Ref, dereferenced: Reference, repository: Repository) {
+        self.ref = ref
+        self.dereferenced = dereferenced
+        self.repository = repository
+    }
+    
+    public func write() throws {
+        let path = repository.subpath(with: ref.path)
+        try "ref: \(dereferenced.ref.path)\n".write(to: path)
+    }
+    
+}
+
+// MARK: - Ref
+
+public struct Ref {
+    
+    static let prefix = "refs"
+    static let tags = Ref.prefix + "/tags"
+    static let branches = Ref.prefix + "/heads"
+    
+    public let path: String
+    
+    public var name: String {
+        return path.components(separatedBy: "/").last!
+    }
+    
+    public var isTag: Bool {
+        return path.hasPrefix(Ref.tags)
+    }
+    
+    public var isBranch: Bool {
+        return path.hasPrefix(Ref.branches)
+    }
+    
+    public init(_ text: String) {
+        self.path = text
+    }
+    
+}
+
+extension Ref: ExpressibleByStringLiteral {
+    
+    public typealias StringLiteralType = String
+    public typealias UnicodeScalarLiteralType = String
+    public typealias ExtendedGraphemeClusterLiteralType = String
+    
+    public init(stringLiteral value: String) {
+        path = value
+    }
+    
+    public init(unicodeScalarLiteral value: String) {
+        path = value
+    }
+    
+    public init(extendedGraphemeClusterLiteral value: String) {
+        path = value
+    }
+    
+}
+
+extension Ref: Hashable {
+    
+    public var hashValue: Int {
+        return path.hashValue
+    }
+    
+}
+
+public func == (lhs: Ref, rhs: Ref) -> Bool {
+    return lhs.path == rhs.path
 }

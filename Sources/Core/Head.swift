@@ -9,94 +9,79 @@
 import Foundation
 import FileKit
 
-final public class Head: SymbolicReference {
+final public class Head {
+    
+    public static let name = "HEAD"
    
     public enum Kind {
-        case hash(String)
-        case reference(Reference)
-    }
-    
-    public let ref = "HEAD"
-    public var hash: String {
-        switch kind {
-        case let .hash(hash): return hash
-        case let .reference(reference): return reference.hash
+        case simple(SimpleReference)
+        case symbolic(SymbolicReference)
+        
+        public var hash: String {
+            switch self {
+            case .simple(let simple): return simple.hash
+            case .symbolic(let symbolic): return symbolic.dereferenced.hash
+            }
         }
     }
+    
     public let repository: Repository
-    public var dereferenced: Reference {
-        switch kind {
-        case let .reference(reference): return reference
-        default: return self
-        }
-    }
-    
     private(set) public var kind: Kind
+    let reflog: Reflog
     
     public var commit: Commit? {
-        return object as? Commit
+        return repository.objectStore[kind.hash] as? Commit
     }
     
     convenience init?(repository: Repository) {
-        guard let contents = try? String.readFromPath(repository.subpath(with: "HEAD")) else {
+        guard let contents = try? String.readFromPath(repository.subpath(with: Head.name)) else {
             return nil
         }
         self.init(text: contents, repository: repository)
     }
     
     init(text: String, repository: Repository) {
-        if text.hasPrefix("ref: "), let refSpace = text.characters.index(of: " ") {
-            let startIndex = text.index(after: refSpace)
-            let refText = text.substring(with: startIndex ..< text.endIndex).trimmingCharacters(in: .whitespacesAndNewlines)
-            
-            guard let reference = ReferenceParser.from(ref: refText, repository: repository) else {
-                fatalError("Broken HEAD: \(refText)")
+        if text.hasPrefix(SymbolicReference.prefix) {
+            guard let symbolicReference = SymbolicReference(ref: Ref(Head.name), text: text, repository: repository) else {
+                fatalError("Broken HEAD: \(text)")
             }
-            self.kind = .reference(reference)
+            
+            self.kind = .symbolic(symbolicReference)
         } else {
-            self.kind = .hash(text.trimmingCharacters(in: .whitespacesAndNewlines))
+            let hash = text.trimmingCharacters(in: .whitespacesAndNewlines)
+            self.kind = .simple(SimpleReference(ref: Ref(Head.name), hash: hash, repository: repository))
         }
         self.repository = repository
+        
+        self.reflog = Reflog(ref: Ref(Head.name), repository: repository)
     }
     
-    public func update(hash: String) throws {
-        kind = .hash(hash)
-        try write()
+    public func update(to hash: String, message: String?) throws {
+        try update(to: .simple(SimpleReference(ref: Ref(Head.name), hash: hash, repository: repository)), message: message)
     }
     
-    public func update(kind: Kind, message: String) throws {
+    public func update(to reference: Reference, message: String?) throws {
+        try update(to: .symbolic(SymbolicReference(ref: Ref(Head.name), dereferenced: reference, repository: repository)), message: message)
+    }
+    
+    public func update(to kind: Kind, message: String?) throws {
         guard let signature = Signature.currentUser() else {
             throw LoggedReferenceError.invalidSignature
         }
-        
-        let newHash: String
-        switch kind {
-        case .hash(let hash): newHash = hash
-        case .reference(let ref): newHash = ref.hash
-        }
-        let entry = ReflogEntry(oldHash: hash, newHash: newHash, signature: signature, message: message)
+
+        let entry = ReflogEntry(oldHash: self.kind.hash, newHash: kind.hash, signature: signature, message: message)
+        try reflog.append(entry: entry)
         
         self.kind = kind
-        try write()
-        try reflog.append(entry: entry)
+        
+        try self.write()
     }
     
     public func write() throws {
-        let path = repository.subpath(with: ref)
-        let text: String
         switch kind {
-        case let .hash(hash): text = hash
-        case let .reference(reference): text = "ref: \(reference.ref)"
+        case .simple(let simple): try simple.write()
+        case .symbolic(let symbolic): try symbolic.write()
         }
-        try (text + "\n").write(to: path)
-    }
-    
-}
-
-extension Head: LoggedReference {
-    
-    public var reflog: Reflog {
-        return Reflog(type: .head, repository: repository)
     }
     
 }

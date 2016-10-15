@@ -15,12 +15,12 @@ public struct Signature {
     public let time: Date
     public let timeZone: TimeZone
     
-    public static func currentUser(at time: Date? = nil) -> Signature? {
+    public static func currentUser(at time: Date? = nil, in timeZone: TimeZone? = nil) -> Signature? {
         guard let name = Config.value(for: "name", in: "user"),
             let email = Config.value(for: "email", in: "user") else {
                 return nil
         }
-        return Signature(name: name, email: email, time: time ?? Date(), timeZone: TimeZone.current)
+        return Signature(name: name, email: email, time: time ?? Date(), timeZone: timeZone ?? TimeZone.current)
     }
     
     init(name: String, email: String, time: Date, timeZone: TimeZone) {

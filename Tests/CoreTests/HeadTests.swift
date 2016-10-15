@@ -14,32 +14,32 @@ class HeadTests: GitTestCase {
     func testHashHead() {
         let repository = TestRepositories.repository(.basic, at: "e1bb0a84098498cceea87cb6b542479a4b9e769d")
         
-        guard case let .hash(hash) = repository.head!.kind else {
+        guard case let .simple(simple) = repository.head!.kind else {
             XCTFail()
             return
         }
-        XCTAssert(hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
+        XCTAssert(simple.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
     }
     
     func testRefHead() {
         let unpackedRepository = TestRepositories.repository(.basic, at: "other_branch")
         let packedRepository = TestRepositories.repository(.packed, at: "other_branch")
         
-        guard case let .reference(reference) = unpackedRepository.head!.kind else {
+        guard case let .symbolic(reference) = unpackedRepository.head!.kind else {
             XCTFail()
             return
         }
-        XCTAssert(reference.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
-        XCTAssert(reference.ref == "refs/heads/other_branch")
-        XCTAssert(reference.name == "other_branch")
+        XCTAssert(reference.dereferenced.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
+        XCTAssert(reference.dereferenced.ref == "refs/heads/other_branch")
+        XCTAssert(reference.dereferenced.name == "other_branch")
         
-        guard case let .reference(packedReference) = packedRepository.head!.kind else {
+        guard case let .symbolic(packedReference) = packedRepository.head!.kind else {
             XCTFail()
             return
         }
-        XCTAssert(packedReference.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
-        XCTAssert(packedReference.ref == "refs/heads/other_branch")
-        XCTAssert(packedReference.name == "other_branch")
+        XCTAssert(packedReference.dereferenced.hash == "29287d7a61db5b55e66f707a01b7fb4b11efcb40")
+        XCTAssert(packedReference.dereferenced.ref == "refs/heads/other_branch")
+        XCTAssert(packedReference.dereferenced.name == "other_branch")
     }
     
     func testUpdate() {
@@ -50,29 +50,25 @@ class HeadTests: GitTestCase {
             return
         }
         
-        guard case let .reference(ref) = headRef.kind else {
+        guard case let .symbolic(ref) = headRef.kind else {
             XCTFail()
             return
         }
-        XCTAssert(ref.equals(ref: "refs/heads/master", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
-        XCTAssert(headRef.equals(ref: "HEAD", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
-        XCTAssert(headRef.dereferenced.equals(ref: "refs/heads/master", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
+        XCTAssert(ref.dereferenced.equals(ref: "refs/heads/master", hash: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717"))
         
         do {
-            try headRef.update(hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d")
+            try headRef.update(to: "e1bb0a84098498cceea87cb6b542479a4b9e769d", message: nil)
         } catch {
             XCTFail()
         }
         
         // Make sure old object correctly updated
         
-        guard case let .hash(oldHash) = headRef.kind else {
+        guard case let .simple(reference) = headRef.kind else {
             XCTFail()
             return
         }
-        XCTAssert(oldHash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
-        XCTAssert(headRef.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
-        XCTAssert(headRef.dereferenced.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
+        XCTAssert(reference.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
         
         // Make sure written correctly
         
@@ -81,13 +77,11 @@ class HeadTests: GitTestCase {
             return
         }
         
-        guard case let .hash(newHash) = newHead.kind else {
+        guard case let .simple(new) = newHead.kind else {
             XCTFail()
             return
         }
-        XCTAssert(newHash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
-        XCTAssert(newHead.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
-        XCTAssert(newHead.dereferenced.equals(ref: "HEAD", hash: "e1bb0a84098498cceea87cb6b542479a4b9e769d"))
+        XCTAssert(new.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
     }
 
 }

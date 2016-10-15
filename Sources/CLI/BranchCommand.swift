@@ -26,14 +26,14 @@ class BranchCommand: RepositoryCommand {
         
         let matchingName: String?
         switch head.kind {
-        case let .hash(hash):
-            print("* (HEAD detached at \(hash))")
+        case let .simple(simple):
+            print("* (HEAD detached at \(simple.hash))")
             matchingName = nil
-        case let .reference(reference):
-            matchingName = reference.name
+        case let .symbolic(symbolic):
+            matchingName = symbolic.dereferenced.ref.name
         }
         
-        for branch in repository.branches {
+        for branch in repository.referenceStore.allBranches() {
             let prefix = branch.name == matchingName ? "*" : " "
             print("\(prefix) \(branch.name)")
         }

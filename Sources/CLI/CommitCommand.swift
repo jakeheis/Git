@@ -24,7 +24,7 @@ class CommitCommand: RepositoryCommand {
     }
     
     func execute(arguments: CommandArguments) throws {
-        guard let repository = repository, let head = repository.head?.dereferenced else {
+        guard let repository = repository, let head = repository.head else {
             throw CLIError.error("Repository could not be read")
         }
         guard let message = message else {
@@ -34,7 +34,12 @@ class CommitCommand: RepositoryCommand {
         do {
             let hash = try CommitWriter.commitCurrent(in: repository, message: message)
             
-            print("[\(head.name) \(hash)] \(message)")
+            let name: String
+            switch head.kind {
+            case .simple(_): name = "(detached)"
+            case .symbolic(let symbolic): name = symbolic.dereferenced.ref.name
+            }
+            print("[\(name) \(hash)] \(message)")
         } catch {
             throw CLIError.error("Couldn't commit")
         }

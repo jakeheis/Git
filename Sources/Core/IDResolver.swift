@@ -9,7 +9,7 @@
 public class IDResolver {
     
     public static func resolve(object: String, in repository: Repository) -> Object? {
-        if let reference = ReferenceParser.parse(raw: object, repository: repository) {
+        if let reference = repository.referenceStore[object] {
             return reference.object
         } else if let repositoryObject = repository.objectStore[object] {
             return repositoryObject
