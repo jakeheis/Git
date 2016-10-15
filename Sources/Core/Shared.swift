@@ -49,4 +49,12 @@ extension String {
         try writeToPath(path)
     }
     
+    public var shortHash: String {
+        let length = 7
+        if self.characters.count <= length {
+            return self
+        }
+        return substring(to: index(startIndex, offsetBy: length))
+    }
+    
 }

@@ -1,5 +1,0 @@
-#! /bin/sh
-
-cd Tests/CLITests
-swift build
-./.build/debug/CLITests_

@@ -27,11 +27,16 @@ extension TestCase {
         TestCaseRecorder.recorder.start(testCase: self)
         test()
         TestCaseRecorder.recorder.end(testCase: self)
+        reset()
     }
     
     @discardableResult
-    func assert(executing arguments: String, in type: TestRepositories.RepositoryType, yields expected: String) -> Bool {
-        TestCaseRecorder.recorder.running(test: arguments)
+    func assert(executing arguments: String, in type: TestRepositories.RepositoryType, at location: String? = nil, yields expected: String) -> Bool {
+        TestCaseRecorder.recorder.running(test: arguments, in: type, at: location)
+        
+        if let repoLocation = location {
+            executeGitCommand(with: "checkout -q \(repoLocation)", in: type)
+        }
         
         let output = execute(with: arguments, in: type)
         if output == expected {
@@ -55,13 +60,26 @@ extension TestCase {
         process.launch()
         process.waitUntilExit()
         
-        TestRepositories.reset()
-        
         if let str = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) {
-            return str.trimmingCharacters(in: .whitespacesAndNewlines)
+            return str.substring(to: str.index(before: str.endIndex)) // Remove ending newline
         }
         
         return nil
+    }
+    
+    func executeGitCommand(with arguments: String, in type: TestRepositories.RepositoryType) {
+        let path = TestRepositories.repository(type)
+        
+        let process = Process()
+        process.launchPath = "/bin/bash"
+        process.arguments = ["-c", "git \(arguments)"]
+        process.currentDirectoryPath = path.rawValue
+        process.launch()
+        process.waitUntilExit()
+    }
+    
+    func reset() {
+        TestRepositories.reset()
     }
     
 }

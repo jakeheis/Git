@@ -1,0 +1,7 @@
+#! /bin/sh
+
+# Test Core
+swift test
+
+# Test CLI
+./clitest

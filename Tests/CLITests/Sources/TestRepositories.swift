@@ -38,7 +38,7 @@ class TestRepositories {
     private static func moveRepository(at path: Path) -> Path {
         let newPath = path.parent + "Real" + path.fileName
         if newPath.exists {
-            try! newPath.deleteFile()
+            return newPath
         }
         try! path.copyFileToPath(newPath)
         try! (newPath + "Git").moveFileToPath(newPath + ".git")

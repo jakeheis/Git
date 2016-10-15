@@ -14,21 +14,26 @@ class TestCaseRecorder {
         fails = 0
     }
     
-    func running(test: String) {
-        print("Testing: ../../.build/debug/CLI \(test)".yellow)
+    func running(test: String, in type: TestRepositories.RepositoryType, at location: String?) {
+        var suffix = "(in \(type)"
+        if let repoLocation = location {
+            suffix += " at \(repoLocation)"
+        }
+        suffix += ")"
+        print("\tTesting: ../../.build/debug/CLI \(test) \(suffix)".yellow)
     }
     
     func testPassed() {
         passes += 1
         
-        print("Test passed".green)
+        print("\tTest passed".green)
     }
     
     func testFailed(with arguments: String, in type: TestRepositories.RepositoryType, expected: String, output: String?) {
         fails += 1
         
-        print("TEST failed: Executing \(arguments) in \(type)".red)
-        print("Expected: \"\(Optional(expected))\" -- Got: \"\(output)\"".red)
+        print("\tTest failed: Executing \(arguments) in \(type)".red)
+        print("\tExpected: \"\(Optional(expected))\" -- Got: \"\(output)\"".red)
     }
     
     func end(testCase: TestCase) {

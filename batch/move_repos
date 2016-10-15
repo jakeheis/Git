@@ -1,0 +1,10 @@
+#! /bin/sh
+
+cp -r /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Basic /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Basic
+mv /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Basic/Git /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Basic/.git 
+
+cp -r /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/EmptyObjects /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/EmptyObjects
+mv /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/EmptyObjects/Git /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/EmptyObjects/.git 
+
+cp -r /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Packed /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Packed
+mv /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Packed/Git /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Packed/.git 

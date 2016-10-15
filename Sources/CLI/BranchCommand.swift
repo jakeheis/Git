@@ -27,7 +27,7 @@ class BranchCommand: RepositoryCommand {
         let matchingName: String?
         switch head.kind {
         case let .simple(simple):
-            print("* (HEAD detached at \(simple.hash))")
+            print("* (HEAD detached at \(simple.hash.shortHash))")
             matchingName = nil
         case let .symbolic(symbolic):
             matchingName = symbolic.dereferenced.ref.name
