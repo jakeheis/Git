@@ -16,8 +16,8 @@ public struct Signature {
     public let timeZone: TimeZone
     
     public static func currentUser(at time: Date? = nil, in timeZone: TimeZone? = nil) -> Signature? {
-        guard let name = Config.value(for: "name", in: "user"),
-            let email = Config.value(for: "email", in: "user") else {
+        guard let name = Config.value(for: "name", in: .user),
+            let email = Config.value(for: "email", in: .user) else {
                 return nil
         }
         return Signature(name: name, email: email, time: time ?? Date(), timeZone: timeZone ?? TimeZone.current)

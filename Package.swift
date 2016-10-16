@@ -8,7 +8,7 @@ let package = Package(
     ],
     dependencies: [
         .Package(url: "https://github.com/jakeheis/FileKit", Version(4, 0, 0, prereleaseIdentifiers: ["beta"])),
-        .Package(url: "https://github.com/jakeheis/SwiftCLI", Version(2, 0, 0, prereleaseIdentifiers: ["beta3"])),
+        .Package(url: "https://github.com/jakeheis/SwiftCLI", Version(2, 0, 0, prereleaseIdentifiers: ["beta4"])),
         .Package(url: "https://github.com/onevcat/Rainbow", Version(2, 0, 0, prereleaseIdentifiers: ["alpha", "1"])),
         .Package(url: "/Users/jakeheiser/Documents/Swift/Cncurses", majorVersion: 1, minor: 0),
         .Package(url: "/Users/jakeheiser/Documents/Swift/Czlib", majorVersion: 1, minor: 0),

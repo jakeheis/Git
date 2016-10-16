@@ -16,18 +16,11 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
 //    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 //    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
     Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
-//    print((try! Diff.diffWorkingDirectoryAndIndex(in: Repository(path: Path.Current)!)).generateWhole())
 }
 
 if isDebug {
     let r = Repository(path: Path.Current)!
-    let head = r.head!
-    switch head.kind {
-    case let .simple(simple):
-        print("* (HEAD detached at \(simple.hash))")
-    case let .symbolic(symbolic):
-        print(symbolic.ref.name)
-    }
+    print(Config.global?.groups)
 }
 
 CLI.setup(name: "sgit", version: "0.0.1", description: "Like git but in Swift")
@@ -60,6 +53,8 @@ let porcelain: [RepositoryCommand] = [
 
 CLI.register(commands: plumbing)
 CLI.register(commands: porcelain)
+
+AliasCommands.loadAliases()
 
 let result: CLIResult
 if isDebug {

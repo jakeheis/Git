@@ -10,6 +10,11 @@ import FileKit
 
 public class Config {
     
+    public enum GroupName: String {
+        case alias
+        case user
+    }
+    
     public static let global = Config(path: Path(rawValue: "~/.gitconfig").standardized)
     
     public let groups: [ConfigGroup]
@@ -17,11 +22,23 @@ public class Config {
     
     private let keyedGroups: [String: ConfigGroup]
     
+    public static func value(for key: String, in group: GroupName) -> String? {
+        return value(for: key, in: group.rawValue)
+    }
+    
     public static func value(for key: String, in group: String) -> String? {
-        if let group = Config.global?.keyedGroups[group] {
+        if let group = global?.keyedGroups[group] {
             return group.values[key]
         }
         return nil
+    }
+    
+    public static func group(named name: GroupName) -> ConfigGroup? {
+        return group(named: name.rawValue)
+    }
+    
+    public static func group(named name: String) -> ConfigGroup? {
+        return global?.keyedGroups[name]
     }
     
     init?(path: Path) {
