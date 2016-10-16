@@ -61,6 +61,9 @@ extension TestCase {
         process.waitUntilExit()
         
         if let str = String(data: output.fileHandleForReading.readDataToEndOfFile(), encoding: .utf8) {
+            if str.isEmpty {
+                return str
+            }
             return str.substring(to: str.index(before: str.endIndex)) // Remove ending newline
         }
         

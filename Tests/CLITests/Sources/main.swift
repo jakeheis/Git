@@ -13,8 +13,23 @@ class BranchCommandTests: TestCase {
     
 }
 
+class StatusCommandTests: TestCase {
+    
+    func test() {
+        assert(executing: "status", in: .basic, yields: "On branch master\nnothing to commit, working directory clean")
+        assert(executing: "status -s", in: .basic, yields: "")
+        assert(executing: "status -sb", in: .basic, yields: "## master")
+        
+        executeGitCommand(with: "read-tree 1f9bcfa09c52c0e5c7df0aa6953ffff8dffdf3c5", in: .basic)
+        assert(executing: "status -s", in: .basic, yields: "MM file.txt\nAD second.txt\nD  third.txt\n?? third.txt")
+        assert(executing: "status -sb", in: .basic, yields: "## master\nMM file.txt\nAD second.txt\nD  third.txt\n?? third.txt")
+    }
+    
+}
+
 let suite = TestSuite(testCases: [
-    BranchCommandTests()
+    BranchCommandTests(),
+    StatusCommandTests()
 ])
 
 suite.test()

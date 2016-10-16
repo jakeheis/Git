@@ -1,0 +1,5 @@
+#! /bin/sh
+
+rm -rf /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Basic
+rm -rf /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/EmptyObjects
+rm -rf /Users/jakeheiser/Documents/Swift/Git/Tests/Repositories/Real/Packed
