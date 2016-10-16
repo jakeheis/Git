@@ -44,7 +44,7 @@ class ReflogTests: XCTestCase {
         
         do {
             try reference.recordUpdate(message: "test: booyah") {
-                try reference.update(hash: "39f6140dee77ffed9539d61aead2e1239ac7ad13")
+                try $0.update(hash: "39f6140dee77ffed9539d61aead2e1239ac7ad13")
             }
         } catch {
             XCTFail()

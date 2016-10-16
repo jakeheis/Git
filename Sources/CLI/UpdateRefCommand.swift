@@ -43,7 +43,7 @@ class UpdateRefCommand: RepositoryCommand {
             do {
                 if reference.ref.isBranch {
                     try reference.recordUpdate(message: nil) {
-                        try reference.update(hash: newValue)
+                        try $0.update(hash: newValue)
                     }
                 } else {
                     try reference.update(hash: newValue)

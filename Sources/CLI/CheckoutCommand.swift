@@ -52,11 +52,19 @@ class CheckoutCommand: RepositoryCommand {
         do {
             let old = head.kind.hash
             let message = "checkout: moving from \(old) to \(commitish)"
-            if let ref = repository.referenceStore[commitish] {
-                try head.update(to: ref, message: message)
+            if let reference = repository.referenceStore[commitish] {
+                if case let .symbolic(symbolic) = head.kind, symbolic.dereferenced.equals(reference) {
+                    throw CLIError.error("HEAD already at \(commitish)")
+                }
+                try head.update(toSymbolic: reference, message: message)
             } else {
-                try head.update(to: commit.hash, message: message)
+                if case let .simple(simple) = head.kind, simple.hash == commit.hash {
+                    throw CLIError.error("HEAD already at \(commitish)")
+                }
+                try head.update(toSimple: commit.hash, message: message)
             }
+        } catch CLIError.error(let message) {
+            throw CLIError.error(message)
         } catch {
             throw CLIError.error("Couldn't update HEAD")
         }

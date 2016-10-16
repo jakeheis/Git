@@ -25,6 +25,7 @@ final public class CommitWriter: ObjectWriter {
         case unreadableHead
     }
     
+    @discardableResult
     public static func commitCurrent(in repository: Repository, message: String) throws -> String {
         let treeHash = try TreeWriter.writeCurrent(in: repository)
         
@@ -34,15 +35,7 @@ final public class CommitWriter: ObjectWriter {
         
         let commitHash = try CommitWriter(treeHash: treeHash, parentHash: head.kind.hash, message: message, repository: repository).write()
         
-        let branchTip: Reference
-        switch head.kind {
-        case .simple(let simple): branchTip = simple
-        case .symbolic(let symbolic): branchTip = symbolic.dereferenced
-        }
-        
-        try branchTip.recordUpdate(message: "commit: \(message)") {
-            try branchTip.update(hash: commitHash)
-        }
+        try head.updateUnderlying(to: commitHash, message: "commit: \(message)")
         
         return commitHash
     }
