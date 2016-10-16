@@ -41,7 +41,13 @@ class UpdateRefCommand: RepositoryCommand {
             }
             
             do {
-                try reference.update(hash: newValue)
+                if reference.ref.isBranch {
+                    try reference.recordUpdate(message: nil) {
+                        try reference.update(hash: newValue)
+                    }
+                } else {
+                    try reference.update(hash: newValue)
+                }
             } catch {
                 throw CLIError.error("Couldn't update foldered ref")
             }

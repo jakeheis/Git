@@ -4,4 +4,4 @@
 swift test
 
 # Test CLI
-./clitest
+batch/clitest

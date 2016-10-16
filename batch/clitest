@@ -2,4 +2,4 @@
 
 swift build
 cd Tests/CLITests
-swift build && ./.build/debug/CLITests_
+swift build && ./.build/debug/CLITests_ "$@"

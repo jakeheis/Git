@@ -106,7 +106,7 @@ public struct TreeEntry {
 extension TreeEntry: CustomStringConvertible {
     
     public var description: String {
-        return "\(mode.intText) \(mode.name) \(hash) \(name)"
+        return "\(mode.intText) \(mode.name) \(hash)\t\(name)"
     }
     
 }

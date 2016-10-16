@@ -36,7 +36,7 @@ class UpdateIndexCommand: RepositoryCommand {
         let files = arguments.requiredCollectedArgument("path")
         for file in files {
             let path = repository.path + file
-            guard path.isRegular else {
+            guard !path.isDirectory else {
                 throw CLIError.error("\(file): can only update-index with files (for now ?)")
             }
             if !path.exists {
