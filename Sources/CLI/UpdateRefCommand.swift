@@ -26,7 +26,7 @@ class UpdateRefCommand: RepositoryCommand {
             throw CLIError.error("Couldn't read repository")
         }
         
-        if let existing = repository.referenceStore[ref] {
+        if let existing = repository.referenceStore.reference(matching: Ref(ref), strict: true) {
             let reference: Reference
             if let symbolic = existing as? SymbolicReference {
                 reference = symbolic.dereferenced

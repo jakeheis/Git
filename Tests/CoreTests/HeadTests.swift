@@ -11,7 +11,7 @@ import XCTest
 
 class HeadTests: GitTestCase {
 
-    func testHashHead() {
+    func testSimpleHead() {
         let repository = TestRepositories.repository(.basic, at: "e1bb0a84098498cceea87cb6b542479a4b9e769d")
         
         guard case let .simple(simple) = repository.head!.kind else {
@@ -21,7 +21,7 @@ class HeadTests: GitTestCase {
         XCTAssert(simple.hash == "e1bb0a84098498cceea87cb6b542479a4b9e769d")
     }
     
-    func testRefHead() {
+    func testSymbolicHead() {
         let unpackedRepository = TestRepositories.repository(.basic, at: "other_branch")
         let packedRepository = TestRepositories.repository(.packed, at: "other_branch")
         

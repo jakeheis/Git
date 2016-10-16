@@ -20,12 +20,16 @@ public class ReferenceStore {
     }
     
     public subscript(raw: String) -> Reference? {
-        return self[Ref(raw)]
+        return reference(matching: Ref(raw), strict: false)
     }
     
     public subscript(ref: Ref) -> Reference? {
+        return reference(matching: ref, strict: true)
+    }
+    
+    public func reference(matching ref: Ref, strict: Bool) -> Reference? {
         for backing in backings {
-            if let reference = backing[ref] {
+            if let reference = backing.reference(matching: ref, strict: strict) {
                 return reference
             }
         }
@@ -61,7 +65,7 @@ public class ReferenceStore {
 protocol ReferenceStoreBacking {
     init(repository: Repository)
     
-    subscript(ref: Ref) -> Reference? { get }
+    func reference(matching ref: Ref, strict: Bool) -> Reference?
     
     func allBranches() -> [Reference]
     func allTags() -> [Reference]
@@ -75,10 +79,13 @@ final fileprivate class FileReferenceStoreBacking: ReferenceStoreBacking {
         self.repository = repository
     }
     
-    subscript(ref: Ref) -> Reference? {
+    func reference(matching ref: Ref, strict: Bool) -> Reference? {
         let file = repository.subpath(with: ref.path)
         if let reference = read(ref: ref, from: file) {
             return reference
+        }
+        if strict {
+             return nil
         }
         
         let directory = repository.subpath(with: Ref.prefix)
@@ -155,9 +162,12 @@ final fileprivate class PackReferenceStoreBacking: ReferenceStoreBacking {
         self.branches = branches
     }
     
-    subscript(ref: Ref) -> Reference? {
+    func reference(matching ref: Ref, strict: Bool) -> Reference? {
         if let reference = references[ref] {
             return reference
+        }
+        if strict {
+            return nil
         }
         for key in references.keys {
             if key.path.hasSuffix(ref.path) {
