@@ -28,7 +28,7 @@ final public class BlobWriter: ObjectWriter {
             }
             self.data = data
         } else {
-            guard let data = try? NSData.readFromPath(file) as Data else {
+            guard let data = try? Data.read(from: file) else {
                 throw Error.readError
             }
             self.data = data

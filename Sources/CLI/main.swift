@@ -15,11 +15,11 @@ if let name = ProcessInfo.processInfo.arguments.first, name.hasSuffix(".build/de
     isDebug = true
 //    Path.Current = "/Users/jakeheiser/Documents/Swift/Git"
 //    Path.Current = "/Users/jakeheiser/Documents/Apps/Git Implementations/git"
-    Path.Current = "/Users/jakeheiser/Documents/Swift/initgit"
+    Path.current = "/Users/jakeheiser/Documents/Swift/initgit"
 }
 
 if isDebug {
-    let r = Repository(path: Path.Current)!
+    let r = Repository(path: Path.current)!
     print(Config.global?.groups)
 }
 

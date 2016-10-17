@@ -58,8 +58,8 @@ class TestRepositories {
                 return newPath
             }
         }
-        try! path.copyFileToPath(newPath)
-        try! (newPath + "Git").moveFileToPath(newPath + ".git")
+        try! path.copyFile(to: newPath)
+        try! (newPath + "Git").moveFile(to: newPath + ".git")
         return newPath
     }
     

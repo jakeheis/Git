@@ -33,7 +33,7 @@ public class PackfileIndex {
             return nil
         }
         
-        guard let data = try? NSData.readFromPath(path) as Data else {
+        guard let data = try? NSData.read(from: path) as Data else {
             return nil
         }
         

@@ -29,13 +29,13 @@ extension Data {
         return (try? (self as NSData).gzipCompressed())?.data as Data?
     }
     
-    func write(to path: Path) throws {
-        try (self as NSData).writeToPath(path)
-    }
+//    func write(to path: Path) throws {
+//        try (self as NSData).writeToPath(path)
+//    }
     
-    static func read(from path: Path) throws -> Data {
-        return try NSData.readFromPath(path) as Data
-    }
+//    static func read(from path: Path) throws -> Data {
+//        return try NSData.readFromPath(path) as Data
+//    }
     
 }
 
@@ -45,9 +45,9 @@ extension String {
         return self.trimmingCharacters(in: hexCharacterSet).isEmpty
     }
     
-    func write(to path: Path) throws {
-        try writeToPath(path)
-    }
+//    func write(to path: Path) throws {
+//        try writeToPath(path)
+//    }
     
     public var shortHash: String {
         let length = 7

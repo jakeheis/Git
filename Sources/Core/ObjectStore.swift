@@ -109,7 +109,7 @@ public class ObjectStore {
     // MARK: - Basic read
     
     func readObject(from file: Path, hash givenHash: String? = nil) throws -> Object {
-        guard let data = try? NSData.readFromPath(file) as Data else {
+        guard let data = try? NSData.read(from: file) as Data else {
             throw Error.readError
         }
         guard let uncompressed = data.uncompressed() else {

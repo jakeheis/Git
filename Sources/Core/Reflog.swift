@@ -36,7 +36,7 @@ public class Reflog {
     
     func write() throws {
         let text = entries.map({ String(describing: $0) }).joined(separator: "\n") + "\n"
-        try text.writeToPath(path)
+        try text.write(to: path)
     }
     
 }

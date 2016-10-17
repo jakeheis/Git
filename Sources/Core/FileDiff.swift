@@ -42,7 +42,7 @@ public class FileDiff {
             lines[0] = "--- a/\(fileName)"
             lines[1] = "+++ b/\(fileName)"
         } else {
-            guard let contents = try? String.readFromPath(original) else {
+            guard let contents = try? String.read(from: original) else {
                 return nil
             }
             let rawLines = contents.components(separatedBy: "\n").map({ "-" + $0 })

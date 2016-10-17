@@ -51,9 +51,9 @@ class CommitWriterTests: XCTestCase {
             return
         }
         
-        try! "hi".writeToPath(repository.path + "hi.txt")
+        try! "hi".write(to: repository.path + "hi.txt")
         try! (repository.path + "third.txt").deleteFile()
-        try! "overwritten".writeToPath(repository.path + "file.txt")
+        try! "overwritten".write(to: repository.path + "file.txt")
         
         let message = "A test commmit"
         let hash: String

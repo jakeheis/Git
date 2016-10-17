@@ -166,7 +166,7 @@ public class AlternatingReference {
     public let repository: Repository
     
     init?(ref: Ref, path: Path, repository: Repository) {
-        guard let contents = try? String.readFromPath(path) else {
+        guard let contents = try? String.read(from: path) else {
             return nil
         }
         

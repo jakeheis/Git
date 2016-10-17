@@ -51,12 +51,12 @@ class IndexTests: GitTestCase {
         let repository = TestRepositories.repository(.basic, at: "db69d97956555ed0ebf9e4a7ff4fedd8c08ba717")
         
         let hiFile = repository.path + "hi.txt"
-        try! "hi".writeToPath(hiFile)
+        try! "hi".write(to: hiFile)
         try! (repository.path + "third.txt").deleteFile()
         defer { try! hiFile.deleteFile() }
         
         Thread.sleep(forTimeInterval: 1) // Make sure stat values for initial creation and modification are different
-        try! "overwritten".writeToPath(repository.path + "file.txt")
+        try! "overwritten".write(to: repository.path + "file.txt")
         
         guard let index = repository.index else {
             XCTFail()
@@ -83,11 +83,11 @@ class IndexTests: GitTestCase {
         
         let newFile1 = "sub/test.txt"
         let newFilePath = repository.path + newFile1
-        try! "test".writeToPath(newFilePath)
+        try! "test".write(to: newFilePath)
         
         let newFile2 = ".a"
         let newFilePath2 = repository.path + newFile2
-        try! "test".writeToPath(newFilePath2)
+        try! "test".write(to: newFilePath2)
         
         do {
             try index.add(file: newFile1, write: false)
@@ -132,7 +132,7 @@ class IndexTests: GitTestCase {
         
         let updateFile = "sub/sub.txt"
         let updateFilePath = repository.path + updateFile
-        try! "test".writeToPath(updateFilePath)
+        try! "test".write(to: updateFilePath)
         
         XCTAssert(index.entries[5].equals(dev: 16777220, mode: .blob, uid: 501, gid: 20, fileSize: 8, hash: "d8fc28d60e02f9dbe0aeb88d130aa73d34a5ef37", assumeValid: false, extended: false, firstStage: false, secondStage: false, name: "sub/sub.txt"))
         

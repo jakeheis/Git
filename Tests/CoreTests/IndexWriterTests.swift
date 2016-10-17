@@ -31,7 +31,7 @@ class IndexWriterTests: GitTestCase {
         
         let newFile = "test.txt"
         let newFilePath = repository.path + newFile
-        try! "test".writeToPath(newFilePath)
+        try! "test".write(to: newFilePath)
         
         do {
             try index.add(file: newFile, write: false)
@@ -58,7 +58,7 @@ class IndexWriterTests: GitTestCase {
         }
         
         let modifiedFile = "file.txt"
-        try! "overwritten".writeToPath(repository.path + modifiedFile)
+        try! "overwritten".write(to: repository.path + modifiedFile)
         
         do {
             try index.update(file: modifiedFile, write: false)

@@ -32,7 +32,7 @@ public class Diff {
                 throw Error.missingFile
             }
             
-            let tmpComparison = Path.UserTemporary + indexEntry.hash
+            let tmpComparison = Path.userTemporary + indexEntry.hash
             try blob.data.write(to: tmpComparison)
             fileDiffs.append(FileDiff(original: tmpComparison, new: (repository.path + file), fileName: file))
         }

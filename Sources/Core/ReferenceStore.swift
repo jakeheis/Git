@@ -102,7 +102,7 @@ final fileprivate class FileReferenceStoreBacking: ReferenceStoreBacking {
     
     private func read(ref: Ref, from file: Path) -> Reference? {
         guard file.exists,
-            let text = (try? String.readFromPath(file))?.trimmingCharacters(in: .whitespacesAndNewlines) else {
+            let text = (try? String.read(from: file))?.trimmingCharacters(in: .whitespacesAndNewlines) else {
                 return nil
         }
         if text.characters.count == 40 {
@@ -140,7 +140,7 @@ final fileprivate class PackReferenceStoreBacking: ReferenceStoreBacking {
         var tags: [Ref] = []
         var branches: [Ref] = []
         
-        if let packedRefsText = try? String.readFromPath(repository.subpath(with: "packed-refs")) {
+        if let packedRefsText = try? String.read(from: repository.subpath(with: "packed-refs")) {
             let lines = packedRefsText.components(separatedBy: "\n")
             
             loop: for line in lines where !line.hasPrefix("#") && !line.isEmpty { // No comments

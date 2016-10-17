@@ -15,7 +15,7 @@ protocol RepositoryCommand: OptionCommand {}
 extension RepositoryCommand {
     
     var repository: Repository? {
-        return Repository(path: Path.Current)
+        return Repository(path: Path.current)
     }
     
 }

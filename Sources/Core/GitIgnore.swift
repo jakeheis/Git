@@ -17,7 +17,7 @@ public class GitIgnore {
         let ignoreFile = repository.path + ".gitignore"
         
         let lines: [String]
-        if let contents = try? String.readFromPath(ignoreFile) {
+        if let contents = try? String.read(from: ignoreFile) {
             lines = contents.components(separatedBy: "\n")
         } else {
             lines = []

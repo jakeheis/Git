@@ -42,7 +42,7 @@ public class Config {
     }
     
     init?(path: Path) {
-        guard var lines = (try? String.readFromPath(path))?.components(separatedBy: "\n") else {
+        guard var lines = (try? String.read(from: path))?.components(separatedBy: "\n") else {
             return nil
         }
         
